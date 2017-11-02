@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 This goes through the corpus,
 select sentences that have the discourse marker
@@ -5,6 +8,28 @@ filtering based on length of sentence (so we can discard ill-formed sentences) 1
 and save them as intermediate files
 shuffle within each discourse marker
 """
+
+import numpy as np
+import argparse
+import io
+import nltk
+import pickle
+import requests
+import re
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
+import os
+from os.path import join as pjoin
+
+import json
+from itertools import izip
+
+from copy import deepcopy as cp
+
+np.random.seed(123)
 
 def collect_raw_sentences(source_dir, dataset, caching):
     markers_dir = pjoin(source_dir, "markers_" + DISCOURSE_MARKER_SET_TAG)

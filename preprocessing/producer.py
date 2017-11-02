@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 (might change name later)
 Based on commands, select a group of markers,
@@ -7,6 +10,28 @@ Merge them into one set, train/val/test split, np.shuffle (fix random seed)
 
 (then Torchtext can take it from there!)
 """
+
+import numpy as np
+import argparse
+import io
+import nltk
+import pickle
+import requests
+import re
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
+import os
+from os.path import join as pjoin
+
+import json
+from itertools import izip
+
+from copy import deepcopy as cp
+
+np.random.seed(123)
 
 
 def filtering(source_dir, args):
