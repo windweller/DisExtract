@@ -68,6 +68,9 @@ def undo_rephrase(lst):
 def rephrase(str):
     return str.replace("for example", "for_example")
 
+def cleanup(str):
+    return str.replace(" @-@ ", "-")
+
 # # not sure if i'll use this actually...
 # dangerous_dependencies = ["mark", "advcl", "acl"]
 
@@ -91,6 +94,11 @@ dependency_patterns = {
     "POS": "CC",
     "S2": "cc",
     "S1": ["conj"]
+  },
+  "as": {
+    "POS": "IN",
+    "S2": "mark",
+    "S1": "advcl"
   },
   "before": {
     "POS": "IN",
@@ -489,7 +497,7 @@ class Sentence():
             return None
 
 def depparse_ssplit(sentence, previous_sentence, marker):
-
+    sentence = cleanup(sentence)
     parse = get_parse(sentence)
     # print(json.dumps(parse, indent=4))
     sentence = Sentence(parse, sentence)
