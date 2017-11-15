@@ -19,7 +19,10 @@ import pickle
 import requests
 import re
 
+from cfg import DISCOURSE_MARKER_SET_TAG, DISCOURSE_MARKERS
+
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -35,8 +38,7 @@ np.random.seed(123)
 
 
 def filtering(source_dir, args):
-
-    args.min_ratio = 1/args.max_ratio
+    args.min_ratio = 1 / args.max_ratio
 
     marker_dir = pjoin(source_dir, "markers_" + DISCOURSE_MARKER_SET_TAG)
     split_dir = pjoin(marker_dir, "split_train{}".format(args.train_size))
@@ -55,7 +57,7 @@ def filtering(source_dir, args):
         os.makedirs(filter_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    
+
     def get_data(element_type, split):
         filename = "{}_{}_{}.txt".format(args.method, split, element_type)
         file_path = pjoin(input_dir, filename)
@@ -75,17 +77,17 @@ def filtering(source_dir, args):
         s1s = get_data("s1", split)
         s2s = get_data("s2", split)
         labels = get_data("label", split)
-        assert(len(s1s) == len(s2s) and len(s2s) == len(labels))
+        assert (len(s1s) == len(s2s) and len(s2s) == len(labels))
         for i in range(len(s1s)):
             s1 = s1s[i][:-1]
             s2 = s2s[i][:-1]
             label = labels[i][:-1]
             len1 = len(s1.split())
             len2 = len(s2.split())
-            ratio = float(len2)/len1
-            if args.min_seq_len<len1 and len1<args.max_seq_len \
-                    and args.min_seq_len<len2 and len2<args.max_seq_len \
-                    and args.min_ratio<ratio and ratio<args.max_ratio:
+            ratio = float(len2) / len1
+            if args.min_seq_len < len1 and len1 < args.max_seq_len \
+                    and args.min_seq_len < len2 and len2 < args.max_seq_len \
+                    and args.min_ratio < ratio and ratio < args.max_ratio:
                 keep["s1"].append(s1)
                 keep["s2"].append(s2)
                 keep["label"].append(label)
@@ -94,11 +96,11 @@ def filtering(source_dir, args):
         # write new filtered files
         for element_type in ["s1", "s2", "label"]:
             filename = "{}_{}_{}_{}_{}_{}.txt".format(
-                split, 
+                split,
                 element_type,
-                args.method, 
-                args.max_seq_len, 
-                args.min_seq_len, 
+                args.method,
+                args.max_seq_len,
+                args.min_seq_len,
                 args.max_ratio
             )
             file_path = pjoin(output_dir, filename)

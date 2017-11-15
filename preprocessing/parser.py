@@ -26,41 +26,19 @@ import json
 from itertools import izip
 
 from copy import deepcopy as cp
+from cfg import DISCOURSE_MARKER_SET_TAG, DISCOURSE_MARKERS
 
 np.random.seed(123)
 
-DISCOURSE_MARKERS = [
-    "after",
-    "also",
-    "although",
-    "and",
-    "as",
-    "because",
-    "before",
-    "but",
-    "for example",
-    "however",
-    "if",
-    "meanwhile",
-    "so",
-    "still",
-    "then",
-    "though",
-    "when",
-    "while"
-]
-DISCOURSE_MARKER_SET_TAG = "ALL18"
 
-# patterns = {
-#     "because": ("IN", "mark", "advcl"),
-# }
+"""
+Given (p, s), previous sentence and current sentence
+1. For each pair, parse s with corenlp, get json with dependency parse
+"""
 
 def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
-
-def sentence_to_token_ids(sentence, vocabulary):
-    return [vocabulary.get(w, UNK_ID) for w in sentence]
 
 def undo_rephrase(lst):
     return " ".join(lst).replace("for_example", "for example").split()

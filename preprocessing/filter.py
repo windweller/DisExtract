@@ -17,6 +17,8 @@ import pickle
 import requests
 import re
 
+from cfg import DISCOURSE_MARKER_SET_TAG, DISCOURSE_MARKERS
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -30,6 +32,25 @@ from itertools import izip
 from copy import deepcopy as cp
 
 np.random.seed(123)
+
+"""
+1. Tokenize the corpus? (Sentence tokenization)
+2. Grab pairs of sentences where the 2nd sentence has one of the discourse markers
+3. Save them, a file for each discourse markers (a json file with [,] is good enough)
+"""
+
+
+
+
+
+
+
+
+
+
+
+def rephrase(str):
+    return str.replace("for example", "for_example")
 
 def collect_raw_sentences(source_dir, dataset, caching):
     markers_dir = pjoin(source_dir, "markers_" + DISCOURSE_MARKER_SET_TAG)
