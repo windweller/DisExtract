@@ -478,7 +478,7 @@ class Sentence():
 
         # if S2 is the whole sentence *and* we're missing S1, let S1 be the previous sentence
         if S2 and not S1:
-            words_in_sentence = len(sentence.tokens)
+            words_in_sentence = len(self.tokens)
             words_in_s2 = len(S2.split())
             if words_in_sentence - 1 == words_in_s2:
                 S1 = previous_sentence
