@@ -166,13 +166,13 @@ def test():
             "sentence": "Although this species is discarded when caught , it is more delicate @-@ bodied than other maskrays and is thus unlikely to survive encounters with trawling gear .",
             "previous_sentence": "In the present day , this is mostly caused by Australia 's Northern Prawn Fishery , which operates throughout its range .",
             "marker": "although",
-            "output": (', it is more delicate @ \x01 @ bodied than other maskrays and is thus unlikely to survive encounters with trawling gear .', 'this species is discarded when caught')
+            "output": (', it is more delicate-bodied than other maskrays and is thus unlikely to survive encounters with trawling gear .', 'this species is discarded when caught')
         },
         {
             "sentence": "In the nineteenth @-@ century , the mound was higher on the western end of the tomb , although this was removed by excavation to reveal the sarsens beneath during the 1920s .",
             "previous_sentence": "The earthen mound that once covered the tomb is now visible only as an undulation approximately 1 foot , 6 inches in height .",
             "marker": "although",
-            "output": ('In the nineteenth @ \x01 @ century , the mound was higher on the western end of the tomb , .', 'this was removed by excavation to reveal the sarsens beneath during the 1920s')
+            "output": ('In the nineteenth-century , the mound was higher on the western end of the tomb , .', 'this was removed by excavation to reveal the sarsens beneath during the 1920s')
         },
         {
             "sentence": "In 1880 , the archaeologist Flinders Petrie included the existence of the stones at \" <unk> \" in his list of Kentish earthworks ; although noting that a previous commentator had described the stones as being in the shape of an oval , he instead described them as forming \" a rectilinear enclosure \" around the chamber .",
@@ -244,132 +244,110 @@ def test():
             "marker": "and",
             "output": ('character growth occurs', 'where units can be customized')
         },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "and",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "as",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
-        # {
-        #     "sentence": "",
-        #     "previous_sentence": "",
-        #     "marker": "because",
-        #     "output": None
-        # },
+        {
+            "sentence": "According to Sega , this was due to poor sales of Valkyria Chronicles II and the general unpopularity of the PSP in the west .",
+            "previous_sentence": "Unlike its two predecessors , Valkyria Chronicles III was not released in the west .",
+            "marker": "and",
+            "output": None
+        },
+        {
+            "sentence": "As with previous <unk> Chronicles games , Valkyria Chronicles III is a tactical role @-@ playing game where players take control of a military unit and take part in missions against enemy forces .",
+            "previous_sentence": ".",
+            "marker": "as",
+            "output": None
+        },
+        {
+            "sentence": "The player progresses through a series of linear missions , gradually unlocked as maps that can be freely scanned through and replayed as they are unlocked .",
+            "previous_sentence": "Stories are told through comic book @-@ like panels with animated character portraits , with characters speaking partially through voiced speech bubbles and partially through unvoiced text .",
+            "marker": "as",
+            "output": ('replayed', 'they are unlocked')
+        },
+        {
+            "sentence": "As the Nameless officially do not exist , the upper echelons of the Gallian Army exploit the concept of plausible deniability in order to send them on missions that would otherwise make Gallia lose face in the war .",
+            "previous_sentence": ".",
+            "marker": "as",
+            "output": (', the upper echelons of the Gallian Army exploit the concept of plausible deniability in order to send them on missions that would otherwise make Gallia lose face in the war .', 'the Nameless officially do not exist')
+        },
+        {
+            "sentence": "He served as the back @-@ up to Allen York during the game , and the following day , he signed a contract for the remainder of the year .",
+            "previous_sentence": "After being eliminated from the NCAA Tournament just days prior , Hunwick skipped an astronomy class and drove his worn down 2003 Ford Ranger to Columbus to make the game .",
+            "marker": "as",
+            "output": None
+        },
+        {
+            "sentence": "The tower was an edifice of great value for astronomical observations made using a sundial as they provided essential confirmation of the need to reform the Julian calendar .",
+            "previous_sentence": "Four stages of progressive development have occurred since it was first established .",
+            "marker": "as",
+            "output": ('The tower was an edifice of great value for astronomical observations made using a sundial .', 'they provided essential confirmation of the need to reform the Julian calendar')
+        },
+        {
+            "sentence": "The first stage of building of the tower , as recorded by Leo XIII in his motu proprio Ut <unk> of 1891 , is credited to Pope Gregory XIII , Pope from 1572 to 1585 .",
+            "previous_sentence": ".",
+            "marker": "as",
+            "output": None
+        },
+        {
+            "sentence": "Its instrumentation , apart from many normal devices ( such as meteorological and magnetic equipment , with a seismograph and a small transit and pendulum clock , ) was noted for the <unk> Telescope .",
+            "previous_sentence": "The original observatory was then set up above the second level of the tower with the agreement of Pope Pius VI .",
+            "marker": "as",
+            "output": None
+        },
+        {
+            "sentence": "As a result of these modifications , the original library was moved to the Pontifical Academy Lincei , and the old meteorological and seismic instruments were shifted to the Valle di Pompei observatory .",
+            "previous_sentence": "A new 16 @-@ inch visual telescope , called Torre Pio X , was erected in the second tower .",
+            "marker": "as",
+            "output": None
+        },
+        {
+            ## really the "while" shouldn't be there...
+            "sentence": "Bulloch and the passengers embarked in the steamer while Bulloch dispatched a letter to his financial agents instructing them to settle damages with the brig 's owners because he could not afford to take the time to deal with the affair lest he and Fingal be detained .",
+            "previous_sentence": "On the night 14 / 15 October , as she was slowly rounding the breakwater at Holyhead , Fingal rammed and sank the Austrian brig <unk> , slowly swinging at anchor without lights .",
+            "marker": "because",
+            "output": ("while Bulloch dispatched a letter to his financial agents instructing them to settle damages with the brig 's owners", 'he could not afford to take the time to deal with the affair lest he and Fingal be detained')
+        },
+        {
+            ## I'm OK with this.
+            "sentence": "Deceased humans were called nṯr because they were considered to be like the gods , whereas the term was rarely applied to many of Egypt 's lesser supernatural beings , which modern scholars often call \" demons \" .",
+            "previous_sentence": "The term nṯr may have applied to any being that was in some way outside the sphere of everyday life .",
+            "marker": "because",
+            "output": ("Deceased humans were called nṯr , whereas the term was rarely applied to many of Egypt 's lesser supernatural beings , which modern scholars often call \" demons \" .", "they were considered to be like the gods")
+        },
+        {
+            "sentence": "Because many deities in later times were strongly tied to particular towns and regions , many scholars have suggested that the pantheon formed as disparate communities coalesced into larger states , spreading and intermingling the worship of the old local deities .",
+            "previous_sentence": "Predynastic Egypt originally consisted of small , independent villages .",
+            "marker": "because",
+            "output": (', many scholars have suggested that the pantheon formed as disparate communities coalesced into larger states , spreading and intermingling the worship of the old local deities .', 'many deities in later times were strongly tied to particular towns and regions')
+        },
+        {
+            "sentence": "Most myths about them lack highly developed characters and plots , because the symbolic meaning of the myths was more important than elaborate storytelling .",
+            "previous_sentence": "Their behavior is inconsistent , and their thoughts and motivations are rarely stated .",
+            "marker": "because",
+            "output": ('Most myths about them lack highly developed characters and plots , .', 'the symbolic meaning of the myths was more important than elaborate storytelling')
+        },
+        {
+            "sentence": "Because of the gods ' multiple and overlapping roles , deities can have many epithets — with more important gods accumulating more titles — and the same epithet can apply to many deities .",
+            "previous_sentence": "In addition to their names , gods were given epithets , like \" possessor of splendor \" , \" ruler of Abydos \" , or \" lord of the sky \" , that describe some aspect of their roles or their worship .",
+            "marker": "because",
+            "output": None
+        },
+        {
+            "sentence": "In October 1941 , the newly installed mayor of Zagreb , Ivan Werner , issued a decree ordering the demolition of the Praška Street synagogue , ostensibly because it did not fit into the city 's master plan .",
+            "previous_sentence": ".",
+            "marker": "because",
+            "output": ('In October 1941 , the newly installed mayor of Zagreb , Ivan Werner , issued a decree ordering the demolition of the Praška Street synagogue , .', "ostensibly it did not fit into the city 's master plan")
+        },
+        {
+            "sentence": "Because this was Jordan 's first championship since his father 's murder , and it was won on Father 's Day , Jordan reacted very emotionally upon winning the title , including a memorable scene of him crying on the locker room floor with the game ball .",
+            "previous_sentence": "He also achieved only the second sweep of the MVP Awards in the All @-@ Star Game , regular season and NBA Finals , Willis Reed having achieved the first , during the 1969 – 70 season .",
+            "marker": "because",
+            "output": (', Jordan reacted very emotionally upon winning the title , including a memorable scene of him crying on the locker room floor with the game ball .', "this was Jordan 's first championship since his father 's murder , and it was won on Father 's Day")
+        },
+        {
+            "sentence": "Archaeologists have been unable to prove whether this adoption of farming was because of a new influx of migrants coming in from continental Europe or because the indigenous Mesolithic Britons came to adopt the agricultural practices of continental societies .",
+            "previous_sentence": "Beginning in the fifth millennium BCE , it saw a widespread change in lifestyle as the communities living in the British Isles adopted agriculture as their primary form of subsistence , abandoning the hunter @-@ gatherer lifestyle that had characterised the preceding Mesolithic period .",
+            "marker": "because",
+            "output": None
+        },
         # {
         #     "sentence": "",
         #     "previous_sentence": "",
@@ -1070,6 +1048,36 @@ def test():
             "marker": "although",
             "output": ('either a Commercial Pilot Licence or an Airline Transport Pilot Licence ,', 'not all of these would be engaged in GA activities')
         },
+        {
+        ## parse is just wrong :(
+        ## it thinks "Calamity Raven move" is a compound NP
+            "sentence": "This is short @-@ lived , however , as following Maximilian 's defeat , Dahau and Calamity Raven move to activate an ancient <unk> super weapon within the Empire , kept secret by their benefactor .",
+            "previous_sentence": "Partly due to these events , and partly due to the major losses in manpower Gallia suffers towards the end of the war with the Empire , the Nameless are offered a formal position as a squad in the Gallian Army rather than serve as an anonymous shadow force .",
+            "marker": "as",
+            "output": None
+        },
+        ## parse is just wrong :(
+        ## thought, to be fair, this sentence garden-pathed me into thinking the same thing as the parser did
+        {
+            "sentence": "As an armed Gallian force invading the Empire just following the two nations ' cease @-@ fire would certainly wreck their newfound peace , Kurt decides to once again make his squad the Nameless , asking Crowe to list himself and all under his command as killed @-@ in @-@ action .",
+            "previous_sentence": "Without the support of Maximilian or the chance to prove themselves in the war with Gallia , it is Dahau 's last trump card in creating a new Darcsen nation .",
+            "marker": "as",
+            "output": None
+        },
+        ## perhaps attaches to the VP, not to "because",
+        ## which could be correct for other sentences, but isn't right for this one
+        {
+            "sentence": "Perhaps because Abraham Lincoln had not yet been inaugurated as President , Captain Totten received no instructions from his superiors and was forced to withdraw his troops .",
+            "previous_sentence": ".",
+            "marker": "because",
+            "output": None
+        },
+        {
+            "sentence": "One of the primary reasons why Jordan was not drafted sooner was because the first two teams were in need of a center .",
+            "previous_sentence": "The Chicago Bulls selected Jordan with the third overall pick , after Hakeem Olajuwon ( Houston Rockets ) and Sam Bowie ( Portland Trail Blazers ) .",
+            "marker": "because",
+            "output": None
+        },
     ]
         
     print("{} cases are weird and I can't figure out how to handle them. :(".format(len(curious_cases)))
@@ -1086,7 +1094,7 @@ def test():
         print("====================")
 
 
-    n_tests = 33
+    n_tests = 51
     i = 0
     failures = 0
     print("running tests...")
