@@ -13,6 +13,8 @@ import pickle
 import requests
 import re
 
+from parser import depparse_ssplit
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
@@ -251,7 +253,787 @@ def test():
         # {
         #     "sentence": "",
         #     "previous_sentence": "",
-        #     "marker": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "as",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "because",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "before",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "but",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "for example",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "however",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "if",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "meanwhile",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "so",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "still",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "then",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "though",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "when",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
+        #     "output": None
+        # },
+        # {
+        #     "sentence": "",
+        #     "previous_sentence": "",
+        #     "marker": "while",
         #     "output": None
         # }
     ]
@@ -297,7 +1079,7 @@ def test():
         for item in curious_cases:
             print("====================")
             print(item["sentence"])
-            output = depparse_ssplit_v2(item["sentence"], item["previous_sentence"], item["marker"])
+            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"])
             print(output)
         print("====================")
         print("====================")
@@ -311,7 +1093,7 @@ def test():
 
     for item in test_items:
         if i < n_tests:
-            output = depparse_ssplit_v2(item["sentence"], item["previous_sentence"], item["marker"])
+            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"])
             try:
                 assert(output == item["output"])
             except AssertionError:
@@ -320,7 +1102,7 @@ def test():
         else:
             print("====================")
             print(item["sentence"])
-            output = depparse_ssplit_v2(item["sentence"], item["previous_sentence"], item["marker"])
+            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"])
             print(output)
         i += 1
 
