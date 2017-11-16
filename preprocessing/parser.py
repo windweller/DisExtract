@@ -49,8 +49,11 @@ def rephrase(str):
 def cleanup(str):
     return str.replace(" @-@ ", "-")
 
-# # not sure if i'll use this actually...
-# dangerous_dependencies = ["mark", "advcl", "acl"]
+# not sure if i'll use this actually...
+top_level_deps_to_ignore_if_extra = [
+    ("mark", "IN"),
+    # ("advmod", "WRB") ## this would solve several minor problems but introduce a few major problems
+]
 
 dependency_patterns = {
   "after": {
@@ -71,7 +74,8 @@ dependency_patterns = {
   "and": {
     "POS": "CC",
     "S2": "cc",
-    "S1": ["conj"]
+    "S1": ["conj"],
+    "flip": True
   },
   "as": {
     "POS": "IN",
@@ -83,6 +87,18 @@ dependency_patterns = {
     "S2": "mark",
     "S1": ["advcl"]
   },
+  "but": {
+    "POS": "CC",
+    "S2": "cc",
+    "S1": ["conj"],
+    "flip": True
+  },
+  # "so": {
+  #   "POS": "IN",
+  #   "S2": "dep",
+  #   "S1": ["parataxis"],
+  #   "flip": True
+  # },
   "so": {
     "POS": "IN",
     "S2": "mark",
@@ -106,17 +122,36 @@ dependency_patterns = {
   "however": {
     "POS": "RB",
     "S2": "advmod",
-    "S1": ["dep", "parataxis"]
+    "S1": [
+        "parataxis",
+        # "ccomp" ## rejecting in favor of high precision
+    ]
   },
   "if": {
     "POS": "IN",
     "S2": "mark",
     "S1": ["advcl"]
   },
+  "meanwhile": {
+    "POS": "RB",
+    "S2": "advmod",
+    "S1": ["parataxis"]
+  },
   "while": {
     "POS": "IN",
     "S2": "mark",
     "S1": ["advcl"]
+  },
+  "for example": {
+    "POS": "NN",
+    "S2": "nmod",
+    "S1": ["parataxis"],
+    "head": "example"
+  },
+  "then": {
+    "POS": "RB",
+    "S2": "advmod",
+    "S1": "parataxis"
   }
 }
 
@@ -285,12 +320,13 @@ class Sentence():
 
         return [d["governor"] for d in deps]
 
-    def find_children(self, index, filter_types=False, exclude_types=False, needs_verb=False):
+    def find_children(self, index, filter_types=False, exclude_types=False, needs_verb=False, exclude_type_and_POS=False):
         deps = self.find_deps(
             index,
             dir="children",
             filter_types=filter_types,
-            exclude_types=exclude_types
+            exclude_types=exclude_types,
+            exclude_type_and_POS=exclude_type_and_POS
         )
 
         if needs_verb:
@@ -319,19 +355,22 @@ class Sentence():
         index = d["dependent"]
         return self.is_verb(index)
 
-    def find_deps(self, index, dir=None, filter_types=False, exclude_types=False):
+    def find_deps(self, index, dir=None, filter_types=False, exclude_types=False, exclude_type_and_POS=False):
         deps = []
         if dir=="parents" or dir==None:
-            deps += [d for d in self.dependencies if d['dependent']==index]
+            deps += [{"dep": d, "index": d['governor']} for d in self.dependencies if d['dependent']==index]
         if dir=="children" or dir==None:
-            deps += [d for d in self.dependencies if d['governor']==index]
+            deps += [{"dep": d, "index": d['dependent']} for d in self.dependencies if d['governor']==index]
 
         if filter_types:
-            deps = [d for d in deps if d["dep"] in filter_types]
+            deps = [d for d in deps if d["dep"]["dep"] in filter_types]
         if exclude_types:
-            deps = [d for d in deps if not d["dep"] in exclude_types]
+            deps = [d for d in deps if not d["dep"]["dep"] in exclude_types]
 
-        return deps
+        if exclude_type_and_POS:
+            deps = [d for d in deps if (d["dep"]["dep"], self.token(d["index"])["pos"]) not in exclude_type_and_POS]
+
+        return [d["dep"] for d in deps]
 
     def find_dep_types(self, index, dir=None, filter_types=False):
         deps = self.find_deps(index, dir=dir, filter_types=filter_types)
@@ -350,7 +389,12 @@ class Sentence():
         # print("explore: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in explore]))
         # print("*****")
 
-        children = [c for i in explore for c in self.find_children(i, exclude_types=exclude_types) if not c in exclude_indices]
+        if depth==0:
+            all_children = [c for i in explore for c in self.find_children(i, exclude_types=exclude_types, exclude_type_and_POS=top_level_deps_to_ignore_if_extra)]
+        else:
+            all_children = [c for i in explore for c in self.find_children(i, exclude_types=exclude_types)]
+
+        children =  [c for c in all_children if not c in exclude_indices]
         if len(children)==0:
             return acc
         else:
@@ -390,7 +434,11 @@ class Sentence():
 
     def get_valid_marker_indices(self, marker):
         pos = dependency_patterns[marker]["POS"]
-        return [i for i in self.indices(marker) if pos == self.token(i)["pos"] ]
+        if "head" in dependency_patterns[marker]:
+            marker_head = dependency_patterns[marker]["head"]
+        else:
+            marker_head = marker
+        return [i for i in self.indices(marker_head) if pos == self.token(i)["pos"] ]
 
     def get_candidate_S2_indices(self, marker, marker_index, needs_verb=False):
         connection_type = dependency_patterns[marker]["S2"]
@@ -455,6 +503,7 @@ class Sentence():
                     exclude_indices=[marker_index, s1_ind],
                     # exclude_types=dependency_patterns[marker]["S1"]
                 )
+
                 # we'll lose some stuff here because of alignment between
                 # wikitext tokenization and corenlp tokenization.
                 # if we can't get a phrase, reject this pair
@@ -462,12 +511,19 @@ class Sentence():
                 if not S2:
                     return None
 
+
         # if S2 is the whole sentence *and* we're missing S1, let S1 be the previous sentence
+        words_in_marker = len(marker.split())
         if S2 and not S1:
             words_in_sentence = len(self.tokens)
             words_in_s2 = len(S2.split())
-            if words_in_sentence - 1 == words_in_s2:
+            if words_in_sentence - words_in_marker == words_in_s2:
                 S1 = previous_sentence
+        else:
+            # if we don't choose S1 to be the previous sentence, then
+            # we might have to switch S1 and S2 because of the way the cc conj pattern works
+            if S1 and S2 and "flip" in dependency_patterns[marker] and dependency_patterns[marker]["flip"]:
+                return S2, S1
 
         if S1 and S2:
             return S1, S2
