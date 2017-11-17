@@ -46,8 +46,10 @@ def undo_rephrase(lst):
 def rephrase(str):
     return str.replace("for example", "for_example")
 
-def cleanup(str):
-    return str.replace(" @-@ ", "-")
+def cleanup(s):
+    s = s.replace(" @-@ ", "-")
+    s = re.sub(' " (.*) " ', ' "\\1" ', s)
+    return s
 
 # not sure if i'll use this actually...
 top_level_deps_to_ignore_if_extra = [
@@ -57,39 +59,39 @@ top_level_deps_to_ignore_if_extra = [
 
 dependency_patterns = {
   "after": {
-    "POS": "IN",
-    "S2": "mark", # S2 head (full S head) ---> connective
+    "POS": ["IN"],
+    "S2": ["mark"], # S2 head (full S head) ---> connective
     "S1": ["advcl", "acl"]
   },
   "also": {
-    "POS": "RB",
-    "S2": "advmod",
+    "POS": ["RB"],
+    "S2": ["advmod"],
     "S1": ["advcl"]
   },
   "although": {
-    "POS": "IN",
-    "S2": "mark",
+    "POS": ["IN"],
+    "S2": ["mark"],
     "S1": ["advcl"]
   },
   "and": {
-    "POS": "CC",
-    "S2": "cc",
+    "POS": ["CC"],
+    "S2": ["cc"],
     "S1": ["conj"],
     "flip": True
   },
   "as": {
-    "POS": "IN",
-    "S2": "mark",
-    "S1": "advcl"
+    "POS": ["IN"],
+    "S2": ["mark"],
+    "S1": ["advcl"]
   },
   "before": {
-    "POS": "IN",
-    "S2": "mark",
+    "POS": ["IN"],
+    "S2": ["mark"],
     "S1": ["advcl"]
   },
   "but": {
-    "POS": "CC",
-    "S2": "cc",
+    "POS": ["CC"],
+    "S2": ["cc"],
     "S1": ["conj"],
     "flip": True
   },
@@ -100,58 +102,65 @@ dependency_patterns = {
   #   "flip": True
   # },
   "so": {
-    "POS": "IN",
-    "S2": "mark",
+    "POS": ["IN", "RB"],
+    "S2": ["mark"],
     "S1": ["advcl"]
   },
   "still": {
-    "POS": "RB",
-    "S2": "advmod",
-    "S1": ["parataxis", "dep"]
+    "POS": ["RB"],
+    "S2": ["advmod"],
+    "S1": ["parataxis", "dep"],
+    "acceptable_order": "S1 S2"
   },
   "though": {
-    "POS": "IN",
-    "S2": "mark",
+    "POS": ["IN"],
+    "S2": ["mark"],
     "S1": ["advcl"]
   },
   "because": {
-    "POS": "IN",
-    "S2": "mark",
+    "POS": ["IN"],
+    "S2": ["mark"],
     "S1": ["advcl"]
   },
   "however": {
-    "POS": "RB",
-    "S2": "advmod",
+    "POS": ["RB"],
+    "S2": ["advmod"],
     "S1": [
         "parataxis",
         # "ccomp" ## rejecting in favor of high precision
     ]
   },
   "if": {
-    "POS": "IN",
-    "S2": "mark",
+    "POS": ["IN"],
+    "S2": ["mark"],
     "S1": ["advcl"]
   },
   "meanwhile": {
-    "POS": "RB",
-    "S2": "advmod",
+    "POS": ["RB"],
+    "S2": ["advmod"],
     "S1": ["parataxis"]
   },
   "while": {
-    "POS": "IN",
-    "S2": "mark",
+    "POS": ["IN"],
+    "S2": ["mark"],
     "S1": ["advcl"]
   },
   "for example": {
-    "POS": "NN",
-    "S2": "nmod",
+    "POS": ["NN"],
+    "S2": ["nmod"],
     "S1": ["parataxis"],
     "head": "example"
   },
   "then": {
-    "POS": "RB",
-    "S2": "advmod",
-    "S1": "parataxis"
+    "POS": ["RB"],
+    "S2": ["advmod"],
+    "S1": ["parataxis"],
+    "acceptable_order": "S1 S2"
+  },
+  "when": {
+    "POS": ["WRB"],
+    "S2": ["advmod"],
+    "S1": ["advcl"]
   }
 }
 
@@ -215,9 +224,12 @@ def get_nearest(lst, element):
     return lst[np.argmin(distances)]
 
 
-def separate_at_signs(lst):
+def redo_tokenization(lst):
     s = " ".join(lst)
     separated_s = re.sub(" @([^ ]+)@ ", " @ \1 @ ", s)
+    separated_s = re.sub(" 't", " ' t", separated_s)
+    separated_s = re.sub(' "', ' " ', separated_s)
+    separated_s = re.sub('" ', ' " ', separated_s)
     return separated_s.split()
 
 
@@ -231,7 +243,9 @@ fix me to catch more cases?
 def extract_subphrase(orig_words, parsed_words, extraction_indices):
     extraction_indices = [i-1 for i in extraction_indices]
 
-    orig_words = separate_at_signs(orig_words)
+    orig_words = redo_tokenization(orig_words)
+    # print(" ".join(orig_words))
+    # print(" ".join(parsed_words))
 
     if len(orig_words) == len(parsed_words):
         return " ".join([orig_words[i] for i in extraction_indices])
@@ -438,12 +452,17 @@ class Sentence():
             marker_head = dependency_patterns[marker]["head"]
         else:
             marker_head = marker
-        return [i for i in self.indices(marker_head) if pos == self.token(i)["pos"] ]
+        valid_marker_indices = [i for i in self.indices(marker_head) if self.token(i)["pos"] in pos ]
+        # if marker=="so":
+        #     for i in valid_marker_indices:
+        #         print self.find_children(i)
+        valid_marker_indices = [i for i in valid_marker_indices if len(self.find_children(i))==(len(marker.split(" "))-1)]
+        return valid_marker_indices
 
     def get_candidate_S2_indices(self, marker, marker_index, needs_verb=False):
-        connection_type = dependency_patterns[marker]["S2"]
+        connection_types = dependency_patterns[marker]["S2"]
         # Look for S2
-        return self.find_parents(marker_index, filter_types=[connection_type], needs_verb=needs_verb)
+        return self.find_parents(marker_index, filter_types=connection_types, needs_verb=needs_verb)
 
     def get_candidate_S1_indices(self, marker, s2_head_index, needs_verb=False):
         valid_connection_types = dependency_patterns[marker]["S1"]
@@ -467,14 +486,32 @@ class Sentence():
         s1_ind = 1000
         s2_ind = 0
 
+        extracted_pairs = []
+
+        # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
+        #     print " ".join([t["word"] for t in self.tokens])
+        #     print self.get_valid_marker_indices(marker)
+
         for marker_index in self.get_valid_marker_indices(marker):
+
+            # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
+            #     print marker_index
 
             for s2_head_index in self.get_candidate_S2_indices(marker, marker_index, needs_verb=True):
                 s2_ind = s2_head_index
 
                 possible_S1s = []
 
-                for s1_head_index in self.get_candidate_S1_indices(marker, s2_head_index, needs_verb=True):
+                s1_candidates = self.get_candidate_S1_indices(marker, s2_head_index, needs_verb=True)
+
+                if "acceptable_order" in dependency_patterns[marker]:
+                    if dependency_patterns[marker]["acceptable_order"]=="S1 S2":
+                        s1_candidates = [s1_ind for s1_ind in s1_candidates if s1_ind < s2_ind]
+                        
+
+                for s1_head_index in s1_candidates:
+                    # print(marker_index, s2_ind, s1_head_index)
+
                     # store S1 if we have one
                     S1 = self.get_phrase_from_head(
                         s1_head_index,
@@ -511,24 +548,27 @@ class Sentence():
                 if not S2:
                     return None
 
+            extracted_pairs.append((S1, S2))
 
-        # if S2 is the whole sentence *and* we're missing S1, let S1 be the previous sentence
-        words_in_marker = len(marker.split())
-        if S2 and not S1:
-            words_in_sentence = len(self.tokens)
-            words_in_s2 = len(S2.split())
-            if words_in_sentence - words_in_marker == words_in_s2:
-                S1 = previous_sentence
-        else:
-            # if we don't choose S1 to be the previous sentence, then
-            # we might have to switch S1 and S2 because of the way the cc conj pattern works
-            if S1 and S2 and "flip" in dependency_patterns[marker] and dependency_patterns[marker]["flip"]:
-                return S2, S1
+        for S1, S2 in extracted_pairs:
 
-        if S1 and S2:
-            return S1, S2
-        else:
-            return None
+            # if S2 is the whole sentence *and* we're missing S1, let S1 be the previous sentence
+            words_in_marker = len(marker.split())
+            if S2 and not S1:
+                words_in_sentence = len(self.tokens)
+                words_in_s2 = len(S2.split())
+                if words_in_sentence - words_in_marker == words_in_s2:
+                    S1 = previous_sentence
+            else:
+                # if we don't choose S1 to be the previous sentence, then
+                # we might have to switch S1 and S2 because of the way the cc conj pattern works
+                if S1 and S2 and "flip" in dependency_patterns[marker] and dependency_patterns[marker]["flip"]:
+                    return S2, S1
+
+            if S1 and S2:
+                return S1, S2
+
+        return None
 
 def depparse_ssplit(sentence, previous_sentence, marker):
     sentence = cleanup(sentence)
