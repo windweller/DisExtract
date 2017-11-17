@@ -34,20 +34,11 @@ from copy import deepcopy as cp
 np.random.seed(123)
 
 """
-1. Tokenize the corpus? (Sentence tokenization)
+1. Sentence tokenization (make it config)
 2. Grab pairs of sentences where the 2nd sentence has one of the discourse markers
 3. Save them, a file for each discourse markers (a json file with [,] is good enough)
+for_example.txt, in side it's [{prev: "", sent: ""}]
 """
-
-
-
-
-
-
-
-
-
-
 
 def rephrase(str):
     return str.replace("for example", "for_example")

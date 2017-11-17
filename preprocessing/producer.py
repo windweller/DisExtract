@@ -1,16 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-(might change name later)
-Based on commands, select a group of markers,
-Add additional preprocessing steps for (s1, s2) here, such as delete punctuations
-Filter based on length, ratio, cap (if needed), etc.
-Merge them into one set, train/val/test split, np.shuffle (fix random seed)
-
-(then Torchtext can take it from there!)
-"""
-
 import numpy as np
 import argparse
 import io
@@ -35,6 +25,16 @@ from itertools import izip
 from copy import deepcopy as cp
 
 np.random.seed(123)
+
+"""
+(might change name later)
+Based on commands, select a group of markers,
+Add additional preprocessing steps for (s1, s2) here, such as delete punctuations
+Filter based on length, ratio, cap (if needed), etc.
+Merge them into one set, train/val/test split, np.shuffle (fix random seed)
+
+(then Torchtext can take it from there!)
+"""
 
 
 def filtering(source_dir, args):

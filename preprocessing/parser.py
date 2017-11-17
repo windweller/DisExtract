@@ -14,6 +14,9 @@ import nltk
 import pickle
 import requests
 import re
+import logging
+
+from dep_patterns import en_dependency_patterns
 
 import sys
 reload(sys)
@@ -29,6 +32,13 @@ from copy import deepcopy as cp
 from cfg import DISCOURSE_MARKER_SET_TAG, DISCOURSE_MARKERS
 
 np.random.seed(123)
+
+logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
+argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
 
 """
@@ -52,114 +62,6 @@ top_level_deps_to_ignore_if_extra = [
     ("mark", "IN"),
     # ("advmod", "WRB") ## this would solve several minor problems but introduce a few major problems
 ]
-
-dependency_patterns = {
-  "after": {
-    "POS": ["IN"],
-    "S2": ["mark"], # S2 head (full S head) ---> connective
-    "S1": ["advcl", "acl"]
-  },
-  "also": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["advcl"]
-  },
-  # "although" : [{"POS": "IN", "S2": "mark", "S1": "advcl"}, {"POS": "IN", "S2": "dep", "S1": "parataxis"}]
-  "although": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "and": {
-    "POS": ["CC"],
-    "S2": ["cc"],
-    "S1": ["conj"],
-    "flip": True
-  },
-  "as": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "before": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "but": {
-    "POS": ["CC"],
-    "S2": ["cc"],
-    "S1": ["conj"],
-    "flip": True
-  },
-  # "so": {
-  #   "POS": "IN",
-  #   "S2": "dep",
-  #   "S1": ["parataxis"],
-  #   "flip": True
-  # },
-  "so": {
-    "POS": ["IN", "RB"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "still": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["parataxis", "dep"],
-    "acceptable_order": "S1 S2"
-  },
-  "though": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "because": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "however": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": [
-        "parataxis",
-        # "ccomp" ## rejecting in favor of high precision
-    ]
-  },
-  "if": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "meanwhile": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["parataxis"]
-  },
-  "while": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "for example": {
-    "POS": ["NN"],
-    "S2": ["nmod"],
-    "S1": ["parataxis"],
-    "head": "example"
-  },
-  "then": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["parataxis"],
-    "acceptable_order": "S1 S2"
-  },
-  "when": {
-    "POS": ["WRB"],
-    "S2": ["advmod"],
-    "S1": ["advcl"]
-  }
-}
 
 # search for pattern:
 # "[discourse marker] S2, S1" (needs dependency parse)
@@ -576,7 +478,6 @@ def depparse_ssplit(sentence, previous_sentence, marker):
 
 if __name__ == '__main__':
     args = setup_args()
+    dependency_patterns = en_dependency_patterns
     depparse_ssplit()
-
-
 
