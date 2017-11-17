@@ -196,8 +196,7 @@ def test():
             "sentence": "Employing the same fusion of tactical and real @-@ time gameplay as its predecessors , the story runs parallel to the first game and follows the \" Nameless \" , a penal military unit serving the nation of Gallia during the Second Europan War who perform secret black operations and are pitted against the Imperial unit \" <unk> Raven \" .",
             "previous_sentence": "Released in January 2011 in Japan , it is the third game in the Valkyria series .",
             "marker": "and",
-            ## the "who" here is not quite right, but I don't know how to resolve that the way the dependency parse works...
-            "output": ('who perform secret black operations', 'are pitted against the Imperial unit " <unk> Raven')
+            "output": ('Employing the same fusion of tactical and real-time gameplay as its predecessors , the story runs parallel to the first game .', 'follows the " Nameless " , a penal military unit serving the nation of Gallia during the Second Europan War who perform secret black operations and are pitted against the Imperial unit " <unk> Raven "')
         },
         {
             "sentence": "Character designer <unk> Honjou and composer Hitoshi Sakimoto both returned from previous entries , along with Valkyria Chronicles II director Takeshi Ozawa .",
@@ -527,61 +526,56 @@ def test():
             "previous_sentence": "Up to nine characters can be assigned to a single mission .",
             "sentence": "During gameplay , characters will call out if something happens to them , such as their health points ( HP ) getting low or being knocked out by enemy attacks ."
         },
-        # {
-        #     ## wrong parse for later "if"s
-        #     "marker": "if",
-        #     "output": None,
-        #     "previous_sentence": "Various types of chromatography are then used to isolate the protein or proteins of interest based on properties such as molecular weight , net charge and binding affinity .",
-        #     "sentence": "The level of purification can be monitored using various types of gel electrophoresis if the desired protein 's molecular weight and isoelectric point are known , by spectroscopy if the protein has distinguishable spectroscopic features , or by enzyme assays if the protein has enzymatic activity ."
-        # },
+        {
+            ## wrong parse for later "if"s
+            "marker": "if",
+            "output": ('The level of purification can be monitored using various types of gel electrophoresis .', "the desired protein 's molecular weight and isoelectric point are known , by spectroscopy if the protein has distinguishable spectroscopic features , or by enzyme assays if the protein has enzymatic activity"),
+            "previous_sentence": "Various types of chromatography are then used to isolate the protein or proteins of interest based on properties such as molecular weight , net charge and binding affinity .",
+            "sentence": "The level of purification can be monitored using various types of gel electrophoresis if the desired protein 's molecular weight and isoelectric point are known , by spectroscopy if the protein has distinguishable spectroscopic features , or by enzyme assays if the protein has enzymatic activity ."
+        },
         {
             "marker": "if",
             "output": ('the lyrics would work for two people', 'he could find a female artist as a duet partner'),
             "previous_sentence": "In an interview with <unk> , Aldean revealed that the song was not originally presented to him as a duet .",
             "sentence": "Nevertheless , he and producer Michael Knox thought the lyrics would work for two people if he could find a female artist as a duet partner ."
         },
-        # {
-        #     "marker": "if",
-        #     "output": ("Juan Per\u00f3n would not accept Franco 's invitation for a state visit to Spain ,", "then she would"),
-        #     "previous_sentence": "Therefore , a visit to Franco , with Ant\u00f3nio Salazar of Portugal the last remaining west European authoritarian leaders in power , would be diplomatically frowned upon internationally .",
-        #     "sentence": "Fraser and Navarro write that Eva decided that , if Juan Per\u00f3n would not accept Franco 's invitation for a state visit to Spain , then she would ."
-        # },
+        {
+            "marker": "if",
+            "output": (', , then she would', "Juan Per\xc3\xb3n would not accept Franco 's invitation for a state visit to Spain"),
+            "previous_sentence": "Therefore , a visit to Franco , with António Salazar of Portugal the last remaining west European authoritarian leaders in power , would be diplomatically frowned upon internationally .",
+            "sentence": "Fraser and Navarro write that Eva decided that , if Juan Perón would not accept Franco 's invitation for a state visit to Spain , then she would ."
+        },
         {
             "marker": "if",
             "output": None,
             "previous_sentence": "Many early AI programs used the same basic algorithm .",
             "sentence": "To achieve some goal ( like winning a game or proving a theorem ) , they proceeded step by step towards it ( by making a move or a deduction ) as if searching through a maze , backtracking whenever they reached a dead end ."
         },
-        # {
-        #     "marker": "if",
-        #     "output": None,
-        #     "previous_sentence": "But the young ones , sir \u2014 I 'm sure they 'll understand when I explain to them why you 're so upset .",
-        #     "sentence": "We 'll do everything we can to protect you from now on , if only you 'll forgive us , and we 'll be sure to let you know when anything good is going to happen ! \""
-        # },
         {
             "marker": "if",
             "output": ('it is expected to sublime', 'it is exposed directly to solar radiation'),
             "previous_sentence": ".",
             "sentence": "Surface water ice is unstable at distances less than 5 AU from the Sun , so it is expected to sublime if it is exposed directly to solar radiation ."
         },
-        # {
-        #     "marker": "if",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "When Samuel Carter Hall was choosing works to illustrate his newly launched The Art Journal , he considered it important to promote new British artists , even if it meant illustrations which some readers considered pornographic or offensive ."
-        # },
+        {
+            ## i'm OK with this, but really we should get rid of the "even"
+            "marker": "if",
+            "output": ('it important to promote new British artists ,', 'even it meant illustrations which some readers considered pornographic or offensive'),
+            "previous_sentence": ".",
+            "sentence": "When Samuel Carter Hall was choosing works to illustrate his newly launched The Art Journal , he considered it important to promote new British artists , even if it meant illustrations which some readers considered pornographic or offensive ."
+        },
         {
             "marker": "if",
             "output": None,
             "previous_sentence": "In a book of the craters and boulders of Mars , Gibbons discovered a photograph of the Galle crater , which resembles a happy face , which they worked into an issue .",
             "sentence": "Moore said , \" We found a lot of these things started to generate themselves as if by magic \" , in particular citing an occasion where they decided to name a lock company the \" Gordian Knot Lock Company \" ."
         },
-        # {
-        #     "marker": "meanwhile",
-        #     "output": None,
-        #     "previous_sentence": "Egyptian cults sometimes incorporated Greek language , philosophy , iconography , and even temple architecture .",
-        #     "sentence": "Meanwhile , the cults of several Egyptian deities \u2014 particularly Isis , Osiris , Anubis , the form of Horus named Harpocrates , and the fused Greco @-@ Egyptian god Serapis \u2014 were adopted into Roman religion and spread across the Roman Empire ."
-        # },
+        {
+            "marker": "meanwhile",
+            "output": ('Egyptian cults sometimes incorporated Greek language , philosophy , iconography , and even temple architecture .', ', the cults of several Egyptian deities \xe2\x80\x94 particularly Isis , Osiris , Anubis , the form of Horus named Harpocrates , and the fused Greco-Egyptian god Serapis \xe2\x80\x94 were adopted into Roman religion and spread across the Roman Empire .'),
+            "previous_sentence": "Egyptian cults sometimes incorporated Greek language , philosophy , iconography , and even temple architecture .",
+            "sentence": "Meanwhile , the cults of several Egyptian deities — particularly Isis , Osiris , Anubis , the form of Horus named Harpocrates , and the fused Greco @-@ Egyptian god Serapis — were adopted into Roman religion and spread across the Roman Empire ."
+        },
         {
             "marker": "meanwhile",
             "output": ('They write in an incomprehensible language , and the number of Observer sightings has increased over the past few months , leaving the team wondering why .', ', August visits the other Observers , who are not happy that he saved a girl who was supposed to die in the plane crash .'),
@@ -684,109 +678,79 @@ def test():
             "previous_sentence": "Kh\u00e1nh then asked his colleagues to participate in a campaign of fomenting anti @-@ American street protests and to give the impression the country did not need Washington 's aid .",
             "sentence": "A CIA informant reported the recent arguments with Taylor had incensed the volatile Thi so much that he had privately vowed to \" blow up everything \" and \" kill Phan Kh\u1eafc S\u1eedu , Tr\u1ea7n V\u0103n H\u01b0\u01a1ng and Nguy\u1ec5n Kh\u00e1nh and put an end to all this ."
         },
-        # {
-        #     ## wrong parse :(
-        #     "marker": "so",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "The developers designed the game like a \" Japanese garden \" , where they attempted to remove all of the game elements that did not fit with the others , so the emotions they wanted the game to evoke would come through ."
-        # },
-        # {
-        #     "sentence": "Nicole felt she was too young and unable to offer a child stability , so she agreed to let Marilyn Chambers adopt the baby upon its birth .",
-        #     "previous_sentence": "One of her final storylines was a pregnancy plot .",
-        #     "marker": "so",
-        #     "output": ('she was too young and unable to offer a child stability ,', 'she agreed to let Marilyn Chambers adopt the baby upon its birth')
-        # },
         {
             "marker": "so",
             "output": None,
             "previous_sentence": "Three years later , Spain revoked the treaty and in 1800 secretly returned Louisiana to Napoleonic France in the Third Treaty of San Ildefonso .",
             "sentence": "This transfer was so secret that the Spanish continued to administer the territory ."
         },
+        {
+            "sentence": "The government buried many in mass graves , some above @-@ ground tombs were forced open so bodies could be stacked inside , and others were burned .",
+            "previous_sentence": "Mayor Jean @-@ Yves Jason said that officials argued for hours about what to do with the volume of corpses .",
+            "output": ('some above-ground tombs were forced open', 'bodies could be stacked inside'),
+            "marker": "so"
+        },
+        {
+            ## i'm ok with this
+            "sentence": "This study includes Auroraceratops , but lacks seven taxa found in Xu and Makovicky 's work , so it is unclear how comparable the two studies are .",
+            "previous_sentence": "In contrast to the previous analysis , You and Dodson find Chaoyangsaurus to be the most basal neoceratopsian , more derived than Psittacosaurus , while Leptoceratopsidae , not Protoceratopsidae , is recovered as the sister group of Ceratopsidae .",
+            "output": ("lacks seven taxa found in Xu and Makovicky 's work ,", 'it is unclear how comparable the two studies are'),
+            "marker": "so"
+        },
         # {
-        #     "sentence": "Of her departure , James said \" I was at Home and Away for three @-@ and @-@ a @-@ half @-@ years , so it 's good to be finished and get to be who I am , and do what I 've wanted to do for so long . \"",
-        #     "previous_sentence": "She has already filmed her final scenes and Nicole will leave on @-@ screen later in the year .",
+        #     "marker": "still",
         #     "output": None,
-        #     "marker": "so"
+        #     "previous_sentence": "Its first public appearance was at the 2010 Tokyo Game Show ( TGS ) , where a demo was made available for journalists and attendees .",
+        #     "sentence": "During the publicity , story details were kept scant so as not to spoil too much for potential players , along with some of its content still being in flux at the time of its reveal ."
         # },
         # {
-        #     "sentence": "Hellblazer was first published during the early days of the Modern Age of Comics , and so its themes were dark , edgy , politically and morally complex as its contemporaries .",
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "Jack finally agrees to pay for Ernest , everyone thinking that it is Algernon 's bill when in fact it is his own .",
+        #     "sentence": "The four @-@ act version was first played on the radio in a BBC production and is still sometimes performed ."
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "A protective wall of massive proportions surrounded the cathedral precinct , but only a small section has survived .",
+        #     "sentence": "The wall had four access gates , one of which \u2014 the Pans Port \u2014 still exists ."
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
         #     "previous_sentence": ".",
-        #     "output": None,
-        #     "marker": "so"
+        #     "sentence": "We are still pursuing but it has been perforce slow as the horses are done and the enemy , when advancing , entrenched himself at various points \u2026 which has enabled him to fight a most masterly rearguard action \u2026 As I am moving on , I must close ."
         # },
         # {
-        #     "sentence": "It 's taken me long enough to get to Hull so I 'm not going to walk out after a few months , or whatever . \"",
-        #     "previous_sentence": "...",
+        #     "marker": "still",
         #     "output": None,
-        #     "marker": "so"
+        #     "previous_sentence": "Kh\u00e1nh did not want his rival taking power , so he and the Americans convinced the HNC to dilute the powers of the position to make it unappealing to Minh , who was then sent on an overseas diplomatic goodwill tour to remove him from the political scene .",
+        #     "sentence": "However , Minh was back in South Vietnam after a few months and the power balance in the junta was still fragile ."
         # },
         # {
-        #     "sentence": "The government buried many in mass graves , some above @-@ ground tombs were forced open so bodies could be stacked inside , and others were burned .",
-        #     "previous_sentence": "Mayor Jean @-@ Yves Jason said that officials argued for hours about what to do with the volume of corpses .",
+        #     "marker": "still",
         #     "output": None,
-        #     "marker": "so"
+        #     "previous_sentence": "Jared Johnson of Allmusic gave the album four out of five stars and described it as a \" powerful worship experience \" , but also stated that \" some might wonder how a little more variety would sound from such experienced professionals ... the band 's core sound continues to land in the AC cross hairs \" .",
+        #     "sentence": "Andrew Greer of CCM Magazine commented that the album \" ups the musical ante a bit , with some borderline poetic verses and interesting musical riffs \" , but also commented that \" many of these tracks still suffer from the ' Crowns Clich\u00e9 Syndrome , ' using lyrical Christian @-@ ese to produce trite rhymes that seem hard @-@ pressed to energize a ready @-@ to @-@ worship crowd \" ."
         # },
         # {
-        #     "sentence": "This study includes Auroraceratops , but lacks seven taxa found in Xu and Makovicky 's work , so it is unclear how comparable the two studies are .",
-        #     "previous_sentence": "In contrast to the previous analysis , You and Dodson find Chaoyangsaurus to be the most basal neoceratopsian , more derived than Psittacosaurus , while Leptoceratopsidae , not Protoceratopsidae , is recovered as the sister group of Ceratopsidae .",
+        #     "marker": "still",
         #     "output": None,
-        #     "marker": "so"
+        #     "previous_sentence": "With a mass only 80 times that of Jupiter ( MJ ) , 2MASS <unk> @-@ 1403 is the smallest known star undergoing nuclear fusion in its core .",
+        #     "sentence": "For stars with metallicity similar to the Sun , the theoretical minimum mass the star can have and still undergo fusion at the core , is estimated to be about 75 MJ ."
         # },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": "Its first public appearance was at the 2010 Tokyo Game Show ( TGS ) , where a demo was made available for journalists and attendees .",
-            "sentence": "During the publicity , story details were kept scant so as not to spoil too much for potential players , along with some of its content still being in flux at the time of its reveal ."
-        },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": "Jack finally agrees to pay for Ernest , everyone thinking that it is Algernon 's bill when in fact it is his own .",
-            "sentence": "The four @-@ act version was first played on the radio in a BBC production and is still sometimes performed ."
-        },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": "A protective wall of massive proportions surrounded the cathedral precinct , but only a small section has survived .",
-            "sentence": "The wall had four access gates , one of which \u2014 the Pans Port \u2014 still exists ."
-        },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": ".",
-            "sentence": "We are still pursuing but it has been perforce slow as the horses are done and the enemy , when advancing , entrenched himself at various points \u2026 which has enabled him to fight a most masterly rearguard action \u2026 As I am moving on , I must close ."
-        },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": "Kh\u00e1nh did not want his rival taking power , so he and the Americans convinced the HNC to dilute the powers of the position to make it unappealing to Minh , who was then sent on an overseas diplomatic goodwill tour to remove him from the political scene .",
-            "sentence": "However , Minh was back in South Vietnam after a few months and the power balance in the junta was still fragile ."
-        },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": "Jared Johnson of Allmusic gave the album four out of five stars and described it as a \" powerful worship experience \" , but also stated that \" some might wonder how a little more variety would sound from such experienced professionals ... the band 's core sound continues to land in the AC cross hairs \" .",
-            "sentence": "Andrew Greer of CCM Magazine commented that the album \" ups the musical ante a bit , with some borderline poetic verses and interesting musical riffs \" , but also commented that \" many of these tracks still suffer from the ' Crowns Clich\u00e9 Syndrome , ' using lyrical Christian @-@ ese to produce trite rhymes that seem hard @-@ pressed to energize a ready @-@ to @-@ worship crowd \" ."
-        },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": "With a mass only 80 times that of Jupiter ( MJ ) , 2MASS <unk> @-@ 1403 is the smallest known star undergoing nuclear fusion in its core .",
-            "sentence": "For stars with metallicity similar to the Sun , the theoretical minimum mass the star can have and still undergo fusion at the core , is estimated to be about 75 MJ ."
-        },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "He was selected by the Arizona Diamondbacks in the fourth round of the 1998 Major League Baseball ( MLB ) Draft .",
+        #     "sentence": "He began his career as a starting pitcher but struggled and converted into a sidearm ( or submarine ) reliever while still in the Diamondbacks ' organization ."
+        # },
         # {
         #     "marker": "still",
         #     "output": None,
         #     "previous_sentence": ".",
         #     "sentence": "As of 2014 , Spokane is still trying to make the transition to a more service @-@ oriented economy in the face of a less prominent manufacturing sector ."
         # },
-        {
-            "marker": "still",
-            "output": None,
-            "previous_sentence": "He was selected by the Arizona Diamondbacks in the fourth round of the 1998 Major League Baseball ( MLB ) Draft .",
-            "sentence": "He began his career as a starting pitcher but struggled and converted into a sidearm ( or submarine ) reliever while still in the Diamondbacks ' organization ."
-        },
         # {
         #     "marker": "still",
         #     "output": None,
@@ -817,25 +781,18 @@ def test():
             "previous_sentence": ".",
             "sentence": "Montgomery 's plan was for the Canadian Division to attack across the Moro in the coastal lowlands to take Ortona first and then Pescara ."
         },
-        # {
-        #     "marker": "then",
-        #     "output": None,
-        #     "previous_sentence": "Van der Weyden 's depiction of the Magdalen is based on Mary of Bethany , identified by the time of Pope Gregory I as the repentant prostitute of Luke 7 : 36 \u2013 50 .",
-        #     "sentence": "She then became associated with weeping and reading : Christ 's mercy causes the eyes of the sinner to be contrite or tearful ."
-        # },
+        {
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "Van der Weyden 's depiction of the Magdalen is based on Mary of Bethany , identified by the time of Pope Gregory I as the repentant prostitute of Luke 7 : 36 \u2013 50 .",
+            "sentence": "She then became associated with weeping and reading : Christ 's mercy causes the eyes of the sinner to be contrite or tearful ."
+        },
         {
             "marker": "then",
             "output": ('Carol was killed due to blunt trauma to her face by means of some instrument , alleged in court to have been an ice axe .', 'She was bound with rope , using complex knots , weighed down with rocks and lead pipes and thrown overboard from a boat on Coniston Water .'),
             "previous_sentence": "Carol was killed due to blunt trauma to her face by means of some instrument , alleged in court to have been an ice axe .",
             "sentence": "She was then bound with rope , using complex knots , weighed down with rocks and lead pipes and thrown overboard from a boat on Coniston Water ."
         },
-        # {
-        #   ## wrong parse
-        #     "marker": "then",
-        #     "output": None,
-        #     "previous_sentence": "No profit was made in six years , and the church left , losing their investment .",
-        #     "sentence": "In the late 1930s the building housed the Empire Hotel , known for its Sky Room lounge , then from World War II to the 1970s , 100 McAllister served as U.S. government offices ."
-        # },
         {
             "marker": "then",
             "output": ("The previous removal of Evita 's body was avenged by the Montoneros when they in 1970 stole Pedro Eugenio Aramburu 's corpse , whom they had previously killed .", "Montoneros used the captive body of Aramburu to pressure for the repatriation of Evita 's body ."),
@@ -854,188 +811,167 @@ def test():
             "previous_sentence": ".",
             "sentence": "The active constituents of this species are water @-@ soluble , and boiling and then discarding the cooking water at least partly <unk> A. muscaria ."
         },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "Barker died in 1973 .",
-        #     "sentence": "Though she published Flower Fairy books with spring , summer , and autumn themes , it wasn 't until 1985 that a winter collection was assembled from her remaining work and published posthumously ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "Horrified to learn that he was adopted after being discovered as a baby in a handbag at Victoria Station , she refuses him and forbids further contact with her daughter .",
-        #     "sentence": "Gwendolen , though , manages covertly to promise to him her undying love ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "By the close of the 19th century , the fort was largely unused and had no defence significance .",
-        #     "sentence": "It was briefly used for military purposes during World War I and World War II , though not for its original defensive role ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "Many federal groups at 100 McAllister moved their offices in 1959 \u2013 1960 to the newly built federal building at 450 Golden Gate Avenue , later named the Phillip Burton Federal Building .",
-        #     "sentence": "Occupancy at 100 McAllister was low , though the United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "This plan was discarded since local residents feared noise pollution and destroyed lawns .",
-        #     "sentence": "Even though Berg was not made a station on the Ring Line , noise shields were put up along the Sognsvann Line ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "Many etymological suggestions have been made , though there is no general agreement : ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "<unk> ( also incorrectly spelled I.",
-        #     "sentence": "<unk> ) , described by Hulke two years after I. prestwichii , has been synonymised with Iguanodon bernissartensis , though this is controversial ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "Though it was known in the nineteenth century that bacteria are the cause of many diseases , no effective antibacterial treatments were available ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "His most notable television screenplay was The New Alfred Hitchcock Presents entry \" Final Escape \" .",
-        #     "sentence": "Though Craig left the staff shortly before \" Oubliette \" entered production for unknown reasons , he was credited as a supervising producer on several installments for the third season ."
-        # },
-        # {
-        #     "marker": "though",
-        #     "output": None,
-        #     "previous_sentence": "@ 67 ERA , as Buffalo won the league pennant .",
-        #     "sentence": "Though the Red Sox won the 1915 and 1916 World Series , Pennock did not appear in either series ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": "The player progresses through a series of linear missions , gradually unlocked as maps that can be freely scanned through and replayed as they are unlocked .",
-        #     "sentence": "The route to each story location on the map varies depending on an individual player 's approach : when one option is selected , the other is sealed off to the player ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": "Struggling at mid @-@ season to ensure a spot in the playoffs , Chicago was 31 \u2013 31 at one point in mid @-@ March .",
-        #     "sentence": "The team received help , however , when Jordan decided to return to the NBA for the Bulls ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "The storyline began on @-@ screen when Nicole started dating Elliot Gillen ( Paul <unk> ) ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "When Zhou is vocalized in \" Yangzhou storytelling \" , he speaks in \" Square mouth public talk \" , which is a manner of speaking reserved for martial heroes , highly respected characters , or , sometimes , lesser characters that pretend to be an important hero ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": "Ramblin ' Man \" features a conversation between an interviewer ( the voice of Michael Deakin \u2014 father of Lemon Jelly 's Fred Deakin ) and \" John the Ramblin ' Man \" ( the voice of Standing ) , during which he lists various places from around the world , ranging from \" from small Sussex villages to major world capitals . \"",
-        #     "sentence": "When listed in the order in which the locations are narrated , the message \" Bagpuss Sees All Things \" is spelled out midway through the song ( from Brixton at four minutes ten seconds , to San Jos\u00e9 at four minutes 31 seconds ) using the first letter of each location ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "When Nesbitt was 11 years old , the family moved to Coleraine , County Londonderry , where May worked for the Housing Executive ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": ".",
-        #     "sentence": "The following managers have all won at least one trophy when in charge or have been notable for Villa in the context of the League , for example Jozef Venglo\u0161 who holds a League record ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": "At the time , NCAA guidelines for bowls required 75 percent of gross receipts to go to participating schools , with 33 percent of tickets to the game also required to go to each school .",
-        #     "sentence": "In 1983 , the NCAA threatened to revoke the Peach Bowl 's charter when ticket sales hovered around 25 @,@ 000 with a week to go before the bowl ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": "Such scenes reflect the popularity of big @-@ game hunting among whites and affluent visitors in Sub @-@ Saharan Africa during the 1930s .",
-        #     "sentence": "Herg\u00e9 later felt guilty about his portrayal of animals in Tintin in the Congo and became an opponent of blood sports ; when he wrote Cigars of the Pharaoh ( 1934 ) , he had Tintin befriend a herd of elephants living in the Indian jungle ."
-        # },
-        # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": "Professor Kenneth Pye , a defense witness , said that there was no evidence that the rock had ever been on the lake bed at all .",
-        #     "sentence": "The article in the Sunday Herald also claims that the policeman said to be responsible for finding the rock fainted when it was produced in court , offering no explanation , but still denying that he ever found it ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "The game began development in 2010 , carrying over a large portion of the work done on Valkyria Chronicles II .",
-        #     "sentence": "While it retained the standard features of the series , it also underwent multiple adjustments , such as making the game more forgiving for series newcomers ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "Jordan 's athletic leaping ability , highlighted in his back @-@ to @-@ back slam dunk contest championships in 1987 and 1988 , is credited by many with having influenced a generation of young players .",
-        #     "sentence": "Several current NBA All @-@ Stars have stated that they considered Jordan their role model while growing up , including LeBron James and Dwyane Wade ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "The chicks have black down , as with all rails .",
-        #     "sentence": "While there are no subspecies , all populations show great individual variation in colouring , and the birds gradually become paler and greyer towards the east of the range ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "@ 0 @-@ 0 e6 6.Nc3 Be7 7.d4 cxd4 <unk> d6 <unk> a6 .",
-        #     "sentence": "White has a spatial advantage , while Black often maneuvers his pieces on the last two ranks of the board , but White \" has to keep a constant eye on the possible liberating pawn thrusts ... b5 and ... d5 . \""
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "During Warren Ellis ' run , he included American school shootings in a one @-@ shot issue which led to a major controversy .",
-        #     "sentence": "In his run , Peter Milligan managed to put punk ideology in the series , with the protagonist trying to reacquire his former punk self , while also characterizing the Conservative government as a demon infestation with the punk subculture fighting against this supposed subversion and abuse ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "Dahl was given a free rein on his script , except for the character of Bond and \" the girl formula \" , involving three women for Bond to seduce : an ally and a henchwoman who both get killed , and the main Bond girl .",
-        #     "sentence": "While the third involved a character from the book , Kissy Suzuki , Dahl had to create Aki and Helga Brandt to fulfil the rest ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "Yankovic , however , directed one himself which was mostly made up of stock footage , with a live action finale that was filmed in an economically devastated part of the Bronx , New York that looked like a bomb had gone off .",
-        #     "sentence": "The final original that was recorded was \" Good Enough for Now \" , a country music pastiche about how the singer 's lover , who , while not the best , will do for now ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "North Somerset features bridges and piers along with a selection of Manor houses .",
-        #     "sentence": "The Sedgemoor district has many buildings related to trade and commerce centered on Bridgwater ; while in South Somerset abbeys , priories and farmhouses predominate ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "American general St. Clair paused at Hubbardton to give the main army 's tired and hungry troops time to rest while he hoped the rear guard would arrive .",
-        #     "sentence": "When it did not arrive in time , he left Colonel Seth Warner and the Green Mountain Boys behind , along with the 2nd New Hampshire Regiment under Colonel Nathan Hale , at Hubbardton to wait for the rear while the main army marched on to Castleton ."
-        # },
-        # {
-        #     "marker": "while",
-        #     "output": None,
-        #     "previous_sentence": "Towards the end of the song , Carey belts out the climax .",
-        #     "sentence": "Sarah Rodman from The Boston Herald described it as fascinating and wrote , \" it sounds as though Carey is singing in falsetto while still in her chest voice . \""
-        # },
+        {
+            "marker": "though",
+            "output": (", it wasn ' t until 1985 that a winter collection was assembled from her remaining work and published posthumously .", 'she published Flower Fairy books with spring , summer , and autumn themes'),
+            "previous_sentence": "Barker died in 1973 .",
+            "sentence": "Though she published Flower Fairy books with spring , summer , and autumn themes , it wasn 't until 1985 that a winter collection was assembled from her remaining work and published posthumously ."
+        },
+        {
+            "marker": "though",
+            "output": None,
+            "previous_sentence": "By the close of the 19th century , the fort was largely unused and had no defence significance .",
+            "sentence": "It was briefly used for military purposes during World War I and World War II , though not for its original defensive role ."
+        },
+        {
+            "marker": "though",
+            "output": ('Occupancy at 100 McAllister was low , .', 'the United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s'),
+            "previous_sentence": "Many federal groups at 100 McAllister moved their offices in 1959 \u2013 1960 to the newly built federal building at 450 Golden Gate Avenue , later named the Phillip Burton Federal Building .",
+            "sentence": "Occupancy at 100 McAllister was low , though the United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s ."
+        },
+        {
+            ## i'm OK with this, but really we should get rid of the "even"
+            "marker": "though",
+            "output": ('This plan was discarded since local residents feared noise pollution and destroyed lawns .', 'Even Berg was not made a station on the Ring Line , noise shields were put up along the Sognsvann Line .'),
+            "previous_sentence": "This plan was discarded since local residents feared noise pollution and destroyed lawns .",
+            "sentence": "Even though Berg was not made a station on the Ring Line , noise shields were put up along the Sognsvann Line ."
+        },
+        {
+            "marker": "though",
+            "output": ('Many etymological suggestions have been made , : .', 'there is no general agreement'),
+            "previous_sentence": ".",
+            "sentence": "Many etymological suggestions have been made , though there is no general agreement : ."
+        },
+        {
+            "marker": "though",
+            "output": ('<unk> ) , described by Hulke two years after I. prestwichii , has been synonymised with Iguanodon bernissartensis , .', 'this is controversial'),
+            "previous_sentence": "<unk> ( also incorrectly spelled I.",
+            "sentence": "<unk> ) , described by Hulke two years after I. prestwichii , has been synonymised with Iguanodon bernissartensis , though this is controversial ."
+        },
+        {
+            "marker": "though",
+            "output": (', no effective antibacterial treatments were available .', 'it was known in the nineteenth century that bacteria are the cause of many diseases'),
+            "previous_sentence": ".",
+            "sentence": "Though it was known in the nineteenth century that bacteria are the cause of many diseases , no effective antibacterial treatments were available ."
+        },
+        {
+            "marker": "though",
+            "output": (', he was credited as a supervising producer on several installments for the third season .', 'Craig left the staff shortly before " Oubliette " entered production for unknown reasons'),
+            "previous_sentence": "His most notable television screenplay was The New Alfred Hitchcock Presents entry \" Final Escape \" .",
+            "sentence": "Though Craig left the staff shortly before \" Oubliette \" entered production for unknown reasons , he was credited as a supervising producer on several installments for the third season ."
+        },
+        {
+            "marker": "though",
+            "output": (', Pennock did not appear in either series .', 'the Red Sox won the 1915 and 1916 World Series'),
+            "previous_sentence": "@ 67 ERA , as Buffalo won the league pennant .",
+            "sentence": "Though the Red Sox won the 1915 and 1916 World Series , Pennock did not appear in either series ."
+        },
+        {
+            "marker": "when",
+            "output": (', the other is sealed off to the player', 'one option is selected'),
+            "previous_sentence": "The player progresses through a series of linear missions , gradually unlocked as maps that can be freely scanned through and replayed as they are unlocked .",
+            "sentence": "The route to each story location on the map varies depending on an individual player 's approach : when one option is selected , the other is sealed off to the player ."
+        },
+        {
+            "marker": "when",
+            "output": ('The team received help , however , .', 'Jordan decided to return to the NBA for the Bulls'),
+            "previous_sentence": "Struggling at mid @-@ season to ensure a spot in the playoffs , Chicago was 31 \u2013 31 at one point in mid @-@ March .",
+            "sentence": "The team received help , however , when Jordan decided to return to the NBA for the Bulls ."
+        },
+        {
+            "marker": "when",
+            "output": ('The storyline began on-screen .', 'Nicole started dating Elliot Gillen ( Paul <unk> )'),
+            "previous_sentence": ".",
+            "sentence": "The storyline began on @-@ screen when Nicole started dating Elliot Gillen ( Paul <unk> ) ."
+        },
+        {
+            "marker": "when",
+            "output": (', he speaks in " Square mouth public talk " , which is a manner of speaking reserved for martial heroes , highly respected characters , or , sometimes , lesser characters that pretend to be an important hero .', 'Zhou is vocalized in " Yangzhou storytelling "'),
+            "previous_sentence": ".",
+            "sentence": "When Zhou is vocalized in \" Yangzhou storytelling \" , he speaks in \" Square mouth public talk \" , which is a manner of speaking reserved for martial heroes , highly respected characters , or , sometimes , lesser characters that pretend to be an important hero ."
+        },
+        {
+            "marker": "when",
+            "output": None,
+            "previous_sentence": "Ramblin ' Man \" features a conversation between an interviewer ( the voice of Michael Deakin \u2014 father of Lemon Jelly 's Fred Deakin ) and \" John the Ramblin ' Man \" ( the voice of Standing ) , during which he lists various places from around the world , ranging from \" from small Sussex villages to major world capitals . \"",
+            "sentence": "When listed in the order in which the locations are narrated , the message \" Bagpuss Sees All Things \" is spelled out midway through the song ( from Brixton at four minutes ten seconds , to San Jos\u00e9 at four minutes 31 seconds ) using the first letter of each location ."
+        },
+        {
+            "marker": "when",
+            "output": (', the family moved to Coleraine , County Londonderry , where May worked for the Housing Executive .', 'Nesbitt was 11 years old'),
+            "previous_sentence": ".",
+            "sentence": "When Nesbitt was 11 years old , the family moved to Coleraine , County Londonderry , where May worked for the Housing Executive ."
+        },
+        {
+            "marker": "when",
+            "output": None,
+            "previous_sentence": ".",
+            "sentence": "The following managers have all won at least one trophy when in charge or have been notable for Villa in the context of the League , for example Jozef Venglo\u0161 who holds a League record ."
+        },
+        {
+            "marker": "when",
+            "output": (', he had Tintin befriend a herd of elephants living in the Indian jungle', 'he wrote Cigars of the Pharaoh ( 1934 )'),
+            "previous_sentence": "Such scenes reflect the popularity of big @-@ game hunting among whites and affluent visitors in Sub @-@ Saharan Africa during the 1930s .",
+            "sentence": "Hergé later felt guilty about his portrayal of animals in Tintin in the Congo and became an opponent of blood sports ; when he wrote Cigars of the Pharaoh ( 1934 ) , he had Tintin befriend a herd of elephants living in the Indian jungle ."
+        },
+        {
+            "marker": "when",
+            "output": ('the rock fainted', 'it was produced in court'),
+            "previous_sentence": "Professor Kenneth Pye , a defense witness , said that there was no evidence that the rock had ever been on the lake bed at all .",
+            "sentence": "The article in the Sunday Herald also claims that the policeman said to be responsible for finding the rock fainted when it was produced in court , offering no explanation , but still denying that he ever found it ."
+        },
+        {
+            "marker": "while",
+            "output": (', it also underwent multiple adjustments , such as making the game more forgiving for series newcomers .', 'it retained the standard features of the series'),
+            "previous_sentence": "The game began development in 2010 , carrying over a large portion of the work done on Valkyria Chronicles II .",
+            "sentence": "While it retained the standard features of the series , it also underwent multiple adjustments , such as making the game more forgiving for series newcomers ."
+        },
+        {
+            "marker": "while",
+            "output": (', all populations show great individual variation in colouring , and the birds gradually become paler and greyer towards the east of the range .', 'there are no subspecies'),
+            "previous_sentence": "The chicks have black down , as with all rails .",
+            "sentence": "While there are no subspecies , all populations show great individual variation in colouring , and the birds gradually become paler and greyer towards the east of the range ."
+        },
+        {
+            "marker": "while",
+            "output": ('to put punk ideology in the series , with the protagonist trying to reacquire his former punk self ,', 'also characterizing the Conservative government as a demon infestation with the punk subculture fighting against this supposed subversion and abuse'),
+            "previous_sentence": "During Warren Ellis ' run , he included American school shootings in a one @-@ shot issue which led to a major controversy .",
+            "sentence": "In his run , Peter Milligan managed to put punk ideology in the series , with the protagonist trying to reacquire his former punk self , while also characterizing the Conservative government as a demon infestation with the punk subculture fighting against this supposed subversion and abuse ."
+        },
+        {
+            "marker": "while",
+            "output": None,
+            "previous_sentence": "Yankovic , however , directed one himself which was mostly made up of stock footage , with a live action finale that was filmed in an economically devastated part of the Bronx , New York that looked like a bomb had gone off .",
+            "sentence": "The final original that was recorded was \" Good Enough for Now \" , a country music pastiche about how the singer 's lover , who , while not the best , will do for now ."
+        },
+        {
+            "marker": "while",
+            "output": ('The Sedgemoor district has many buildings related to trade and commerce centered on Bridgwater ; .', 'in South Somerset abbeys , priories and farmhouses predominate'),
+            "previous_sentence": "North Somerset features bridges and piers along with a selection of Manor houses .",
+            "sentence": "The Sedgemoor district has many buildings related to trade and commerce centered on Bridgwater ; while in South Somerset abbeys , priories and farmhouses predominate ."
+        },
+        {
+            ## I am OK with this
+            "marker": "while",
+            "output": ('to wait for the rear', 'the main army marched on to Castleton'),
+            "previous_sentence": "American general St. Clair paused at Hubbardton to give the main army 's tired and hungry troops time to rest while he hoped the rear guard would arrive .",
+            "sentence": "When it did not arrive in time , he left Colonel Seth Warner and the Green Mountain Boys behind , along with the 2nd New Hampshire Regiment under Colonel Nathan Hale , at Hubbardton to wait for the rear while the main army marched on to Castleton ."
+        },
+        {
+            "marker": "while",
+            "output": None,
+            "previous_sentence": "Towards the end of the song , Carey belts out the climax .",
+            "sentence": "Sarah Rodman from The Boston Herald described it as fascinating and wrote , \" it sounds as though Carey is singing in falsetto while still in her chest voice . \""
+        },
     ]
     curious_cases = [
+        {
+            ## wrong parse
+            "marker": "when",
+            "output": None,
+            "previous_sentence": "At the time , NCAA guidelines for bowls required 75 percent of gross receipts to go to participating schools , with 33 percent of tickets to the game also required to go to each school .",
+            "sentence": "In 1983 , the NCAA threatened to revoke the Peach Bowl 's charter when ticket sales hovered around 25 @,@ 000 with a week to go before the bowl ."
+        },
         {
             "sentence": "But , after inspecting the work and observing the spirit of the men I decided that a garrison 500 strong could hold out against Fitch and that I would lead the remainder - about 1500 - to Gen 'l Rust as soon as shotguns and rifles could be obtained from Little Rock instead of pikes and lances , with which most of them were armed .",
             "previous_sentence": "",
@@ -1054,6 +990,20 @@ def test():
             "previous_sentence": "Speaking in an interview , it was stated that the development team considered Valkyria Chronicles III to be the series ' first true sequel : while Valkyria Chronicles II had required a large amount of trial and error during development due to the platform move , the third game gave them a chance to improve upon the best parts of Valkyria Chronicles II due to being on the same platform .",
             "marker": "also",
             "output": ('while the script was written by Hiroyuki Fujii , Koichi Majima , <unk> Miyagi , Seiki <unk> and Takayuki <unk>', 'In addition to Sega staff from the previous games , development work was handled by <unk> The original scenario was written Kazuki Yamanobe , .')
+        },
+        {
+            ## wrong parse :(
+            "marker": "so",
+            "output": None,
+            "previous_sentence": ".",
+            "sentence": "The developers designed the game like a \" Japanese garden \" , where they attempted to remove all of the game elements that did not fit with the others , so the emotions they wanted the game to evoke would come through ."
+        },
+        {
+            ## weird parse - in particular "so" has an uncategorized dependency to S1 rather than a mark dependency to S2...
+            "sentence": "Nicole felt she was too young and unable to offer a child stability , so she agreed to let Marilyn Chambers adopt the baby upon its birth .",
+            "previous_sentence": "One of her final storylines was a pregnancy plot .",
+            "marker": "so",
+            "output": None
         },
         ## parse is just wrong :(
         {
@@ -1093,10 +1043,31 @@ def test():
             "output": (', Captain Totten received no instructions from his superiors and was forced to withdraw his troops .', 'Perhaps Abraham Lincoln had not yet been inaugurated as President')
         },
         {
+            ## incorrect parse
+            "marker": "while",
+            "output": ('they considered Jordan their role model', 'growing up , including LeBron James and Dwyane Wade'),
+            "previous_sentence": "Jordan 's athletic leaping ability , highlighted in his back @-@ to @-@ back slam dunk contest championships in 1987 and 1988 , is credited by many with having influenced a generation of young players .",
+            "sentence": "Several current NBA All @-@ Stars have stated that they considered Jordan their role model while growing up , including LeBron James and Dwyane Wade ."
+        },
+        {
+          ## wrong parse
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "No profit was made in six years , and the church left , losing their investment .",
+            "sentence": "In the late 1930s the building housed the Empire Hotel , known for its Sky Room lounge , then from World War II to the 1970s , 100 McAllister served as U.S. government offices ."
+        },
+        {
             "sentence": "One of the primary reasons why Jordan was not drafted sooner was because the first two teams were in need of a center .",
             "previous_sentence": "The Chicago Bulls selected Jordan with the third overall pick , after Hakeem Olajuwon ( Houston Rockets ) and Sam Bowie ( Portland Trail Blazers ) .",
             "marker": "because",
             "output": ('One of the primary reasons why Jordan was not drafted sooner was .', 'the first two teams were in need of a center')
+        },
+        {
+            ## not sure what could be done about this
+            "sentence": "Hellblazer was first published during the early days of the Modern Age of Comics , and so its themes were dark , edgy , politically and morally complex as its contemporaries .",
+            "previous_sentence": ".",
+            "output": None,
+            "marker": "so"
         },
         ## this honestly might be right. what does this sentence even mean?
         {
@@ -1110,6 +1081,13 @@ def test():
             "previous_sentence": "The tools , machinery , and the material were gathered piecemeal or else made by hand labor .",
             "marker": "before",
             "output": ('The tools , machinery , and the material were gathered piecemeal or else made by hand labor .', 'Nothing of this sort had been attempted on Government account in Arkansas to my knowledge , except for the manufacture of small arms , the machinery for which was taken away by General Van Dorn and there was neither capital nor sufficient enterprise among the citizens to engage in such undertakings <unk> A further supply , along with lead and caps , was procured from the citizens of Little Rock and vicinity by donation , purchases , and impressments .')
+        },
+        {
+            ## wrong parse
+            "marker": "while",
+            "output": None,
+            "previous_sentence": "Dahl was given a free rein on his script , except for the character of Bond and \" the girl formula \" , involving three women for Bond to seduce : an ally and a henchwoman who both get killed , and the main Bond girl .",
+            "sentence": "While the third involved a character from the book , Kissy Suzuki , Dahl had to create Aki and Helga Brandt to fulfil the rest ."
         },
         ## parse is very wrong, and not only because the sentence is split badly and has a quote in it
         {
@@ -1154,6 +1132,20 @@ def test():
             "output": None
         },
         {
+            ## incorrect parse
+            "sentence": "It 's taken me long enough to get to Hull so I 'm not going to walk out after a few months , or whatever . \"",
+            "previous_sentence": "...",
+            "output": None,
+            "marker": "so"
+        },
+        {
+            ## weird parse
+            "sentence": "Of her departure , James said \" I was at Home and Away for three @-@ and @-@ a @-@ half @-@ years , so it 's good to be finished and get to be who I am , and do what I 've wanted to do for so long . \"",
+            "previous_sentence": "She has already filmed her final scenes and Nicole will leave on @-@ screen later in the year .",
+            "output": None,
+            "marker": "so"
+        },
+        {
             ## slight parsing error
             "sentence": "Where a subadult fails to leave his maternal range , for example , he may be killed by his father .",
             "previous_sentence": "Because males disperse farther than females and compete more directly for mates and territory , they are most likely to be involved in conflict .",
@@ -1175,11 +1167,25 @@ def test():
             "output": None
         },
         {
+            ## though is advmod here...
+            "marker": "though",
+            "output": None,
+            "previous_sentence": "Horrified to learn that he was adopted after being discovered as a baby in a handbag at Victoria Station , she refuses him and forbids further contact with her daughter .",
+            "sentence": "Gwendolen , though , manages covertly to promise to him her undying love ."
+        },
+        {
             # parses as ccomp, which i'm rejecting in favor of high precision
             "sentence": "Through her relationship with Geoff she had mellowed , however her vanity was still present .",
             "previous_sentence": "Nicole relates to the wild side of Freya , but has no idea how far Freya is going to take it . \"",
             "marker": "however",
             "output": ('Through her relationship with Geoff she had mellowed , .', 'her vanity was still present')
+        },
+        {
+            ## i'm not sure what a good parse of this would be...
+            "marker": "while",
+            "output": ('White has a spatial advantage , . "', 'Black often maneuvers his pieces on the last two ranks of the board , but White " has to keep a constant eye on the possible liberating pawn thrusts ... b5 and ... d5'),
+            "previous_sentence": "@ 0 @-@ 0 e6 6.Nc3 Be7 7.d4 cxd4 <unk> d6 <unk> a6 .",
+            "sentence": "White has a spatial advantage , while Black often maneuvers his pieces on the last two ranks of the board , but White \" has to keep a constant eye on the possible liberating pawn thrusts ... b5 and ... d5 . \""
         },
         {
             ## wrong parse
@@ -1188,10 +1194,17 @@ def test():
             "previous_sentence": "The Catechism states that , with the help of God 's grace , men and women are required to overcome lust and bodily desires \" for sinful relationships with another person 's spouse . \"",
             "sentence": "In Theology of the Body , a series of lectures given by Pope John Paul II , Jesus ' statement in Matthew 5 : 28 is interpreted that one can commit adultery in the heart not only with another 's spouse , but also with his / her own spouse if one looks at him / her lustfully or treats him / her \" only as an object to satisfy instinct \" ."
         },
+        {
+            ## should we try to solve "if only"?
+            "marker": "if",
+            "output": None,
+            "previous_sentence": "But the young ones , sir — I 'm sure they 'll understand when I explain to them why you 're so upset .",
+            "sentence": "We 'll do everything we can to protect you from now on , if only you 'll forgive us , and we 'll be sure to let you know when anything good is going to happen ! \""
+        },
     ]
         
     print("{} cases are weird and I can't figure out how to handle them. :(".format(len(curious_cases)))
-    print("{} of those incorrectly return None".format(len([c for c in curious_cases if c["output"]==None])))
+    print("{} of those incorrectly return None".format(len([c for c in curious_cases if depparse_ssplit(c["sentence"], c["previous_sentence"], c["marker"])==None])))
     print("{} parsable cases are being tested".format(len(test_items)))
     curious=False
     if curious:
