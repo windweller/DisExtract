@@ -29,6 +29,8 @@ from copy import deepcopy as cp
 
 np.random.seed(123)
 
+dependency_patterns = None
+
 def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
@@ -1252,5 +1254,6 @@ def test():
 
 if __name__ == '__main__':
     args = setup_args()
+    dependency_patterns = en_dependency_patterns
     test()
 
