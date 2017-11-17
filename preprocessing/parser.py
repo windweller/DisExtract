@@ -40,18 +40,14 @@ def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
 
-def undo_rephrase(lst):
-    return " ".join(lst).replace("for_example", "for example").split()
-
-def rephrase(str):
-    return str.replace("for example", "for_example")
-
 def cleanup(s):
     s = s.replace(" @-@ ", "-")
     s = re.sub(' " (.*) " ', ' "\\1" ', s)
     return s
 
-# not sure if i'll use this actually...
+# this was chosen for english, but it's probably fine for other languages, too
+# basically, if there are multiple discourse markers,
+# throw them all out and just keep the sentence they attach to
 top_level_deps_to_ignore_if_extra = [
     ("mark", "IN"),
     # ("advmod", "WRB") ## this would solve several minor problems but introduce a few major problems
@@ -68,6 +64,7 @@ dependency_patterns = {
     "S2": ["advmod"],
     "S1": ["advcl"]
   },
+  # "although" : [{"POS": "IN", "S2": "mark", "S1": "advcl"}, {"POS": "IN", "S2": "dep", "S1": "parataxis"}]
   "although": {
     "POS": ["IN"],
     "S2": ["mark"],
