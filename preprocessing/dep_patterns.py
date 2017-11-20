@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # grab test cases
 ch_dependency_patterns = {
   "然后": [{ # then
