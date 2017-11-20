@@ -31,6 +31,7 @@ en_dependency_patterns = {
     "S2": ["mark"], # S2 head (full S head) ---> connective
     "S1": ["advcl", "acl"]
   },
+  # "although" : [{"POS": "IN", "S2": "mark", "S1": "advcl"}, {"POS": "IN", "S2": "dep", "S1": "parataxis"}]
   "also": {
     "POS": ["RB"],
     "S2": ["advmod"],

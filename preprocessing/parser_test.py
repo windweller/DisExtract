@@ -29,6 +29,8 @@ from copy import deepcopy as cp
 
 np.random.seed(123)
 
+dependency_patterns = None
+
 def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
@@ -639,7 +641,7 @@ def test():
         {
             "marker": "so",
             "output": None,
-            "previous_sentence": "The battle resulted in the capture of Kan Joy Chitam II of Palenque and made Tonin\u00e1 the dominant centre in the lower Usumacinta region .",
+            "previous_sentence": "The battle resulted in the capture of Kan Joy Chitam II of Palenque and made Toniná the dominant centre in the lower Usumacinta region .",
             "sentence": "The victory was so complete that it resulted in a ten @-@ year gap in the dynastic history of the defeated city , during which the captured ruler may have been held hostage ."
         },
         {
@@ -669,14 +671,14 @@ def test():
         {
             "marker": "so",
             "output": None,
-            "previous_sentence": "The choreography was done by Danielle Polanco and <unk> ' Moaning , who used a 1980 \u2019 s retro set .",
-            "sentence": "Beyonc\u00e9 explained the concept of the video at MTV : \" It 's probably the most flamboyant video , and the metallic dresses are so beautiful , they added so much color ."
+            "previous_sentence": "The choreography was done by Danielle Polanco and <unk> ' Moaning , who used a 1980 ’ s retro set .",
+            "sentence": "Beyoncé explained the concept of the video at MTV : \" It 's probably the most flamboyant video , and the metallic dresses are so beautiful , they added so much color ."
         },
         {
             "marker": "so",
             "output": None,
-            "previous_sentence": "Kh\u00e1nh then asked his colleagues to participate in a campaign of fomenting anti @-@ American street protests and to give the impression the country did not need Washington 's aid .",
-            "sentence": "A CIA informant reported the recent arguments with Taylor had incensed the volatile Thi so much that he had privately vowed to \" blow up everything \" and \" kill Phan Kh\u1eafc S\u1eedu , Tr\u1ea7n V\u0103n H\u01b0\u01a1ng and Nguy\u1ec5n Kh\u00e1nh and put an end to all this ."
+            "previous_sentence": "Khánh then asked his colleagues to participate in a campaign of fomenting anti @-@ American street protests and to give the impression the country did not need Washington 's aid .",
+            "sentence": "A CIA informant reported the recent arguments with Taylor had incensed the volatile Thi so much that he had privately vowed to \" blow up everything \" and \" kill Phan Khắc Sửu , Trần Văn Hương and Nguyễn Khánh and put an end to all this ."
         },
         {
             "marker": "so",
@@ -713,25 +715,25 @@ def test():
         #     "marker": "still",
         #     "output": None,
         #     "previous_sentence": "A protective wall of massive proportions surrounded the cathedral precinct , but only a small section has survived .",
-        #     "sentence": "The wall had four access gates , one of which \u2014 the Pans Port \u2014 still exists ."
+        #     "sentence": "The wall had four access gates , one of which — the Pans Port — still exists ."
         # },
         # {
         #     "marker": "still",
         #     "output": None,
         #     "previous_sentence": ".",
-        #     "sentence": "We are still pursuing but it has been perforce slow as the horses are done and the enemy , when advancing , entrenched himself at various points \u2026 which has enabled him to fight a most masterly rearguard action \u2026 As I am moving on , I must close ."
+        #     "sentence": "We are still pursuing but it has been perforce slow as the horses are done and the enemy , when advancing , entrenched himself at various points … which has enabled him to fight a most masterly rearguard action … As I am moving on , I must close ."
         # },
         # {
         #     "marker": "still",
         #     "output": None,
-        #     "previous_sentence": "Kh\u00e1nh did not want his rival taking power , so he and the Americans convinced the HNC to dilute the powers of the position to make it unappealing to Minh , who was then sent on an overseas diplomatic goodwill tour to remove him from the political scene .",
+        #     "previous_sentence": "Khánh did not want his rival taking power , so he and the Americans convinced the HNC to dilute the powers of the position to make it unappealing to Minh , who was then sent on an overseas diplomatic goodwill tour to remove him from the political scene .",
         #     "sentence": "However , Minh was back in South Vietnam after a few months and the power balance in the junta was still fragile ."
         # },
         # {
         #     "marker": "still",
         #     "output": None,
         #     "previous_sentence": "Jared Johnson of Allmusic gave the album four out of five stars and described it as a \" powerful worship experience \" , but also stated that \" some might wonder how a little more variety would sound from such experienced professionals ... the band 's core sound continues to land in the AC cross hairs \" .",
-        #     "sentence": "Andrew Greer of CCM Magazine commented that the album \" ups the musical ante a bit , with some borderline poetic verses and interesting musical riffs \" , but also commented that \" many of these tracks still suffer from the ' Crowns Clich\u00e9 Syndrome , ' using lyrical Christian @-@ ese to produce trite rhymes that seem hard @-@ pressed to energize a ready @-@ to @-@ worship crowd \" ."
+        #     "sentence": "Andrew Greer of CCM Magazine commented that the album \" ups the musical ante a bit , with some borderline poetic verses and interesting musical riffs \" , but also commented that \" many of these tracks still suffer from the ' Crowns Cliché Syndrome , ' using lyrical Christian @-@ ese to produce trite rhymes that seem hard @-@ pressed to energize a ready @-@ to @-@ worship crowd \" ."
         # },
         # {
         #     "marker": "still",
@@ -784,7 +786,7 @@ def test():
         {
             "marker": "then",
             "output": None,
-            "previous_sentence": "Van der Weyden 's depiction of the Magdalen is based on Mary of Bethany , identified by the time of Pope Gregory I as the repentant prostitute of Luke 7 : 36 \u2013 50 .",
+            "previous_sentence": "Van der Weyden 's depiction of the Magdalen is based on Mary of Bethany , identified by the time of Pope Gregory I as the repentant prostitute of Luke 7 : 36 – 50 .",
             "sentence": "She then became associated with weeping and reading : Christ 's mercy causes the eyes of the sinner to be contrite or tearful ."
         },
         {
@@ -826,7 +828,7 @@ def test():
         {
             "marker": "though",
             "output": ('Occupancy at 100 McAllister was low , .', 'the United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s'),
-            "previous_sentence": "Many federal groups at 100 McAllister moved their offices in 1959 \u2013 1960 to the newly built federal building at 450 Golden Gate Avenue , later named the Phillip Burton Federal Building .",
+            "previous_sentence": "Many federal groups at 100 McAllister moved their offices in 1959 – 1960 to the newly built federal building at 450 Golden Gate Avenue , later named the Phillip Burton Federal Building .",
             "sentence": "Occupancy at 100 McAllister was low , though the United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s ."
         },
         {
@@ -875,7 +877,7 @@ def test():
         {
             "marker": "when",
             "output": ('The team received help , however , .', 'Jordan decided to return to the NBA for the Bulls'),
-            "previous_sentence": "Struggling at mid @-@ season to ensure a spot in the playoffs , Chicago was 31 \u2013 31 at one point in mid @-@ March .",
+            "previous_sentence": "Struggling at mid @-@ season to ensure a spot in the playoffs , Chicago was 31 – 31 at one point in mid @-@ March .",
             "sentence": "The team received help , however , when Jordan decided to return to the NBA for the Bulls ."
         },
         {
@@ -893,8 +895,8 @@ def test():
         {
             "marker": "when",
             "output": None,
-            "previous_sentence": "Ramblin ' Man \" features a conversation between an interviewer ( the voice of Michael Deakin \u2014 father of Lemon Jelly 's Fred Deakin ) and \" John the Ramblin ' Man \" ( the voice of Standing ) , during which he lists various places from around the world , ranging from \" from small Sussex villages to major world capitals . \"",
-            "sentence": "When listed in the order in which the locations are narrated , the message \" Bagpuss Sees All Things \" is spelled out midway through the song ( from Brixton at four minutes ten seconds , to San Jos\u00e9 at four minutes 31 seconds ) using the first letter of each location ."
+            "previous_sentence": "Ramblin ' Man \" features a conversation between an interviewer ( the voice of Michael Deakin — father of Lemon Jelly 's Fred Deakin ) and \" John the Ramblin ' Man \" ( the voice of Standing ) , during which he lists various places from around the world , ranging from \" from small Sussex villages to major world capitals . \"",
+            "sentence": "When listed in the order in which the locations are narrated , the message \" Bagpuss Sees All Things \" is spelled out midway through the song ( from Brixton at four minutes ten seconds , to San José at four minutes 31 seconds ) using the first letter of each location ."
         },
         {
             "marker": "when",
@@ -906,7 +908,7 @@ def test():
             "marker": "when",
             "output": None,
             "previous_sentence": ".",
-            "sentence": "The following managers have all won at least one trophy when in charge or have been notable for Villa in the context of the League , for example Jozef Venglo\u0161 who holds a League record ."
+            "sentence": "The following managers have all won at least one trophy when in charge or have been notable for Villa in the context of the League , for example Jozef Vengloš who holds a League record ."
         },
         {
             "marker": "when",
@@ -1252,5 +1254,6 @@ def test():
 
 if __name__ == '__main__':
     args = setup_args()
+    dependency_patterns = en_dependency_patterns
     test()
 
