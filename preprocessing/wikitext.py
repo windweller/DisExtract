@@ -17,7 +17,7 @@ import pickle
 import requests
 import re
 
-from cfg import DISCOURSE_MARKER_SET_TAG, DISCOURSE_MARKERS
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
 
 import sys
 reload(sys)
@@ -30,18 +30,18 @@ import json
 from itertools import izip
 
 from copy import deepcopy as cp
+from util import rephrase
 
 np.random.seed(123)
 
 """
+This file contains WikiText-specific information
+
 1. Sentence tokenization (make it config)
 2. Grab pairs of sentences where the 2nd sentence has one of the discourse markers
 3. Save them, a file for each discourse markers (a json file with [,] is good enough)
 for_example.txt, in side it's [{prev: "", sent: ""}]
 """
-
-def rephrase(str):
-    return str.replace("for example", "for_example")
 
 def collect_raw_sentences(source_dir, dataset, caching):
     markers_dir = pjoin(source_dir, "markers_" + DISCOURSE_MARKER_SET_TAG)
@@ -61,7 +61,7 @@ def collect_raw_sentences(source_dir, dataset, caching):
     else:
         raise Exception("not implemented")
 
-    sentences = {marker: {"sentence": [], "previous": []} for marker in DISCOURSE_MARKERS}
+    sentences = {marker: {"sentence": [], "previous": []} for marker in EN_DISCOURSE_MARKERS}
     
     for filename in filenames:
         print("reading {}".format(filename))
@@ -82,7 +82,7 @@ def collect_raw_sentences(source_dir, dataset, caching):
         previous_sentence = ""
         for sentence in sent_list:
             words = rephrase(sentence).split()  # replace "for example"
-            for marker in DISCOURSE_MARKERS:
+            for marker in EN_DISCOURSE_MARKERS:
                 if marker == "for example":
                     proxy_marker = "for_example" 
                 else:

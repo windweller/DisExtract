@@ -9,7 +9,7 @@ import pickle
 import requests
 import re
 
-from cfg import DISCOURSE_MARKER_SET_TAG, DISCOURSE_MARKERS
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
 
 import sys
 
@@ -66,7 +66,7 @@ def filtering(source_dir, args):
     frequencies = {}
     for split in ["train", "valid", "test"]:
         frequencies[split] = {}
-        for marker in DISCOURSE_MARKERS:
+        for marker in EN_DISCOURSE_MARKERS:
             frequencies[split][marker] = 0
 
     statistics_lines = []

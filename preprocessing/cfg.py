@@ -1,4 +1,4 @@
-DISCOURSE_MARKERS = [
+EN_DISCOURSE_MARKERS = [
     "after",
     "also",
     "although",

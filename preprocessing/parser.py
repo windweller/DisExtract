@@ -29,7 +29,7 @@ import json
 from itertools import izip
 
 from copy import deepcopy as cp
-from cfg import DISCOURSE_MARKER_SET_TAG, DISCOURSE_MARKERS
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
 
 np.random.seed(123)
 
@@ -480,5 +480,4 @@ def depparse_ssplit(sentence, previous_sentence, marker):
 if __name__ == '__main__':
     args = setup_args()
     dependency_patterns = en_dependency_patterns
-    depparse_ssplit()
 

@@ -14,6 +14,7 @@ import requests
 import re
 
 from parser import depparse_ssplit
+from dep_patterns import en_dependency_patterns
 
 import sys
 reload(sys)
