@@ -480,6 +480,15 @@ class Sentence():
 
         return None
 
+def setup_corenlp():
+    try:
+        get_parse("The quick brown fox jumped over the lazy dog.")
+    except:
+        # TODO
+        # run the server if we can
+        # otherwise ask to install the server and install it if we can
+        raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
+
 def depparse_ssplit(sentence, previous_sentence, marker):
     sentence = cleanup(sentence)
     parse = get_parse(sentence)
