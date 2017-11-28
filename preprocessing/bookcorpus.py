@@ -16,6 +16,10 @@ from os.path import join as pjoin
 from parser import depparse_ssplit, setup_corenlp
 from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 """
 Unlike Wikitext, we don't have sentence tokenization, and don't need to cache that.
 But we do need to cache dependency parses.
@@ -173,8 +177,8 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
 
     # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
     with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'a') as w:
-        header = "{}\t{}\t{}\n".format("s1", "s2", "marker")
-        w.write(header)
+        # header = "{}\t{}\t{}\n".format("s1", "s2", "marker")
+        # w.write(header)
 
         with open(input_file_path, 'rb') as f:
             logger.info("reading {}".format(input_file_path))
