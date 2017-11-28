@@ -13,6 +13,7 @@ import logging
 from util import rephrase
 from os.path import join as pjoin
 
+from parser import depparse_ssplit
 from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
 
 """
@@ -23,11 +24,17 @@ But we do need to cache dependency parses.
 parser = argparse.ArgumentParser(description='DisExtract BookCorpus')
 
 parser.add_argument("--json", type=str, default="allen_corpus.json", help="corpus parameter setting to load")
-parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
+
+parser.add_argument("--filter", action='store_false',
+                    help="Stage 1: run filtering on the corpus, collect sentence pairs")
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
 parser.add_argument("--max_ratio", default=5.0, type=float)
-parser.add_argument("--print_every", default=10000, type=int)
+parser.add_argument("--filter_print_every", default=10000, type=int)
+
+parser.add_argument("--parse", action='store_false',
+                    help="Stage 1: run filtering on the corpus, collect sentence pairs")
+parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
@@ -49,12 +56,19 @@ with open(args.json, 'rb') as f:
 books_dir = json_config['books_dir']
 book_files = ['books_large_p1.txt', 'books_large_p2.txt']
 
-"""
-Filter: only collect sentences that contain discourse markers
-"""
-
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
+    """
+    This function needs to be implemented differently for each corpus
+    since it contains crucial corpus-specific functions, though
+    the main logic remains the same
+
+    :param source_dir:
+    :param filenames:
+    :param marker_set_tag:
+    :param discourse_markers:
+    :return:
+    """
     markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     output_dir = pjoin(markers_dir, "sentences")
 
@@ -105,14 +119,14 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                 previous_sentence = sentence
                 previous_sentence_split = words
 
-                if i % args.print_every == 0:
+                if i % args.filter_print_every == 0:
                     logger.info("processed {}".format(i))
 
         logger.info("{} file finished".format(filename))
 
     logger.info('writing files')
 
-    with open(pjoin(output_dir, "{}.json".format(marker_set_tag))) as f:
+    with open(pjoin(output_dir, "{}.json".format(marker_set_tag)), 'wb') as f:
         json.dump(sentences, f)
 
     logger.info('file writing complete')
@@ -123,10 +137,16 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         statistics_lines.append("{}\t{}".format(marker, n_sentences))
 
     statistics_report = "\n".join(statistics_lines)
-    with open(pjoin(markers_dir, "VERSION.txt"), "w") as f:
+    with open(pjoin(markers_dir, "VERSION.txt"), "wb") as f:
         f.write(
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
         )
 
+def dependency_parsing():
+    depparse_ssplit()
+
 if __name__ == '__main__':
-    collect_raw_sentences(books_dir, book_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
+    if args.filter:
+        collect_raw_sentences(books_dir, book_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
+    elif args.parse:
+        pass

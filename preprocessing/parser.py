@@ -106,7 +106,6 @@ def search_for_dep_pattern(marker, current_sentence, previous_sentence):
     sentence = Sentence(parse["sentences"][0], current_sentence)
     return sentence.find_pair(marker, "any", previous_sentence)
 
-
 # https://stackoverflow.com/a/18669080
 def get_indices(lst, element, case="sensitive"):
   result = []
@@ -198,12 +197,24 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices):
 use corenlp server (see https://github.com/erindb/corenlp-ec2-startup)
 to parse sentences: tokens, dependency parse
 """
-def get_parse(sentence, depparse=True):
+def get_parse(sentence, depparse=True, language='en'):
     sentence = sentence.replace("'t ", " 't ")
-    if depparse:
-        url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
-    else:
-        url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
+    if language == 'en':
+        if depparse:
+            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
+        else:
+            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
+    elif language == 'zh':
+        # maybe there might be different?
+        if depparse:
+            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
+        else:
+            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
+    elif language == 'es':
+        if depparse:
+            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
+        else:
+            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
     data = sentence
     parse_string = requests.post(url, data=data).text
     return json.loads(parse_string)["sentences"][0]

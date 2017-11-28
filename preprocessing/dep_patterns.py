@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # grab test cases
-ch_dependency_patterns = {
+cn_dependency_patterns = {
   "然后": [{ # then
     "POS": ["AD"],
     "S1": ["conj"],  # the dep tag S1 -> S2
@@ -22,6 +22,11 @@ ch_dependency_patterns = {
     "POS": ["AD"],
     "S1": ["conj"],
     "S2": ["advmod"]
+  },
+  "因为": { # because
+    "POS": ["P"],
+    "S1": ["nmod:prep"],
+    "S2": ["case"]
   }
 }
 
