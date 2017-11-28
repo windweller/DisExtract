@@ -259,6 +259,10 @@ class Sentence():
         # print(deps)
         return [d["dependent"] for d in deps]
 
+    def is_punct(self, index):
+        pos = self.token(index)["pos"]
+        return pos in [".", '"', ":", "-RRB-", "-LRB-"]
+
     def is_verb(self, index):
         pos = self.token(index)["pos"]
         if pos[0] == "V":
@@ -342,6 +346,10 @@ class Sentence():
         if not subordinate_indices:
             return None
         subordinate_indices.sort()
+
+        # exclude any punctuation not followed by a non-punctuation token
+        while self.is_punct(subordinate_indices[-1]):
+            subordinate_indices = subordinate_indices[:-1]
         
         # make string of subordinate phrase from parse
         parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
@@ -354,7 +362,10 @@ class Sentence():
         subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices)
 
         # make a string from this to return
-        return subordinate_phrase
+        if subordinate_phrase:
+            return subordinate_phrase.capitalize() + "."
+        else:
+            return None
 
     def get_valid_marker_indices(self, marker):
         pos = dependency_patterns[marker]["POS"]
