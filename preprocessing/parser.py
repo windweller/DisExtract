@@ -15,7 +15,7 @@ import requests
 import re
 import logging
 
-from dep_patterns import en_dependency_patterns
+from dep_patterns import en_dependency_patterns as dep_patterns
 
 import sys
 reload(sys)
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
 argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
-dependency_patterns = None
+# dependency_patterns = None
 
 """
 Given (p, s), previous sentence and current sentence
@@ -479,6 +479,15 @@ class Sentence():
                 return S1, S2
 
         return None
+
+def setup_corenlp():
+    try:
+        get_parse("The quick brown fox jumped over the lazy dog.")
+    except:
+        # TODO
+        # run the server if we can
+        # otherwise ask to install the server and install it if we can
+        raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
 
 def depparse_ssplit(sentence, previous_sentence, marker):
     sentence = cleanup(sentence)
