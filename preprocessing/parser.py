@@ -10,7 +10,6 @@ This creates (s1, s2, marker) by each marker
 import numpy as np
 import argparse
 import io
-import nltk
 import pickle
 import requests
 import re
