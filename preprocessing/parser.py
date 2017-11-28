@@ -15,7 +15,7 @@ import requests
 import re
 import logging
 
-from dep_patterns import en_dependency_patterns as dep_patterns
+from dep_patterns import en_dependency_patterns as dependency_patterns
 
 import sys
 reload(sys)

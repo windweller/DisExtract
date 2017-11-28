@@ -155,10 +155,10 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
 
     markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
-    input_file_path = pjoin(output_dir, "{}.json".format(marker_set_tag))
+    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
     output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
 
-    if not os.path.exists(output_dir):
+    if not os.path.exists(markers_dir):
         raise Exception("{} does not exist".format(markers_dir))
     if not os.path.exists(input_dir):
         raise Exception("{} does not exist".format(input_dir))
@@ -185,7 +185,8 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
             i = 0
             for marker, slists in sentences.iteritems():
                 for sentence, previous in zip(slists["sentence"], slists["previous"]):
-                    if i >= 0:
+                    i += 1
+                    if i > 0:
                         parsed_output = dependency_parsing(sentence, previous, marker)
                         if parsed_output:
                             s1, s2 = parsed_output
@@ -206,7 +207,7 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
     logger.info('file writing complete')
 
 def dependency_parsing(sentence, previous_sentence, marker):
-    depparse_ssplit(sentence, previous_sentence, marker)
+    return depparse_ssplit(sentence, previous_sentence, marker)
 
 if __name__ == '__main__':
     if args.filter:
