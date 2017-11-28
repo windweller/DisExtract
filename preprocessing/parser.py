@@ -15,7 +15,7 @@ import requests
 import re
 import logging
 
-from dep_patterns import en_dependency_patterns
+from dep_patterns import en_dependency_patterns as dep_patterns
 
 import sys
 reload(sys)
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
 argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
-dependency_patterns = None
+# dependency_patterns = None
 
 """
 Given (p, s), previous sentence and current sentence
