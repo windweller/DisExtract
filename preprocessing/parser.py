@@ -261,7 +261,7 @@ class Sentence():
 
     def is_punct(self, index):
         pos = self.token(index)["pos"]
-        return pos in [".", '"', ":", "-RRB-", "-LRB-"]
+        return pos in '.,"-RRB--LRB-:;'
 
     def is_verb(self, index):
         pos = self.token(index)["pos"]
@@ -322,7 +322,15 @@ class Sentence():
         else:
             all_children = [c for i in explore for c in self.find_children(i, exclude_types=exclude_types)]
 
-        children =  [c for c in all_children if not c in exclude_indices]
+        # exclude indices
+        children = [c for c in all_children if not c in exclude_indices]
+
+        # delete commas before excluded indices
+        children = [c for c in children if not (c+1 in exclude_indices and self.word(c)==",")]
+
+        # delete commas after excluded indices
+        children = [c for c in children if not (c-1 in exclude_indices and self.word(c)==",")]
+
         if len(children)==0:
             return acc
         else:
