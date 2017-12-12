@@ -39,6 +39,8 @@ logger = logging.getLogger(__name__)
 argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
 argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
+PUNCTUATION = '.,:;— '
+
 # dependency_patterns = None
 
 """
@@ -261,7 +263,8 @@ class Sentence():
 
     def is_punct(self, index):
         pos = self.token(index)["pos"]
-        return pos in '.,"-RRB--LRB-:;'
+        # return pos in '.,"-RRB--LRB-:;'
+        return pos in PUNCTUATION
 
     def is_verb(self, index):
         pos = self.token(index)["pos"]
@@ -358,6 +361,9 @@ class Sentence():
         # exclude any punctuation not followed by a non-punctuation token
         while self.is_punct(subordinate_indices[-1]):
             subordinate_indices = subordinate_indices[:-1]
+
+        while self.is_punct(subordinate_indices[0]):
+            subordinate_indices = subordinate_indices[1:]
         
         # make string of subordinate phrase from parse
         parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
@@ -482,12 +488,12 @@ class Sentence():
         for S1, S2 in extracted_pairs:
 
             # if S2 is the whole sentence *and* we're missing S1, let S1 be the previous sentence
-            words_in_marker = len(marker.split())
+            words_in_marker = marker.split()
             if S2 and not S1:
-                words_in_sentence = len(self.tokens)
-                words_in_s2 = len(S2.split())
-                if words_in_sentence - words_in_marker == words_in_s2:
-                    S1 = previous_sentence
+                words_in_sentence = [t["word"] for t in self.tokens if not self.is_punct(t["index"])]
+                words_in_s2 = [t for t in S2.split() if not t in PUNCTUATION]
+                if len(words_in_sentence) - len(words_in_marker) == len(words_in_s2):
+                    S1 = previous_sentence[0].capitalize() + previous_sentence[1:]
             else:
                 # if we don't choose S1 to be the previous sentence, then
                 # we might have to switch S1 and S2 because of the way the cc conj pattern works
