@@ -54,6 +54,11 @@ def setup_args():
 
 def cleanup(s):
     s = s.replace(" @-@ ", "-")
+    s = s.replace(" i ", " I ")
+    s = s.replace(" im ", " I'm ")
+    if s[0:3] == "im ":
+        s = "I'm " + s[3:]
+    s = s[0].capitalize() + s[1:]
     s = re.sub(' " (.*) " ', ' "\\1" ', s)
     return s
 
@@ -377,7 +382,10 @@ class Sentence():
 
         # make a string from this to return
         if subordinate_phrase:
-            return subordinate_phrase.capitalize() + "."
+            subordinate_phrase = subordinate_phrase[0].capitalize() + subordinate_phrase[1:]
+            if subordinate_phrase[-3:] in ". \". '":
+                return subordinate_phrase
+            return subordinate_phrase + " ."
         else:
             return None
 
