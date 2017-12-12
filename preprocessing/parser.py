@@ -247,7 +247,7 @@ class Sentence():
         deps = self.find_deps(index, dir="parents", filter_types=filter_types)
 
         if needs_verb:
-            deps = [d for d in deps if self.gov_is_verb(d) or self.dep_is_verb(d)]
+            deps = [d for d in deps if self.gov_is_verb(d)]
 
         return [d["governor"] for d in deps]
 
