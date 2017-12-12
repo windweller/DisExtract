@@ -440,6 +440,9 @@ class Sentence():
             # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
             #     print marker_index
 
+            # if marker=="and" and "magical" in str(self):
+            #     print marker_index
+
             for s2_head_index in self.get_candidate_S2_indices(marker, marker_index, needs_verb=True):
                 s2_ind = s2_head_index
 
@@ -474,6 +477,11 @@ class Sentence():
                     possible_S1s.append((s1_head_index, S1))
 
                 # to do: fix this. it is wrong. we're just grabbing the first if there are multiple matches for the S1 pattern rather than choosing in a principled way
+                # if len(possible_S1s) > 1:
+                    # could sort by something here...
+                    # possible_S1s = sorted(possible_S1s, key=lambda t: -abs(marker_index - t[0]))
+                    # print self
+                    # print possible_S1s
                 if len(possible_S1s) > 0:
                     s1_ind, S1 = possible_S1s[0]
 
