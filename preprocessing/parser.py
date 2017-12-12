@@ -74,6 +74,7 @@ top_level_deps_to_ignore_if_extra = [
 # "[discourse marker] S2, S1" (needs dependency parse)
 def search_for_reverse_pattern_pair(sent, marker, words, previous_sentence):
     parse_string = get_parse(sent, depparse=True)
+    parse_string = parse_string.replace('\r\n', '')
 
     # book corpus maybe has carriage returns and new lines and other things?
     try: 
@@ -223,7 +224,14 @@ def get_parse(sentence, depparse=True, language='en'):
             url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
     data = sentence
     parse_string = requests.post(url, data=data).text
-    return json.loads(parse_string)["sentences"][0]
+    parse_string = parse_string.replace('\r\n', '')
+    parse_string = parse_string.replace('\x19', '')
+    # if len(parse_string) >= 12478: print([parse_string[12478]])
+    try:
+        return json.loads(parse_string)["sentences"][0]
+    except ValueError:
+        return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]   
+
 
 class Sentence():
     def __init__(self, json_sentence, original_sentence):
