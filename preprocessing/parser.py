@@ -541,6 +541,8 @@ def setup_corenlp():
         raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
 
 def depparse_ssplit(sentence, previous_sentence, marker):
+    sentence = sentence.strip()
+    previous_sentence = previous_sentence.strip()
     sentence = cleanup(sentence)
     parse = get_parse(sentence)
     # print(json.dumps(parse, indent=4))

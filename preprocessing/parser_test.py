@@ -41,7 +41,7 @@ def test():
     test_items = [
         {
             "sentence": "After release , it received downloadable content , along with an expanded edition in November of that year .",
-            "previous_sentence": "It met with positive sales in Japan , and was praised by both Japanese and western critics .",
+            "previous_sentence": """It met with positive sales in Japan , and was praised by both Japanese and western critics .""",
             "marker": "after",
             "output": None
         },
@@ -421,7 +421,7 @@ def test():
         {
             ## why is there no actual previous sentence here?
             "sentence": "But above all Mario Vargas Llosa uses the fictional Urania to facilitate the novel 's attempt at remembering the regime .",
-            "previous_sentence": ".",
+            "previous_sentence": ".\n",
             "marker": "but",
             "output": ('.', "Above all Mario Vargas Llosa uses the fictional Urania to facilitate the novel 's attempt at remembering the regime .")
         },
