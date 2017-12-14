@@ -1340,12 +1340,6 @@ def test():
             "sentence": "when i looked back at seth , i realized he had also made an outfit change .",
         },
         # {
-        #     "marker": "when",
-        #     "output": None,
-        #     "previous_sentence": "emily said angrily .",
-        #     "sentence": "thats when suddenly a hideous creature appeared in front of us .",
-        # },
-        # {
         #     "marker": "however",
         #     "output": None,
         #     "previous_sentence": "he has this annoying skill to be able to just return to his body without having to be near it , which wasnt fair when he wasnt the one injured .",
@@ -2305,6 +2299,13 @@ def test():
             "output": ('We already were .', 'He vanished .'),
             "previous_sentence": "jason yelled .",
             "sentence": "i opened my mouth to say that we already were when he vanished .",
+        },
+        {
+            # wrong parse, but to be fair, it's lost its punctuation...
+            "marker": "when",
+            "output": None,
+            "previous_sentence": "emily said angrily .",
+            "sentence": "thats when suddenly a hideous creature appeared in front of us .",
         },
     ]
         
