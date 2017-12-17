@@ -34,7 +34,7 @@ Merge them into one set, train/val/test split, np.shuffle (fix random seed)
 parser = argparse.ArgumentParser(description='DisExtract Producer')
 
 # parser.add_argument("--json", type=str, default="example_config.json", help="load in config params")
-parser.add_argument("--corpus", type=str, default='bookcorpus',
+parser.add_argument("--corpus", type=str, default='books',
                     help="bookcorpus|gigaword, marked by Spanish and Chinese")
 parser.add_argument("--train_size", default=0.9, type=float)
 parser.add_argument("--data_dir", type=str, default='default', help="the path for the data file")
