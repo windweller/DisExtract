@@ -84,7 +84,7 @@ if __name__ == '__main__':
                     int(np.rint(len(examples) * (split_proportions['train'] + split_proportions['valid'])))]
     test_numbers = serial_numbers[int(np.rint(len(examples) * (split_proportions['train'] + split_proportions['valid']))):]
 
-    print("train/valid/test number of examples: {}".format(len(train_numbers), len(valid_numbers), len(test_numbers)))
+    print("train/valid/test number of examples: {}/{}/{}".format(len(train_numbers), len(valid_numbers), len(test_numbers)))
 
     train, valid, test = [], [], []
 
