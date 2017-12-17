@@ -29,10 +29,7 @@ then S1 connects to S2.
 
 [x] switch to better (more automatic) dependency parsing with corenlp
 [x] finish making test cases and editing parser for all discourse markers in english
-[ ] rewrite filter
-[ ] rewrite producer
-[ ] run filter on English BookCorpus
-[ ] new dependency extraction for BookCorpus
+[x] rewrite producer
 [ ] run model on new dataset for English
 [ ] get Chinese and Spanish corpora
 [ ] check parser on a few examples of English BookCorpus data

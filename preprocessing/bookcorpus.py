@@ -23,11 +23,13 @@ sys.setdefaultencoding('utf8')
 """
 Unlike Wikitext, we don't have sentence tokenization, and don't need to cache that.
 But we do need to cache dependency parses.
+
+This does filtering on max, min, ratio already, to save dependency parsing time
 """
 
 parser = argparse.ArgumentParser(description='DisExtract BookCorpus')
 
-parser.add_argument("--json", type=str, default="allen_corpus.json", help="corpus parameter setting to load")
+parser.add_argument("--json", type=str, default="example_config.json", help="corpus parameter setting to load")
 
 parser.add_argument("--filter", action='store_false',
                     help="Stage 1: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
