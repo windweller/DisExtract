@@ -24,7 +24,8 @@ sys.setdefaultencoding('utf8')
 Unlike Wikitext, we don't have sentence tokenization, and don't need to cache that.
 But we do need to cache dependency parses.
 
-This does filtering on max, min, ratio already, to save dependency parsing time
+This does filtering on max, min, ratio already (ratio should not be there...)
+, to save dependency parsing time
 """
 
 parser = argparse.ArgumentParser(description='DisExtract BookCorpus')
@@ -110,6 +111,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                             filtered_out += 1
                             continue
 
+                        # this part might be uncalled for...
                         len2 = len(previous_sentence_split)
                         ratio = float(len2) / len(words)
 
