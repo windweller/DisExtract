@@ -36,6 +36,8 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+logging.getLogger('requests').setLevel(logging.CRITICAL)
+
 argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
 argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
@@ -517,5 +519,5 @@ def depparse_ssplit(sentence, previous_sentence, marker):
 
 if __name__ == '__main__':
     args = setup_args()
-    dependency_patterns = en_dependency_patterns
+    dependency_patterns = dependency_patterns
 

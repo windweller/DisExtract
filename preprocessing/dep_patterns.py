@@ -15,7 +15,7 @@ cn_dependency_patterns = {
   ],
   "但是": { # but
     "POS": ["AD"],
-    "S1": ["conj"],
+    "S1": ["conj"],  # nsubj
     "S2": ["advmod"]
   },
   "也": { # also
