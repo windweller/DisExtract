@@ -30,110 +30,92 @@ cn_dependency_patterns = {
   }
 }
 
+es_dependency_patterns = {
+  "luego": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
+  "después": [{"S1": "advcl", "S2": "advmod", "POS": "rg"}],
+  "también": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
+  "además": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
+  "aunque": [{"S1": "advcl", "S2": "mark", "POS": "cs"}],
+  # "a pesar de que": [{"S1": "", "S2": "", "POS": ""}],
+  "y": [{"S1": "conj", "S2": "cc", "POS": "cc", "flip": True}],
+  "porque": [{"S1": "advcl", "S2": "mark", "POS": "cs"}],
+  "ya que": [{"S1": "advcl", "S2": "mark", "POS": "rg", "head": "ya"}],
+  # "dado que": [{"S1": "", "S2": "", "POS": "", "head": ""}],
+  "puesto que": [{"S1": "advcl", "S2": "mark", "POS": "nc0s000", "head": "puesto"}],
+  "antes": [{"S1": "advcl", "S2": "advmod", "POS": "rg"}],
+  "pero": [{"S1": "conj", "S2": "cc", "POS": "cc", "flip": True}],
+  "por ejemplo": [{"S1": "advcl", "S2": "nmod", "POS": "ejemplo"}],
+  "sin embargo": [{"S1": "conj", "S2": "cc", "POS": "sp000", "head": "sin"}],
+  "si": [{"S1": "advcl", "S2": "mark", "POS": "cs"}],
+  "mientras": [{"S1": "advcl", "S2": "mark", "POS": "cs", "alternative": "mientras tanto"}],
+  "entonces": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
+  "por lo tanto": [{"S1": "parataxis", "S2": "nmod", "POS": "vmis000", "head": "tanto"}],
+  "por eso": [{"S1": "advcl", "S2": "nmod", "POS": "pd000000", "head": "eso"}],
+  "por lo cual": [{"S1": "parataxis", "S2": "nmod", "POS": "pr000000", "head": "cual"}],
+  "en consecuencia": [{"S1": "advcl", "S2": "nmod", "POS": "nc0s000", "head": "consecuencia"}],
+  "todavía": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
+  "cuando": [{"S1": "advcl", "S2": "mark", "POS": "cs"}]
+}
+
 en_dependency_patterns = {
-  "after": {
-    "POS": ["IN"],
-    "S2": ["mark"], # S2 head (full S head) ---> connective
-    "S1": ["advcl", "acl"]
-  },
-  # "although" : [{"POS": "IN", "S2": "mark", "S1": "advcl"}, {"POS": "IN", "S2": "dep", "S1": "parataxis"}]
-  "also": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["advcl"]
-  },
-  "although": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "and": {
-    "POS": ["CC"],
-    "S2": ["cc"],
-    "S1": ["conj"],
-    "flip": True
-  },
-  "as": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "before": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "but": {
-    "POS": ["CC"],
-    "S2": ["cc"],
-    "S1": ["conj"],
-    "flip": True
-  },
-  # "so": {
-  #   "POS": "IN",
-  #   "S2": "dep",
-  #   "S1": ["parataxis"],
-  #   "flip": True
-  # },
-  "so": {
-    "POS": ["IN", "RB"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "still": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["parataxis", "dep"],
-    "acceptable_order": "S1 S2"
-  },
-  "though": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "because": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "however": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": [
-        "parataxis",
-        # "ccomp" ## rejecting in favor of high precision
-    ]
-  },
-  "if": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "meanwhile": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["parataxis"]
-  },
-  "while": {
-    "POS": ["IN"],
-    "S2": ["mark"],
-    "S1": ["advcl"]
-  },
-  "for example": {
-    "POS": ["NN"],
-    "S2": ["nmod"],
-    "S1": ["parataxis"],
-    "head": "example"
-  },
-  "then": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["parataxis"],
-    "acceptable_order": "S1 S2"
-  },
-  "when": {
-    "POS": ["WRB"],
-    "S2": ["advmod"],
-    "S1": ["advcl"]
-  }
+  # S2 ~ S2 head (full S head) ---> connective
+  "after": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+    {"S1": "acl", "S2": "mark", "POS": "IN"},
+  ],
+  "also": [
+    {"S1": "advcl", "S2": "advmod", "POS": "RB"},
+  ],
+  "although": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+  ],
+  "and": [
+    {"S1": "conj", "S2": "cc", "POS": "CC", "flip": True},
+  ],
+  "as": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+  ],
+  "before": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+  ],
+  "but": [
+    {"S1": "conj", "S2": "cc", "POS": "CC", "flip": True},
+  ],
+  "so": [
+    # {"S1": "parataxis", "S2": "dep", "POS": "IN", "flip": True},
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+    {"S1": "advcl", "S2": "mark", "POS": "RB"},
+  ],
+  "still": [
+    {"S1": "parataxis", "S2": "advmod", "POS": "RB", "acceptable_order": "S1 S2"},
+    {"S1": "dep", "S2": "advmod", "POS": "RB", "acceptable_order": "S1 S2"},
+  ],
+  "though": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+  ],
+  "because": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+  ],
+  "however": [
+    {"S1": "parataxis", "S2": "advmod", "POS": "RB"},
+    # {"S1": "ccomp", "S2": "advmod", "POS": "RB"}, ## rejecting in favor of high precision
+  ],
+  "if": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+  ],
+  "meanwhile": [
+    {"S1": "parataxis", "S2": "advmod", "POS": "RB"},
+  ],
+  "while": [
+    {"S1": "advcl", "S2": "mark", "POS": "IN"},
+  ],
+  "for example": [
+    {"S1": "parataxis", "S2": "nmod", "POS": "NN", "head": "example"},
+  ],
+  "then": [
+    {"S1": "parataxis", "S2": "advmod", "POS": "RB", "acceptable_order": "S1 S2"},
+  ],
+  "when": [
+    {"S1": "advcl", "S2": "advmod", "POS": "WRB"},
+  ],
 }

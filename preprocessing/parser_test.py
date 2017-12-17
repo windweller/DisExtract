@@ -41,7 +41,7 @@ def test():
     test_items = [
         {
             "sentence": "After release , it received downloadable content , along with an expanded edition in November of that year .",
-            "previous_sentence": "It met with positive sales in Japan , and was praised by both Japanese and western critics .",
+            "previous_sentence": """It met with positive sales in Japan , and was praised by both Japanese and western critics .""",
             "marker": "after",
             "output": None
         },
@@ -67,19 +67,19 @@ def test():
             "sentence": "Valkyria of the Battlefield 3 : The Flower of the Nameless Oath ) , illustrated by Naoyuki Fujisawa and eventually released in two volumes after being serialized in Dengeki Maoh between 2011 and 2012 ; and Senjō no Valkyria 3 : <unk> Unmei no <unk> <unk> ( 戦場のヴァルキュリア3 <unk> , lit .",
             "previous_sentence": "They were Senjō no Valkyria 3 : Namo <unk> <unk> no Hana ( 戦場のヴァルキュリア3 <unk> , lit .",
             "marker": "after",
-            "output": ('eventually released in two volumes', 'being serialized in Dengeki Maoh between 2011 and 2012')
+            "output": ('Eventually released in two volumes .', 'Being serialized in Dengeki Maoh between 2011 and 2012 .')
         },
         {
             "sentence": "After taking up residence , her health began to deteriorate .",
             "previous_sentence": "She restored a maisonette in Storrington , Sussex , England , bequeathed by her friend Edith Major , and named it St. Andrew 's .",
             "marker": "after",
-            "output": (', her health began to deteriorate .', 'taking up residence')
+            "output": ('Her health began to deteriorate .', 'Taking up residence .')
         },
         {
             "sentence": "While it retained the standard features of the series , it also underwent multiple adjustments , such as making the game more forgiving for series newcomers .",
             "previous_sentence": "The game began development in 2010 , carrying over a large portion of the work done on Valkyria Chronicles II .",
             "marker": "also",
-            "output": ('it retained the standard features of the series', ', it underwent multiple adjustments , such as making the game more forgiving for series newcomers .')
+            "output": ('It retained the standard features of the series .', 'It underwent multiple adjustments , such as making the game more forgiving for series newcomers .')
         },
         {
             "sentence": "It was also adapted into manga and an original video animation series .",
@@ -109,7 +109,7 @@ def test():
             "sentence": "In a preview of the TGS demo , Ryan Geddes of IGN was left excited as to where the game would go after completing the demo , along with enjoying the improved visuals over Valkyria Chronicles II .",
             "previous_sentence": ".",
             "marker": "after",
-            "output": ('as to where the game would go', 'completing the demo')
+            "output": ('As to where the game would go .', 'Completing the demo .')
         },
         {
             "sentence": "The units comprising the infantry force of Van Dorn 's Army of the West were the 1st and 2nd Arkansas Mounted Rifles were also armed with M1822 flintlocks from the Little Rock Arsenal .",
@@ -127,7 +127,7 @@ def test():
             "sentence": "It has also been the headquarters of the Little Rock Æsthetic Club since 1894 .",
             "previous_sentence": "It was home to the Arkansas Museum of Natural History and Antiquities from 1942 to 1997 and the MacArthur Museum of Arkansas Military History since 2001 .",
             "marker": "also",
-            "output": ('It was home to the Arkansas Museum of Natural History and Antiquities from 1942 to 1997 and the MacArthur Museum of Arkansas Military History since 2001 .', 'It has been the headquarters of the Little Rock \xc3\x86sthetic Club since 1894 .')
+            "output": ('It was home to the Arkansas Museum of Natural History and Antiquities from 1942 to 1997 and the MacArthur Museum of Arkansas Military History since 2001 .', 'It has been the headquarters of the Little Rock Æsthetic Club since 1894 .')
         },
         {
             "sentence": "It was also the starting place of the Camden Expedition .",
@@ -157,37 +157,37 @@ def test():
             "sentence": "Dunnington was selected to head the ordnance works at Little Rock , and although he continued to draw his pay from the Confederate Navy Department , he was placed in charge of all Confederate ordnance activities ( which included artillery functions ) there with the rank of lieutenant colonel .",
             "previous_sentence": "Ponchartrain , which had been brought to Little Rock in hopes of converting it to an ironclad .",
             "marker": "although",
-            "output": (', he was placed in charge of all Confederate ordnance activities ( which included artillery functions ) there with the rank of lieutenant colonel', 'he continued to draw his pay from the Confederate Navy Department')
+            "output": ('He was placed in charge of all Confederate ordnance activities ( which included artillery functions ) there with the rank of lieutenant colonel .', 'He continued to draw his pay from the Confederate Navy Department .')
         },
         {
             "sentence": "The development of a national team faces challenges similar to those across Africa , although the national football association has four staff members focusing on women 's football .",
             "previous_sentence": "The Gambia has two youth teams , an under @-@ 17 side that has competed in FIFA U @-@ 17 Women 's World Cup qualifiers , and an under @-@ 19 side that withdrew from regional qualifiers for an under @-@ 19 World Cup .",
             "marker": "although",
-            "output": ('The development of a national team faces challenges similar to those across Africa , .', "the national football association has four staff members focusing on women 's football")
+            "output": ('The development of a national team faces challenges similar to those across Africa .', "The national football association has four staff members focusing on women 's football .")
         },
         {
             "sentence": "Although this species is discarded when caught , it is more delicate @-@ bodied than other maskrays and is thus unlikely to survive encounters with trawling gear .",
             "previous_sentence": "In the present day , this is mostly caused by Australia 's Northern Prawn Fishery , which operates throughout its range .",
             "marker": "although",
-            "output": (', it is more delicate-bodied than other maskrays and is thus unlikely to survive encounters with trawling gear .', 'this species is discarded when caught')
+            "output": ('It is more delicate-bodied than other maskrays and is thus unlikely to survive encounters with trawling gear .', 'This species is discarded when caught .')
         },
         {
             "sentence": "In the nineteenth @-@ century , the mound was higher on the western end of the tomb , although this was removed by excavation to reveal the sarsens beneath during the 1920s .",
             "previous_sentence": "The earthen mound that once covered the tomb is now visible only as an undulation approximately 1 foot , 6 inches in height .",
             "marker": "although",
-            "output": ('In the nineteenth-century , the mound was higher on the western end of the tomb , .', 'this was removed by excavation to reveal the sarsens beneath during the 1920s')
+            "output": ('In the nineteenth-century , the mound was higher on the western end of the tomb .', 'This was removed by excavation to reveal the sarsens beneath during the 1920s .')
         },
         {
             "sentence": "In 1880 , the archaeologist Flinders Petrie included the existence of the stones at \" <unk> \" in his list of Kentish earthworks ; although noting that a previous commentator had described the stones as being in the shape of an oval , he instead described them as forming \" a rectilinear enclosure \" around the chamber .",
             "previous_sentence": "He believed that the monument consisted of both a \" chamber \" and an \" oval \" of stones , suggesting that they were \" two distinct erections \" .",
             "marker": "although",
-            "output": (', he instead described them as forming " a rectilinear enclosure " around the chamber', 'noting that a previous commentator had described the stones as being in the shape of an oval')
+            "output": ('He instead described them as forming " a rectilinear enclosure " around the chamber .', 'Noting that a previous commentator had described the stones as being in the shape of an oval .')
         },
         {
             "sentence": "She was not damaged although it took over a day to pull her free .",
             "previous_sentence": "Webb demonstrated his aggressiveness when he attempted to sortie on the first spring tide ( 30 May ) after taking command , but Atlanta 's forward engine broke down after he had passed the obstructions , and the ship ran aground .",
             "marker": "although",
-            "output": ('She was not damaged .', 'it took over a day to pull her free')
+            "output": ('She was not damaged .', 'It took over a day to pull her free .')
         },
         {
             "sentence": "Valkyria of the Battlefield 3 ) , commonly referred to as Valkyria Chronicles III outside Japan , is a tactical role @-@ playing video game developed by Sega and Media.Vision for the PlayStation Portable .",
@@ -199,7 +199,7 @@ def test():
             "sentence": "Employing the same fusion of tactical and real @-@ time gameplay as its predecessors , the story runs parallel to the first game and follows the \" Nameless \" , a penal military unit serving the nation of Gallia during the Second Europan War who perform secret black operations and are pitted against the Imperial unit \" <unk> Raven \" .",
             "previous_sentence": "Released in January 2011 in Japan , it is the third game in the Valkyria series .",
             "marker": "and",
-            "output": ('Employing the same fusion of tactical and real-time gameplay as its predecessors , the story runs parallel to the first game .', 'follows the " Nameless " , a penal military unit serving the nation of Gallia during the Second Europan War who perform secret black operations and are pitted against the Imperial unit " <unk> Raven "')
+            "output": ('Employing the same fusion of tactical and real-time gameplay as its predecessors , the story runs parallel to the first game .', 'Follows the " Nameless " , a penal military unit serving the nation of Gallia during the Second Europan War who perform secret black operations and are pitted against the Imperial unit " <unk> Raven " .')
         },
         {
             "sentence": "Character designer <unk> Honjou and composer Hitoshi Sakimoto both returned from previous entries , along with Valkyria Chronicles II director Takeshi Ozawa .",
@@ -211,7 +211,7 @@ def test():
             "sentence": "It met with positive sales in Japan , and was praised by both Japanese and western critics .",
             "previous_sentence": ".",
             "marker": "and",
-            "output": ('It met with positive sales in Japan , .', 'was praised by both Japanese and western critics')
+            "output": ('It met with positive sales in Japan .', 'Was praised by both Japanese and western critics .')
         },
         {
             "sentence": "It was also adapted into manga and an original video animation series .",
@@ -224,7 +224,7 @@ def test():
             "previous_sentence": ".",
             "marker": "and",
             ## the "where" here is not quite right, but I don't know how to resolve that the way the dependency parse works...
-            "output": ('where players take control of a military unit', 'take part in missions against enemy forces')
+            "output": ('Where players take control of a military unit .', 'Take part in missions against enemy forces .')
         },
         {
             "sentence": "Stories are told through comic book @-@ like panels with animated character portraits , with characters speaking partially through voiced speech bubbles and partially through unvoiced text .",
@@ -237,14 +237,14 @@ def test():
             "sentence": "The player progresses through a series of linear missions , gradually unlocked as maps that can be freely scanned through and replayed as they are unlocked .",
             "previous_sentence": "Stories are told through comic book @-@ like panels with animated character portraits , with characters speaking partially through voiced speech bubbles and partially through unvoiced text .",
             "marker": "and",
-            "output": ('that can be freely scanned through', 'replayed as they are unlocked')
+            "output": ('That can be freely scanned through .', 'Replayed as they are unlocked .')
         },
         {
             ## the "where" here is not quite right, but I don't know how to resolve that the way the dependency parse works...
             "sentence": "Outside missions , the player characters rest in a camp , where units can be customized and character growth occurs .",
             "previous_sentence": "The route to each story location on the map varies depending on an individual player 's approach : when one option is selected , the other is sealed off to the player .",
             "marker": "and",
-            "output": ('where units can be customized', 'character growth occurs')
+            "output": ('Where units can be customized .', 'Character growth occurs .')
         },
         {
             "sentence": "According to Sega , this was due to poor sales of Valkyria Chronicles II and the general unpopularity of the PSP in the west .",
@@ -262,13 +262,13 @@ def test():
             "sentence": "The player progresses through a series of linear missions , gradually unlocked as maps that can be freely scanned through and replayed as they are unlocked .",
             "previous_sentence": "Stories are told through comic book @-@ like panels with animated character portraits , with characters speaking partially through voiced speech bubbles and partially through unvoiced text .",
             "marker": "as",
-            "output": ('replayed', 'they are unlocked')
+            "output": ('Replayed .', 'They are unlocked .')
         },
         {
             "sentence": "As the Nameless officially do not exist , the upper echelons of the Gallian Army exploit the concept of plausible deniability in order to send them on missions that would otherwise make Gallia lose face in the war .",
             "previous_sentence": ".",
             "marker": "as",
-            "output": (', the upper echelons of the Gallian Army exploit the concept of plausible deniability in order to send them on missions that would otherwise make Gallia lose face in the war .', 'the Nameless officially do not exist')
+            "output": ('The upper echelons of the Gallian Army exploit the concept of plausible deniability in order to send them on missions that would otherwise make Gallia lose face in the war .', 'The Nameless officially do not exist .')
         },
         {
             "sentence": "He served as the back @-@ up to Allen York during the game , and the following day , he signed a contract for the remainder of the year .",
@@ -280,7 +280,7 @@ def test():
             "sentence": "The tower was an edifice of great value for astronomical observations made using a sundial as they provided essential confirmation of the need to reform the Julian calendar .",
             "previous_sentence": "Four stages of progressive development have occurred since it was first established .",
             "marker": "as",
-            "output": ('The tower was an edifice of great value for astronomical observations made using a sundial .', 'they provided essential confirmation of the need to reform the Julian calendar')
+            "output": ('The tower was an edifice of great value for astronomical observations made using a sundial .', 'They provided essential confirmation of the need to reform the Julian calendar .')
         },
         {
             "sentence": "The first stage of building of the tower , as recorded by Leo XIII in his motu proprio Ut <unk> of 1891 , is credited to Pope Gregory XIII , Pope from 1572 to 1585 .",
@@ -304,26 +304,26 @@ def test():
             "sentence": "Bulloch and the passengers embarked in the steamer while Bulloch dispatched a letter to his financial agents instructing them to settle damages with the brig 's owners because he could not afford to take the time to deal with the affair lest he and Fingal be detained .",
             "previous_sentence": "On the night 14 / 15 October , as she was slowly rounding the breakwater at Holyhead , Fingal rammed and sank the Austrian brig <unk> , slowly swinging at anchor without lights .",
             "marker": "because",
-            "output": ("Bulloch dispatched a letter to his financial agents instructing them to settle damages with the brig 's owners", 'he could not afford to take the time to deal with the affair lest he and Fingal be detained')
+            "output": ("Bulloch dispatched a letter to his financial agents instructing them to settle damages with the brig 's owners .", 'He could not afford to take the time to deal with the affair lest he and Fingal be detained .')
         },
         {
             ## I'm OK with this.
             "sentence": "Deceased humans were called nṯr because they were considered to be like the gods , whereas the term was rarely applied to many of Egypt 's lesser supernatural beings , which modern scholars often call \" demons \" .",
             "previous_sentence": "The term nṯr may have applied to any being that was in some way outside the sphere of everyday life .",
             "marker": "because",
-            "output": ("Deceased humans were called nṯr , whereas the term was rarely applied to many of Egypt 's lesser supernatural beings , which modern scholars often call \" demons \" .", "they were considered to be like the gods")
+            "output": ("Deceased humans were called nṯr , whereas the term was rarely applied to many of Egypt 's lesser supernatural beings , which modern scholars often call \" demons \" .", "They were considered to be like the gods .")
         },
         {
             "sentence": "Because many deities in later times were strongly tied to particular towns and regions , many scholars have suggested that the pantheon formed as disparate communities coalesced into larger states , spreading and intermingling the worship of the old local deities .",
             "previous_sentence": "Predynastic Egypt originally consisted of small , independent villages .",
             "marker": "because",
-            "output": (', many scholars have suggested that the pantheon formed as disparate communities coalesced into larger states , spreading and intermingling the worship of the old local deities .', 'many deities in later times were strongly tied to particular towns and regions')
+            "output": ('Many scholars have suggested that the pantheon formed as disparate communities coalesced into larger states , spreading and intermingling the worship of the old local deities .', 'Many deities in later times were strongly tied to particular towns and regions .')
         },
         {
             "sentence": "Most myths about them lack highly developed characters and plots , because the symbolic meaning of the myths was more important than elaborate storytelling .",
             "previous_sentence": "Their behavior is inconsistent , and their thoughts and motivations are rarely stated .",
             "marker": "because",
-            "output": ('Most myths about them lack highly developed characters and plots , .', 'the symbolic meaning of the myths was more important than elaborate storytelling')
+            "output": ('Most myths about them lack highly developed characters and plots .', 'The symbolic meaning of the myths was more important than elaborate storytelling .')
         },
         {
             "sentence": "Because of the gods ' multiple and overlapping roles , deities can have many epithets — with more important gods accumulating more titles — and the same epithet can apply to many deities .",
@@ -335,13 +335,13 @@ def test():
             "sentence": "In October 1941 , the newly installed mayor of Zagreb , Ivan Werner , issued a decree ordering the demolition of the Praška Street synagogue , ostensibly because it did not fit into the city 's master plan .",
             "previous_sentence": ".",
             "marker": "because",
-            "output": ('In October 1941 , the newly installed mayor of Zagreb , Ivan Werner , issued a decree ordering the demolition of the Praška Street synagogue , .', "ostensibly it did not fit into the city 's master plan")
+            "output": ('In October 1941 , the newly installed mayor of Zagreb , Ivan Werner , issued a decree ordering the demolition of the Praška Street synagogue .', "Ostensibly it did not fit into the city 's master plan .")
         },
         {
             "sentence": "Because this was Jordan 's first championship since his father 's murder , and it was won on Father 's Day , Jordan reacted very emotionally upon winning the title , including a memorable scene of him crying on the locker room floor with the game ball .",
             "previous_sentence": "He also achieved only the second sweep of the MVP Awards in the All @-@ Star Game , regular season and NBA Finals , Willis Reed having achieved the first , during the 1969 – 70 season .",
             "marker": "because",
-            "output": (', Jordan reacted very emotionally upon winning the title , including a memorable scene of him crying on the locker room floor with the game ball .', "this was Jordan 's first championship since his father 's murder , and it was won on Father 's Day")
+            "output": ('Jordan reacted very emotionally upon winning the title , including a memorable scene of him crying on the locker room floor with the game ball .', "This was Jordan 's first championship since his father 's murder , and it was won on Father 's Day .")
         },
         {
             "sentence": "Archaeologists have been unable to prove whether this adoption of farming was because of a new influx of migrants coming in from continental Europe or because the indigenous Mesolithic Britons came to adopt the agricultural practices of continental societies .",
@@ -353,7 +353,7 @@ def test():
             "sentence": "Her sister Dorothy taught kindergarten in two private schools before opening a kindergarten at home .",
             "previous_sentence": "Following her father ’ s death in June 1912 , the seventeen @-@ year @-@ old Barker submitted art and poetry to My Magazine , Child ’ s Own , Leading Strings , and Raphael Tuck annuals in an effort to support both her mother and sister .",
             "marker": "before",
-            "output": ('Her sister Dorothy taught kindergarten in two private schools .', 'opening a kindergarten at home')
+            "output": ('Her sister Dorothy taught kindergarten in two private schools .', 'Opening a kindergarten at home .')
         },
         {
             "sentence": "Most of the body lacks dermal denticles ; a midline row of 4 – 13 small , closely spaced thorns is present behind the spiracles , and another row of 0 – 4 thorns before the stings .",
@@ -363,16 +363,17 @@ def test():
         },
         {
             ## bad sentence tokenization here...
+            ## bailing on this for better precision
             "sentence": "@ 8 seconds allowing the Kings time to score the tying goal , before winning in overtime .",
             "previous_sentence": "The team was involved in a controversial loss to the Los Angeles Kings , when the Staples Center clock appeared to freeze at 1 @.",
             "marker": "before",
-            "output": ('@ 8 seconds allowing the Kings time to score the tying goal , .', 'winning in overtime')
+            "output": None#('@ 8 seconds allowing the Kings time to score the tying goal .', 'Winning in overtime .')
         },
         {
             "sentence": "Sanford started 12 consecutive games before Steve Mason made his next start .",
             "previous_sentence": "@ 38 goals against average and <unk> save percentage over his next six games .",
             "marker": "before",
-            "output": ('Sanford started 12 consecutive games .', 'Steve Mason made his next start')
+            "output": ('Sanford started 12 consecutive games .', 'Steve Mason made his next start .')
         },
         {
             "sentence": "Unlike before , the rumors were about player moves rather than coaching changes .",
@@ -390,25 +391,26 @@ def test():
             "sentence": "Some of these images , such as stars and cattle , are reminiscent of important features of Egyptian religion in later times , but in most cases there is not enough evidence to say whether the images are connected with deities .",
             "previous_sentence": "Predynastic artwork depicts a variety of animal and human figures .",
             "marker": "but",
-            "output": ('Some of these images , such as stars and cattle , are reminiscent of important features of Egyptian religion in later times , .', 'in most cases there is not enough evidence to say whether the images are connected with deities')
+            "output": ('Some of these images , such as stars and cattle , are reminiscent of important features of Egyptian religion in later times .', 'In most cases there is not enough evidence to say whether the images are connected with deities .')
         },
         {
             "sentence": "But in general , morality was based on practical ways to uphold maat in daily life , rather than on strict rules that the gods laid out .",
             "previous_sentence": "For example , the gods judged humans ' moral righteousness after death , and by the New Kingdom , a verdict of innocence in this judgment was believed to be necessary for admittance into the afterlife .",
             "marker": "but",
-            "output": ("For example , the gods judged humans ' moral righteousness after death , and by the New Kingdom , a verdict of innocence in this judgment was believed to be necessary for admittance into the afterlife .", 'in general , morality was based on practical ways to uphold maat in daily life , rather than on strict rules that the gods laid out .')
+            "output": ("For example , the gods judged humans ' moral righteousness after death , and by the New Kingdom , a verdict of innocence in this judgment was believed to be necessary for admittance into the afterlife .", 'In general , morality was based on practical ways to uphold maat in daily life , rather than on strict rules that the gods laid out .')
         },
         {
+            # punctuation is slightly off but whatever
             "sentence": "The CAA concludes that a severe reduction in GA would give \" some merit to the argument that pilot recruitment would be threatened \" , but that the data on flying hours \" does not support such a gloomy outlook . \"",
             "previous_sentence": "The counter argument to this claim is that pilots can be trained outside of the UK , and that the airline industry is not therefore dependent on a healthy GA sector in the UK for its supply of pilots .",
             "marker": "but",
-            "output": ('a severe reduction in GA would give " some merit to the argument that pilot recruitment would be threatened " ,', 'the data on flying hours " does not support such a gloomy outlook')
+            "output": ('A severe reduction in GA would give " some merit to the argument that pilot recruitment would be threatened " .', 'The data on flying hours " does not support such a gloomy outlook .')
         },
         {
             "sentence": "The use of chiral sulfides in a stoichiometric fashion has proved more successful than the corresponding catalytic variants , but the substrate scope is still limited in all cases .",
             "previous_sentence": "yielding an enantiomeric excess , which is labelled as \" ee \" ) variant of the Johnson – Corey – Chaykovsky reaction remains an active area of academic research .",
             "marker": "but",
-            "output": ('The use of chiral sulfides in a stoichiometric fashion has proved more successful than the corresponding catalytic variants , .', 'the substrate scope is still limited in all cases')
+            "output": ('The use of chiral sulfides in a stoichiometric fashion has proved more successful than the corresponding catalytic variants .', 'The substrate scope is still limited in all cases .')
         },
         {
             "sentence": "She was the victim of sexual abuse at the hands of the dictator himself , a sacrifice her father made to try to gain favor with the dictator again , a fact to which she alludes throughout the book , but which is only revealed at the very end : the book concludes with her recounting the memory of that night to her aunt and cousins , who never knew the true reason she left the country .",
@@ -419,15 +421,15 @@ def test():
         {
             ## why is there no actual previous sentence here?
             "sentence": "But above all Mario Vargas Llosa uses the fictional Urania to facilitate the novel 's attempt at remembering the regime .",
-            "previous_sentence": ".",
+            "previous_sentence": ".\n",
             "marker": "but",
-            "output": ('.', "above all Mario Vargas Llosa uses the fictional Urania to facilitate the novel 's attempt at remembering the regime .")
+            "output": ('.', "Above all Mario Vargas Llosa uses the fictional Urania to facilitate the novel 's attempt at remembering the regime .")
         },
         {
             "sentence": "The populace may , for example , have mistaken the religion 's symbolic statements about the gods and their actions for literal truth .",
             "previous_sentence": "Commoners ' perceptions of the divine may have differed from those of the priests .",
             "marker": "for example",
-            "output": ("Commoners ' perceptions of the divine may have differed from those of the priests .", "The populace may , , have mistaken the religion 's symbolic statements about the gods and their actions for literal truth .")
+            "output": ("Commoners ' perceptions of the divine may have differed from those of the priests .", "The populace may , have mistaken the religion 's symbolic statements about the gods and their actions for literal truth .")
         },
         {
             "sentence": "Pre @-@ war civil aerodromes , for example Sywell , were returned to civilian use .",
@@ -439,13 +441,13 @@ def test():
             "sentence": "Innis pointed out , for example , that as furs became scarce and trade in that staple declined , it became necessary to develop and export other staples such as wheat , potash and especially lumber .",
             "previous_sentence": "Innis theorized that this reliance on exporting natural resources made Canada dependent on more industrially advanced countries and resulted in periodic disruptions to economic life as the international demand for staples rose and fell ; as the staple itself became increasingly scarce ; and , as technological change resulted in shifts from one staple to others .",
             "marker": "for example",
-            "output": ('Innis theorized that this reliance on exporting natural resources made Canada dependent on more industrially advanced countries and resulted in periodic disruptions to economic life as the international demand for staples rose and fell ; as the staple itself became increasingly scarce ; and , as technological change resulted in shifts from one staple to others .', 'Innis pointed out , , that as furs became scarce and trade in that staple declined , it became necessary to develop and export other staples such as wheat , potash and especially lumber .')
+            "output": ('Innis theorized that this reliance on exporting natural resources made Canada dependent on more industrially advanced countries and resulted in periodic disruptions to economic life as the international demand for staples rose and fell ; as the staple itself became increasingly scarce ; and , as technological change resulted in shifts from one staple to others .', 'Innis pointed out , that as furs became scarce and trade in that staple declined , it became necessary to develop and export other staples such as wheat , potash and especially lumber .')
         },
         {
             "sentence": "Oxford Town \" , for example , was an account of James Meredith 's ordeal as the first black student to risk enrollment at the University of Mississippi .",
             "previous_sentence": "Many songs on this album were labeled protest songs , inspired partly by Guthrie and influenced by Pete Seeger 's passion for topical songs . \"",
             "marker": "for example",
-            "output": ('Many songs on this album were labeled protest songs , inspired partly by Guthrie and influenced by Pete Seeger \'s passion for topical songs . "', 'Oxford Town " , , was an account of James Meredith \'s ordeal as the first black student to risk enrollment at the University of Mississippi .')
+            "output": ('Many songs on this album were labeled protest songs , inspired partly by Guthrie and influenced by Pete Seeger \'s passion for topical songs . "', 'Oxford Town " , was an account of James Meredith \'s ordeal as the first black student to risk enrollment at the University of Mississippi .')
         },
         {
             "sentence": "Likewise , it is unclear whether prophylactic treatment of chronic infection is beneficial in persons who will undergo immunosuppression ( for example , organ transplant recipients ) or in persons who are already immunosuppressed ( for example , those with HIV infection ) .",
@@ -483,68 +485,69 @@ def test():
             "sentence": "This is short @-@ lived , however , as following Maximilian 's defeat , Dahau and Calamity Raven move to activate an ancient <unk> super weapon within the Empire , kept secret by their benefactor .",
             "previous_sentence": "Partly due to these events , and partly due to the major losses in manpower Gallia suffers towards the end of the war with the Empire , the Nameless are offered a formal position as a squad in the Gallian Army rather than serve as an anonymous shadow force .",
             "marker": "however",
-            "output": ('Partly due to these events , and partly due to the major losses in manpower Gallia suffers towards the end of the war with the Empire , the Nameless are offered a formal position as a squad in the Gallian Army rather than serve as an anonymous shadow force .', "This is short-lived , , as following Maximilian 's defeat , Dahau and Calamity Raven move to activate an ancient <unk> super weapon within the Empire , kept secret by their benefactor .")
+            "output": ('Partly due to these events , and partly due to the major losses in manpower Gallia suffers towards the end of the war with the Empire , the Nameless are offered a formal position as a squad in the Gallian Army rather than serve as an anonymous shadow force .', "This is short-lived as following Maximilian 's defeat , Dahau and Calamity Raven move to activate an ancient <unk> super weapon within the Empire , kept secret by their benefactor .")
         },
         {
             "sentence": "On June 10 , 1991 , however , the District Court declared the statute unconstitutional , stating that it violated both the Fourteenth and Seventeenth Amendments due to the failure to ensure \" popular participation \" through the use of primary elections .",
             "previous_sentence": "The case was first heard in the United States District Court for the Eastern District of Pennsylvania , where , following oral arguments , the judge dismissed both Trinsey 's motion to remove Wofford and the Commonwealth 's motion to dismiss .",
             "marker": "however",
-            "output": ("The case was first heard in the United States District Court for the Eastern District of Pennsylvania , where , following oral arguments , the judge dismissed both Trinsey 's motion to remove Wofford and the Commonwealth 's motion to dismiss .", 'On June 10 , 1991 , , the District Court declared the statute unconstitutional , stating that it violated both the Fourteenth and Seventeenth Amendments due to the failure to ensure " popular participation " through the use of primary elections .')
+            "output": ("The case was first heard in the United States District Court for the Eastern District of Pennsylvania , where , following oral arguments , the judge dismissed both Trinsey 's motion to remove Wofford and the Commonwealth 's motion to dismiss .", 'On June 10 , 1991 the District Court declared the statute unconstitutional , stating that it violated both the Fourteenth and Seventeenth Amendments due to the failure to ensure " popular participation " through the use of primary elections .')
         },
         {
             "sentence": "Compared to pre @-@ war classes , the absence of Polish Jewish students was notable , as they were confined by the Nazi Germans to ghettos ; there was , however , underground Jewish education in the ghettos , often organized with support from Polish organizations like TON .",
             "previous_sentence": "It is estimated that in some rural areas , the educational coverage was actually improved ( most likely as courses were being organized in some cases by teachers escaped or deported from the cities ) .",
             "marker": "however",
-            "output": ('Compared to pre-war classes , the absence of Polish Jewish students was notable , as they were confined by the Nazi Germans to ghettos ; .', 'there was , , underground Jewish education in the ghettos , often organized with support from Polish organizations like TON')
+            "output": ('Compared to pre-war classes , the absence of Polish Jewish students was notable , as they were confined by the Nazi Germans to ghettos .', 'There was underground Jewish education in the ghettos , often organized with support from Polish organizations like TON .')
         },
         {
             "sentence": "However , they found that the specimen was <unk> , and thus A. lucaris was a nomen dubium . \"",
             "previous_sentence": "Paul and Carpenter stated that the type specimen of this species , YPM 1931 , was from a younger age than Allosaurus , and might represent a different genus .",
             "marker": "however",
-            "output": ('Paul and Carpenter stated that the type specimen of this species , YPM 1931 , was from a younger age than Allosaurus , and might represent a different genus .', ', they found that the specimen was <unk> , and thus A. lucaris was a nomen dubium . "')
+            "output": ('Paul and Carpenter stated that the type specimen of this species , YPM 1931 , was from a younger age than Allosaurus , and might represent a different genus .', 'They found that the specimen was <unk> , and thus A. lucaris was a nomen dubium . "')
         },
         {
             "sentence": "However , it took five years for its popularity to be established with professional users .",
             "previous_sentence": "The speaker was poorly received and its commercial life was short .",
             "marker": "however",
-            "output": ('The speaker was poorly received and its commercial life was short .', ', it took five years for its popularity to be established with professional users .')
+            "output": ('The speaker was poorly received and its commercial life was short .', 'It took five years for its popularity to be established with professional users .')
         },
         {
             ## this is nonsense, but that's only because the sentence split was wonky
             "sentence": "However , Stevens assembled his games from those that had been published in chess magazines , rather than complete collections of all the games played in particular events .",
             "previous_sentence": "@ 1 % .",
             "marker": "however",
-            "output": ('@ 1 % .', ', Stevens assembled his games from those that had been published in chess magazines , rather than complete collections of all the games played in particular events .')
+            "output": ('@ 1 % .', 'Stevens assembled his games from those that had been published in chess magazines , rather than complete collections of all the games played in particular events .')
         },
         {
             "sentence": "However , at one point the writers had deliberated ending the series with Ross and Rachel in \" a gray area of where they aren ’ t together , but we hint there ’ s a sense that they might be down the road . \"",
             "previous_sentence": "When it finally came time to write the series finale , \" The only thing [ Crane and Kauffman ] absolutely knew from very early on was that we had to get Ross and Rachel together , \" deciding , \" We had <unk> the audience around for 10 years with their ' will they or won ’ t they , ' and we didn ’ t see any advantage in frustrating them \" any longer .",
             "marker": "however",
-            "output": ('When it finally came time to write the series finale , " The only thing [ Crane and Kauffman ] absolutely knew from very early on was that we had to get Ross and Rachel together , " deciding , " We had <unk> the audience around for 10 years with their \' will they or won \xe2\x80\x99 t they , \' and we didn \xe2\x80\x99 t see any advantage in frustrating them " any longer .', ', at one point the writers had deliberated ending the series with Ross and Rachel in " a gray area of where they aren \xe2\x80\x99 t together , but we hint there \xe2\x80\x99 s a sense that they might be down the road . "')
+            "output": ('When it finally came time to write the series finale , " The only thing [ Crane and Kauffman ] absolutely knew from very early on was that we had to get Ross and Rachel together , " deciding , " We had <unk> the audience around for 10 years with their \' will they or won \xe2\x80\x99 t they , \' and we didn \xe2\x80\x99 t see any advantage in frustrating them " any longer .', 'At one point the writers had deliberated ending the series with Ross and Rachel in " a gray area of where they aren \xe2\x80\x99 t together , but we hint there \xe2\x80\x99 s a sense that they might be down the road . "')
         },
         {
             ## i am ok with this
             "marker": "if",
-            "output": ('During gameplay , characters will call out .', 'something happens to them , such as their health points ( HP ) getting low or being knocked out by enemy attacks'),
+            "output": ('During gameplay , characters will call out .', 'Something happens to them , such as their health points ( HP ) getting low or being knocked out by enemy attacks .'),
             "previous_sentence": "Up to nine characters can be assigned to a single mission .",
             "sentence": "During gameplay , characters will call out if something happens to them , such as their health points ( HP ) getting low or being knocked out by enemy attacks ."
         },
         {
             ## wrong parse for later "if"s
             "marker": "if",
-            "output": ('The level of purification can be monitored using various types of gel electrophoresis .', "the desired protein 's molecular weight and isoelectric point are known , by spectroscopy if the protein has distinguishable spectroscopic features , or by enzyme assays if the protein has enzymatic activity"),
+            "output": ('The level of purification can be monitored using various types of gel electrophoresis .', "The desired protein 's molecular weight and isoelectric point are known , by spectroscopy if the protein has distinguishable spectroscopic features , or by enzyme assays if the protein has enzymatic activity ."),
             "previous_sentence": "Various types of chromatography are then used to isolate the protein or proteins of interest based on properties such as molecular weight , net charge and binding affinity .",
             "sentence": "The level of purification can be monitored using various types of gel electrophoresis if the desired protein 's molecular weight and isoelectric point are known , by spectroscopy if the protein has distinguishable spectroscopic features , or by enzyme assays if the protein has enzymatic activity ."
         },
         {
             "marker": "if",
-            "output": ('the lyrics would work for two people', 'he could find a female artist as a duet partner'),
+            "output": ('The lyrics would work for two people .', 'He could find a female artist as a duet partner .'),
             "previous_sentence": "In an interview with <unk> , Aldean revealed that the song was not originally presented to him as a duet .",
             "sentence": "Nevertheless , he and producer Michael Knox thought the lyrics would work for two people if he could find a female artist as a duet partner ."
         },
         {
+            # bailing on this for better precision
             "marker": "if",
-            "output": (', , then she would', "Juan Per\xc3\xb3n would not accept Franco 's invitation for a state visit to Spain"),
+            "output": None, #('Then she would .', "Juan Perón would not accept Franco 's invitation for a state visit to Spain ."),
             "previous_sentence": "Therefore , a visit to Franco , with António Salazar of Portugal the last remaining west European authoritarian leaders in power , would be diplomatically frowned upon internationally .",
             "sentence": "Fraser and Navarro write that Eva decided that , if Juan Perón would not accept Franco 's invitation for a state visit to Spain , then she would ."
         },
@@ -556,14 +559,14 @@ def test():
         },
         {
             "marker": "if",
-            "output": ('it is expected to sublime', 'it is exposed directly to solar radiation'),
+            "output": ('It is expected to sublime .', 'It is exposed directly to solar radiation .'),
             "previous_sentence": ".",
             "sentence": "Surface water ice is unstable at distances less than 5 AU from the Sun , so it is expected to sublime if it is exposed directly to solar radiation ."
         },
         {
             ## i'm OK with this, but really we should get rid of the "even"
             "marker": "if",
-            "output": ('it important to promote new British artists ,', 'even it meant illustrations which some readers considered pornographic or offensive'),
+            "output": ('It important to promote new British artists .', 'Even it meant illustrations which some readers considered pornographic or offensive .'),
             "previous_sentence": ".",
             "sentence": "When Samuel Carter Hall was choosing works to illustrate his newly launched The Art Journal , he considered it important to promote new British artists , even if it meant illustrations which some readers considered pornographic or offensive ."
         },
@@ -575,61 +578,61 @@ def test():
         },
         {
             "marker": "meanwhile",
-            "output": ('Egyptian cults sometimes incorporated Greek language , philosophy , iconography , and even temple architecture .', ', the cults of several Egyptian deities \xe2\x80\x94 particularly Isis , Osiris , Anubis , the form of Horus named Harpocrates , and the fused Greco-Egyptian god Serapis \xe2\x80\x94 were adopted into Roman religion and spread across the Roman Empire .'),
+            "output": ('Egyptian cults sometimes incorporated Greek language , philosophy , iconography , and even temple architecture .', 'The cults of several Egyptian deities — particularly Isis , Osiris , Anubis , the form of Horus named Harpocrates , and the fused Greco-Egyptian god Serapis — were adopted into Roman religion and spread across the Roman Empire .'),
             "previous_sentence": "Egyptian cults sometimes incorporated Greek language , philosophy , iconography , and even temple architecture .",
             "sentence": "Meanwhile , the cults of several Egyptian deities — particularly Isis , Osiris , Anubis , the form of Horus named Harpocrates , and the fused Greco @-@ Egyptian god Serapis — were adopted into Roman religion and spread across the Roman Empire ."
         },
         {
             "marker": "meanwhile",
-            "output": ('They write in an incomprehensible language , and the number of Observer sightings has increased over the past few months , leaving the team wondering why .', ', August visits the other Observers , who are not happy that he saved a girl who was supposed to die in the plane crash .'),
+            "output": ('They write in an incomprehensible language , and the number of Observer sightings has increased over the past few months , leaving the team wondering why .', 'August visits the other Observers , who are not happy that he saved a girl who was supposed to die in the plane crash .'),
             "previous_sentence": "They write in an incomprehensible language , and the number of Observer sightings has increased over the past few months , leaving the team wondering why .",
             "sentence": "Meanwhile , August visits the other Observers , who are not happy that he saved a girl who was supposed to die in the plane crash ."
         },
         {
             "marker": "meanwhile",
-            "output": ('In the episode , Cerie Xerox ( Bowden ) gets engaged so that she can be a " young hot mom " , causing Liz Lemon ( Tina Fey ) to think about marriage and having a family .', ", Jack Donaghy ( Alec Baldwin ) has trouble dealing with his own domineering mother , who wants to move in with him , and at the same time , Tracy Jordan ( Tracy Morgan ) becomes upset by Josh Girard 's ( Ross ) impression of him ."),
+            "output": ('In the episode , Cerie Xerox ( Bowden ) gets engaged so that she can be a " young hot mom " , causing Liz Lemon ( Tina Fey ) to think about marriage and having a family .', "Jack Donaghy ( Alec Baldwin ) has trouble dealing with his own domineering mother , who wants to move in with him , and at the same time , Tracy Jordan ( Tracy Morgan ) becomes upset by Josh Girard 's ( Ross ) impression of him ."),
             "previous_sentence": "In the episode , Cerie Xerox ( Bowden ) gets engaged so that she can be a \" young hot mom \" , causing Liz Lemon ( Tina Fey ) to think about marriage and having a family .",
             "sentence": "Meanwhile , Jack Donaghy ( Alec Baldwin ) has trouble dealing with his own domineering mother , who wants to move in with him , and at the same time , Tracy Jordan ( Tracy Morgan ) becomes upset by Josh Girard 's ( Ross ) impression of him ."
         },
         {
             "marker": "meanwhile",
-            "output": ('In the episode , Mulder is shown evidence of alien life which may actually be part of a huge government hoax designed to deflect attention from secret military programs .', ', Scully struggles with her cancer in the face of hostility from her brother , who believes she should no longer be working .'),
+            "output": ('In the episode , Mulder is shown evidence of alien life which may actually be part of a huge government hoax designed to deflect attention from secret military programs .', 'Scully struggles with her cancer in the face of hostility from her brother , who believes she should no longer be working .'),
             "previous_sentence": "In the episode , Mulder is shown evidence of alien life which may actually be part of a huge government hoax designed to deflect attention from secret military programs .",
             "sentence": "Meanwhile , Scully struggles with her cancer in the face of hostility from her brother , who believes she should no longer be working ."
         },
         {
             "marker": "meanwhile",
-            "output": ('Shekhar is disgusted to hear of the marriage and in his anger he scowls at Lolita , humiliating her like his father .', ", Girish assists Gurcharan 's family and takes them to London for the heart treatment ."),
+            "output": ('Shekhar is disgusted to hear of the marriage and in his anger he scowls at Lolita , humiliating her like his father .', "Girish assists Gurcharan 's family and takes them to London for the heart treatment ."),
             "previous_sentence": "Shekhar is disgusted to hear of the marriage and in his anger he scowls at Lolita , humiliating her like his father .",
             "sentence": "Meanwhile , Girish assists Gurcharan 's family and takes them to London for the heart treatment ."
         },
         {
             "marker": "meanwhile",
-            "output": ('At the other end , Johnston was also able to make the ball move sideways .', ', Compton appeared to be untroubled by the bowling .'),
+            "output": ('At the other end , Johnston was also able to make the ball move sideways .', 'Compton appeared to be untroubled by the bowling .'),
             "previous_sentence": "At the other end , Johnston was also able to make the ball move sideways .",
             "sentence": "Meanwhile , Compton appeared to be untroubled by the bowling ."
         },
         {
             "marker": "meanwhile",
-            "output": ("In the episode , Peter and Lois go on a second honeymoon to spice up their marriage , but are chased by Mel Gibson after Peter steals the sequel to The Passion of the Christ from Gibson 's private hotel room .", ', Brian and Stewie take care of Chris and Meg at home .'),
+            "output": ("In the episode , Peter and Lois go on a second honeymoon to spice up their marriage , but are chased by Mel Gibson after Peter steals the sequel to The Passion of the Christ from Gibson 's private hotel room .", 'Brian and Stewie take care of Chris and Meg at home .'),
             "previous_sentence": "In the episode , Peter and Lois go on a second honeymoon to spice up their marriage , but are chased by Mel Gibson after Peter steals the sequel to The Passion of the Christ from Gibson 's private hotel room .",
             "sentence": "Meanwhile , Brian and Stewie take care of Chris and Meg at home ."
         },
         {
             "marker": "meanwhile",
-            "output": ('.', ", Chris learns that his best customer , Herbert , has made Kyle , a neighbor 's son and a bully , his new paper boy ."),
+            "output": ('.', "Chris learns that his best customer , Herbert , has made Kyle , a neighbor 's son and a bully , his new paper boy ."),
             "previous_sentence": ".",
             "sentence": "Meanwhile , Chris learns that his best customer , Herbert , has made Kyle , a neighbor 's son and a bully , his new paper boy ."
         },
         {
             "marker": "meanwhile",
-            "output": ('When he informs George they cannot go back to his apartment because of the baby shower , George insists and Jerry discovers that George is wearing the red shirt and is just using the favor as a chance to encounter Leslie at the baby shower .', ', Kramer and the two Russians crash the shower to install cable television , start to eat all the food and get into a heated argument .'),
+            "output": ('When he informs George they cannot go back to his apartment because of the baby shower , George insists and Jerry discovers that George is wearing the red shirt and is just using the favor as a chance to encounter Leslie at the baby shower .', 'Kramer and the two Russians crash the shower to install cable television , start to eat all the food and get into a heated argument .'),
             "previous_sentence": "When he informs George they cannot go back to his apartment because of the baby shower , George insists and Jerry discovers that George is wearing the red shirt and is just using the favor as a chance to encounter Leslie at the baby shower .",
             "sentence": "Meanwhile , Kramer and the two Russians crash the shower to install cable television , start to eat all the food and get into a heated argument ."
         },
         {
             "marker": "meanwhile",
-            "output": ('.', ', at 23 : 44 Tanaka ordered his ships to break contact and retire from the battle area .'),
+            "output": ('.', 'At 23 : 44 Tanaka ordered his ships to break contact and retire from the battle area .'),
             "previous_sentence": ".",
             "sentence": "Meanwhile , at 23 : 44 Tanaka ordered his ships to break contact and retire from the battle area ."
         },
@@ -690,14 +693,14 @@ def test():
         {
             "sentence": "The government buried many in mass graves , some above @-@ ground tombs were forced open so bodies could be stacked inside , and others were burned .",
             "previous_sentence": "Mayor Jean @-@ Yves Jason said that officials argued for hours about what to do with the volume of corpses .",
-            "output": ('some above-ground tombs were forced open', 'bodies could be stacked inside'),
+            "output": ('Some above-ground tombs were forced open .', 'Bodies could be stacked inside .'),
             "marker": "so"
         },
         {
             ## i'm ok with this
             "sentence": "This study includes Auroraceratops , but lacks seven taxa found in Xu and Makovicky 's work , so it is unclear how comparable the two studies are .",
             "previous_sentence": "In contrast to the previous analysis , You and Dodson find Chaoyangsaurus to be the most basal neoceratopsian , more derived than Psittacosaurus , while Leptoceratopsidae , not Protoceratopsidae , is recovered as the sister group of Ceratopsidae .",
-            "output": ("lacks seven taxa found in Xu and Makovicky 's work ,", 'it is unclear how comparable the two studies are'),
+            "output": ("Lacks seven taxa found in Xu and Makovicky 's work .", 'It is unclear how comparable the two studies are .'),
             "marker": "so"
         },
         # {
@@ -815,8 +818,9 @@ def test():
             "sentence": "The active constituents of this species are water @-@ soluble , and boiling and then discarding the cooking water at least partly <unk> A. muscaria ."
         },
         {
+            # bailing on this in favor of higher precision
             "marker": "though",
-            "output": (", it wasn ' t until 1985 that a winter collection was assembled from her remaining work and published posthumously .", 'she published Flower Fairy books with spring , summer , and autumn themes'),
+            "output": None,#("It wasn ' t until 1985 that a winter collection was assembled from her remaining work and published posthumously .", 'She published Flower Fairy books with spring , summer , and autumn themes .'),
             "previous_sentence": "Barker died in 1973 .",
             "sentence": "Though she published Flower Fairy books with spring , summer , and autumn themes , it wasn 't until 1985 that a winter collection was assembled from her remaining work and published posthumously ."
         },
@@ -828,7 +832,7 @@ def test():
         },
         {
             "marker": "though",
-            "output": ('Occupancy at 100 McAllister was low , .', 'the United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s'),
+            "output": ('Occupancy at 100 McAllister was low .', 'The United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s .'),
             "previous_sentence": "Many federal groups at 100 McAllister moved their offices in 1959 – 1960 to the newly built federal building at 450 Golden Gate Avenue , later named the Phillip Burton Federal Building .",
             "sentence": "Occupancy at 100 McAllister was low , though the United States Army Corps of Engineers moved their San Francisco District offices there in the 1960s , and local draftees were still required to appear there through the late 1960s ."
         },
@@ -841,67 +845,67 @@ def test():
         },
         {
             "marker": "though",
-            "output": ('Many etymological suggestions have been made , : .', 'there is no general agreement'),
+            "output": ('Many etymological suggestions have been made .', 'There is no general agreement .'),
             "previous_sentence": ".",
             "sentence": "Many etymological suggestions have been made , though there is no general agreement : ."
         },
         {
             "marker": "though",
-            "output": ('<unk> ) , described by Hulke two years after I. prestwichii , has been synonymised with Iguanodon bernissartensis , .', 'this is controversial'),
+            "output": ('<unk> ) , described by Hulke two years after I. prestwichii , has been synonymised with Iguanodon bernissartensis .', 'This is controversial .'),
             "previous_sentence": "<unk> ( also incorrectly spelled I.",
             "sentence": "<unk> ) , described by Hulke two years after I. prestwichii , has been synonymised with Iguanodon bernissartensis , though this is controversial ."
         },
         {
             "marker": "though",
-            "output": (', no effective antibacterial treatments were available .', 'it was known in the nineteenth century that bacteria are the cause of many diseases'),
+            "output": ('No effective antibacterial treatments were available .', 'It was known in the nineteenth century that bacteria are the cause of many diseases .'),
             "previous_sentence": ".",
             "sentence": "Though it was known in the nineteenth century that bacteria are the cause of many diseases , no effective antibacterial treatments were available ."
         },
         {
             "marker": "though",
-            "output": (', he was credited as a supervising producer on several installments for the third season .', 'Craig left the staff shortly before " Oubliette " entered production for unknown reasons'),
+            "output": ('He was credited as a supervising producer on several installments for the third season .', 'Craig left the staff shortly before " Oubliette " entered production for unknown reasons .'),
             "previous_sentence": "His most notable television screenplay was The New Alfred Hitchcock Presents entry \" Final Escape \" .",
             "sentence": "Though Craig left the staff shortly before \" Oubliette \" entered production for unknown reasons , he was credited as a supervising producer on several installments for the third season ."
         },
         {
             "marker": "though",
-            "output": (', Pennock did not appear in either series .', 'the Red Sox won the 1915 and 1916 World Series'),
+            "output": ('Pennock did not appear in either series .', 'The Red Sox won the 1915 and 1916 World Series .'),
             "previous_sentence": "@ 67 ERA , as Buffalo won the league pennant .",
             "sentence": "Though the Red Sox won the 1915 and 1916 World Series , Pennock did not appear in either series ."
         },
         {
             "marker": "when",
-            "output": (', the other is sealed off to the player', 'one option is selected'),
+            "output": ('The other is sealed off to the player .', 'One option is selected .'),
             "previous_sentence": "The player progresses through a series of linear missions , gradually unlocked as maps that can be freely scanned through and replayed as they are unlocked .",
             "sentence": "The route to each story location on the map varies depending on an individual player 's approach : when one option is selected , the other is sealed off to the player ."
         },
         {
             "marker": "when",
-            "output": ('The team received help , however , .', 'Jordan decided to return to the NBA for the Bulls'),
+            "output": ('The team received help , however .', 'Jordan decided to return to the NBA for the Bulls .'),
             "previous_sentence": "Struggling at mid @-@ season to ensure a spot in the playoffs , Chicago was 31 – 31 at one point in mid @-@ March .",
             "sentence": "The team received help , however , when Jordan decided to return to the NBA for the Bulls ."
         },
         {
             "marker": "when",
-            "output": ('The storyline began on-screen .', 'Nicole started dating Elliot Gillen ( Paul <unk> )'),
+            "output": ('The storyline began on-screen .', 'Nicole started dating Elliot Gillen ( Paul <unk> ) .'),
             "previous_sentence": ".",
             "sentence": "The storyline began on @-@ screen when Nicole started dating Elliot Gillen ( Paul <unk> ) ."
         },
         {
             "marker": "when",
-            "output": (', he speaks in " Square mouth public talk " , which is a manner of speaking reserved for martial heroes , highly respected characters , or , sometimes , lesser characters that pretend to be an important hero .', 'Zhou is vocalized in " Yangzhou storytelling "'),
+            "output": ('He speaks in " Square mouth public talk " , which is a manner of speaking reserved for martial heroes , highly respected characters , or , sometimes , lesser characters that pretend to be an important hero .', 'Zhou is vocalized in " Yangzhou storytelling " .'),
             "previous_sentence": ".",
             "sentence": "When Zhou is vocalized in \" Yangzhou storytelling \" , he speaks in \" Square mouth public talk \" , which is a manner of speaking reserved for martial heroes , highly respected characters , or , sometimes , lesser characters that pretend to be an important hero ."
         },
         {
             "marker": "when",
-            "output": None,
+            "output": ('The message " Bagpuss Sees All Things " is spelled out midway through the song ( from Brixton at four minutes ten seconds , to San José at four minutes 31 seconds ) using the first letter of each location .', 'Listed in the order in which the locations are narrated .'),
             "previous_sentence": "Ramblin ' Man \" features a conversation between an interviewer ( the voice of Michael Deakin — father of Lemon Jelly 's Fred Deakin ) and \" John the Ramblin ' Man \" ( the voice of Standing ) , during which he lists various places from around the world , ranging from \" from small Sussex villages to major world capitals . \"",
             "sentence": "When listed in the order in which the locations are narrated , the message \" Bagpuss Sees All Things \" is spelled out midway through the song ( from Brixton at four minutes ten seconds , to San José at four minutes 31 seconds ) using the first letter of each location ."
         },
         {
             "marker": "when",
-            "output": (', the family moved to Coleraine , County Londonderry , where May worked for the Housing Executive .', 'Nesbitt was 11 years old'),
+            "output": ('The family moved to Coleraine , County Londonderry , where May worked for the Housing Executive .', 'Nesbitt was 11 years old .'),
             "previous_sentence": ".",
             "sentence": "When Nesbitt was 11 years old , the family moved to Coleraine , County Londonderry , where May worked for the Housing Executive ."
         },
@@ -913,31 +917,31 @@ def test():
         },
         {
             "marker": "when",
-            "output": (', he had Tintin befriend a herd of elephants living in the Indian jungle', 'he wrote Cigars of the Pharaoh ( 1934 )'),
+            "output": ('He had Tintin befriend a herd of elephants living in the Indian jungle .', 'He wrote Cigars of the Pharaoh ( 1934 ) .'),
             "previous_sentence": "Such scenes reflect the popularity of big @-@ game hunting among whites and affluent visitors in Sub @-@ Saharan Africa during the 1930s .",
             "sentence": "Hergé later felt guilty about his portrayal of animals in Tintin in the Congo and became an opponent of blood sports ; when he wrote Cigars of the Pharaoh ( 1934 ) , he had Tintin befriend a herd of elephants living in the Indian jungle ."
         },
         {
             "marker": "when",
-            "output": ('the rock fainted', 'it was produced in court'),
+            "output": ('The rock fainted .', 'It was produced in court .'),
             "previous_sentence": "Professor Kenneth Pye , a defense witness , said that there was no evidence that the rock had ever been on the lake bed at all .",
             "sentence": "The article in the Sunday Herald also claims that the policeman said to be responsible for finding the rock fainted when it was produced in court , offering no explanation , but still denying that he ever found it ."
         },
         {
             "marker": "while",
-            "output": (', it also underwent multiple adjustments , such as making the game more forgiving for series newcomers .', 'it retained the standard features of the series'),
+            "output": ('It also underwent multiple adjustments , such as making the game more forgiving for series newcomers .', 'It retained the standard features of the series .'),
             "previous_sentence": "The game began development in 2010 , carrying over a large portion of the work done on Valkyria Chronicles II .",
             "sentence": "While it retained the standard features of the series , it also underwent multiple adjustments , such as making the game more forgiving for series newcomers ."
         },
         {
             "marker": "while",
-            "output": (', all populations show great individual variation in colouring , and the birds gradually become paler and greyer towards the east of the range .', 'there are no subspecies'),
+            "output": ('All populations show great individual variation in colouring , and the birds gradually become paler and greyer towards the east of the range .', 'There are no subspecies .'),
             "previous_sentence": "The chicks have black down , as with all rails .",
             "sentence": "While there are no subspecies , all populations show great individual variation in colouring , and the birds gradually become paler and greyer towards the east of the range ."
         },
         {
             "marker": "while",
-            "output": ('to put punk ideology in the series , with the protagonist trying to reacquire his former punk self ,', 'also characterizing the Conservative government as a demon infestation with the punk subculture fighting against this supposed subversion and abuse'),
+            "output": ('To put punk ideology in the series , with the protagonist trying to reacquire his former punk self .', 'Also characterizing the Conservative government as a demon infestation with the punk subculture fighting against this supposed subversion and abuse .'),
             "previous_sentence": "During Warren Ellis ' run , he included American school shootings in a one @-@ shot issue which led to a major controversy .",
             "sentence": "In his run , Peter Milligan managed to put punk ideology in the series , with the protagonist trying to reacquire his former punk self , while also characterizing the Conservative government as a demon infestation with the punk subculture fighting against this supposed subversion and abuse ."
         },
@@ -949,14 +953,14 @@ def test():
         },
         {
             "marker": "while",
-            "output": ('The Sedgemoor district has many buildings related to trade and commerce centered on Bridgwater ; .', 'in South Somerset abbeys , priories and farmhouses predominate'),
+            "output": ('The Sedgemoor district has many buildings related to trade and commerce centered on Bridgwater .', 'In South Somerset abbeys , priories and farmhouses predominate .'),
             "previous_sentence": "North Somerset features bridges and piers along with a selection of Manor houses .",
             "sentence": "The Sedgemoor district has many buildings related to trade and commerce centered on Bridgwater ; while in South Somerset abbeys , priories and farmhouses predominate ."
         },
         {
             ## I am OK with this
             "marker": "while",
-            "output": ('to wait for the rear', 'the main army marched on to Castleton'),
+            "output": ('To wait for the rear .', 'The main army marched on to Castleton .'),
             "previous_sentence": "American general St. Clair paused at Hubbardton to give the main army 's tired and hungry troops time to rest while he hoped the rear guard would arrive .",
             "sentence": "When it did not arrive in time , he left Colonel Seth Warner and the Green Mountain Boys behind , along with the 2nd New Hampshire Regiment under Colonel Nathan Hale , at Hubbardton to wait for the rear while the main army marched on to Castleton ."
         },
@@ -966,6 +970,1035 @@ def test():
             "previous_sentence": "Towards the end of the song , Carey belts out the climax .",
             "sentence": "Sarah Rodman from The Boston Herald described it as fascinating and wrote , \" it sounds as though Carey is singing in falsetto while still in her chest voice . \""
         },
+        {
+            "marker": "and",
+            "output": None,
+            "previous_sentence": "i know it all and starlings is not the place where you want to be after dark .",
+            "sentence": "the only reason why no one knows this is because jason , emily , seth and i have kept it that way .",
+        },
+        {
+            "marker": "and",
+            "output": None,
+            "previous_sentence": "i walked along the empty road alone , occasionally waving to passing kids on bikes .",
+            "sentence": "my backpack was slung over my shoulder , filled with my writing books and sketchpads .",
+        },
+        {
+            "marker": "and",
+            "output": None,
+            "previous_sentence": "i kicked a rock into the grass .",
+            "sentence": "the sun was starting to set , painting the sky in brilliant oranges and reds .",
+        },
+        {
+            "marker": "and",
+            "output": ('My phone buzzed .', 'I awoke from my trance .'),
+            "previous_sentence": "the world prepared to go into its hours of unreal silence that made it seem magical , and it really was .",
+            "sentence": "my phone buzzed and i awoke from my trance .",
+        },
+        {
+            "marker": "and",
+            "output": ('I thumbed the keypad .', 'Opened the message seth had sent me .'),
+            "previous_sentence": "my phone buzzed and i awoke from my trance .",
+            "sentence": "i thumbed the keypad and opened the message seth had sent me .",
+        },
+        {
+            "marker": "and",
+            "output": ('I flipped open the pad .', 'Wrote : walking home .'),
+            "previous_sentence": "it read : whatcha doing ?",
+            "sentence": "i flipped open the pad and wrote : walking home .",
+        },
+        {
+            # i'm ok with this
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "i couldnt let the creature reach my house .",
+            "sentence": "i pulled back the string , and then stopped .",
+        },
+        {
+            # i'm ok with this
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "i pushed him off and grabbed my fallen bow , the familiar feeling of the wood boosting my confidence .",
+            "sentence": "i turned back around and started back where i left off , but then a body slammed into me .",
+        },
+        {
+            "marker": "then",
+            "output": ('I closed my eyes against the pain , trying to focus myself against the dull throb in my shin .', 'The thrasher went limp against me .'),
+            "previous_sentence": "i closed my eyes against the pain , trying to focus myself against the dull throb in my shin .",
+            "sentence": "then the thrasher went limp against me .",
+        },
+        {
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "He kicked the dead thrasher one more time before sheathing his sword .",
+            "sentence": "you know better jazell then to take on a monster by yourself .",
+        },
+        {
+            "marker": "then",
+            "output": ('I threw my bag on my bed and took off my shoes .', 'I headed back down stairs to help set the table .'),
+            "previous_sentence": "i threw my bag on my bed and took off my shoes .",
+            "sentence": "then i headed back down stairs to help set the table .",
+        },
+        {
+            "marker": "then",
+            "output": ('We were walking through the woods , rambling on about how halloween was almost here and that ms. stecher was still giving us too much homework .', 'All of a sudden an invisible object slammed into me .'),
+            "previous_sentence": "we were walking through the woods , rambling on about how halloween was almost here and that ms. stecher was still giving us too much homework .",
+            "sentence": "then all of a sudden an invisible object slammed into me .",
+        },
+        {
+            # i'm ok with this
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "i said .",
+            "sentence": "he bit his lip and then smirked .",
+        },
+        {
+            "marker": "then",
+            "output": ('When the creature went down , seth stood and took a breath .', 'Another tackled him to the ground .'),
+            "previous_sentence": "when the creature went down , seth stood and took a breath .",
+            "sentence": "then another tackled him to the ground .",
+        },
+        {
+            # i'm ok with this
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "i imagined myself in my body , and what is was like to be back .",
+            "sentence": "and then i was back to normal .",
+        },
+        {
+            # i'm ok with this
+            "marker": "then",
+            "output": None,
+            "previous_sentence": "wait .",
+            "sentence": "the wind picked up around him and then suddenly he was back , blue hair and all , standing beside his sitting , normal body .",
+        },
+        {
+            # i guess i'm ok with this...
+            "marker": "because",
+            "output": ('The only reason why no one knows this is .', 'Jason , emily , seth and I have kept it that way .'),
+            "previous_sentence": "i know it all and starlings is not the place where you want to be after dark .",
+            "sentence": "the only reason why no one knows this is because jason , emily , seth and i have kept it that way .",
+        },
+        {
+            "marker": "because",
+            "output": ('I didnt open his reply .', 'I knew what it would say .'),
+            "previous_sentence": "my ears heard nothing and i didnt see any movement but my hands shook slightly as i typed , nothing , im fine .",
+            "sentence": "i didnt open his reply because i knew what it would say .",
+        },
+        {
+            "marker": "because",
+            "output": ('None of us did , at that time .', 'We didnt know what was going on .'),
+            "previous_sentence": "he didnt have a clue as what to do to fight these invisible creatures .",
+            "sentence": "none of us did , at that time , because we didnt know what was going on .",
+        },
+        {
+            "marker": "because",
+            "output": ('I did .', 'We need all the facts .'),
+            "previous_sentence": "seth complained .",
+            "sentence": "i did because we need all the facts .",
+        },
+        {
+            "marker": "because",
+            "output": ('I asked , watching her .', 'She had refused to let me help .'),
+            "previous_sentence": "why do you think seth wont tell us what he was doing ?",
+            "sentence": "i asked , watching her because she had refused to let me help .",
+        },
+        {
+            "marker": "because",
+            "output": None,
+            "previous_sentence": "she was silent , i guess the person theyre talking about is kojas , but we dont know who he is , or if hes important .",
+            "sentence": "well , im thinking hes important because these weird dwarfs keep talking about him .",
+        },
+        {
+            "marker": "because",
+            "output": None,
+            "previous_sentence": "i yawned .",
+            "sentence": "emily didnt reply because her face was pushed up against the window .",
+        },
+        {
+            "marker": "because",
+            "output": ('You will care .', 'In the end , he will destroy you once hes done using you .'),
+            "previous_sentence": "the dwarf was now whispering and all the others had fallen silent so they could hear .",
+            "sentence": "you will care because in the end , he will destroy you once hes done using you .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('At the same time , nancy turned around and brought a whistle to her lips , letting out a sharp trill that caused the guard to drop his laser gun and grab his ears in pain as he was lifted off his feet from the blast .', 'The marbles johnny threw reached the guard and exploded , drenching him in a kaleidoscope of multicolored extra sticky paint .'),
+            "previous_sentence": "at the same time , nancy turned around and brought a whistle to her lips , letting out a sharp trill that caused the guard to drop his laser gun and grab his ears in pain as he was lifted off his feet from the blast .",
+            "sentence": "meanwhile , the marbles johnny threw reached the guard and exploded , drenching him in a kaleidoscope of multicolored extra sticky paint .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('People feared the wasteland more than any man .', 'Rasid laughed , the fat jowls of his face shaking with mirth .'),
+            "previous_sentence": "people feared the wasteland more than any man .",
+            "sentence": "rasid , meanwhile , laughed , the fat jowls of his face shaking with mirth .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": None,
+            "previous_sentence": "i will cause a distraction , and they will go after me .",
+            "sentence": "in the meanwhile , you can run across and meet me on the other side .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('The red light above began to swirl at a faster rate , and the ringing bell started to ring louder than before .', 'Suvan rushed over to the desk and began to randomly push buttons .'),
+            "previous_sentence": "the red light above began to swirl at a faster rate , and the ringing bell started to ring louder than before .",
+            "sentence": "meanwhile , suvan rushed over to the desk and began to randomly push buttons .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('They escort us there and i end up leaving after the cops leave .', 'Johnny had gotten high as a kite and wanted to fly down the road .'),
+            "previous_sentence": "they escort us there and i end up leaving after the cops leave .",
+            "sentence": "meanwhile johnny had gotten high as a kite and wanted to fly down the road .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('We will collect the money another time , after it has been forgotten about .', 'All comrades will return to the star chamber .'),
+            "previous_sentence": "we will collect the money another time , after it has been forgotten about .",
+            "sentence": "meanwhile , all comrades will return to the star chamber .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('A gentle face , a sad face , perhaps he had found some truth at last .', 'After the tremor , the lords of the double cross had assembled in the drawing room .'),
+            "previous_sentence": "a gentle face , a sad face , perhaps he had found some truth at last .",
+            "sentence": "meanwhile , after the tremor , the lords of the double cross had assembled in the drawing room .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('He stepped back and waited .', 'Puffy had found a pig and the two creatures were holding a staring match over a fence .'),
+            "previous_sentence": "he stepped back and waited .",
+            "sentence": "puffy , meanwhile , had found a pig and the two creatures were holding a staring match over a fence .",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('The well-meaning states attorney takes the plea , and they send this man to a mental hospital , based on his va evaluation , which says that he is mentally unstable because of his war experience .', 'The detective assigned to the case is reading a book called stolen valor , are you familiar with it manny .'),
+            "previous_sentence": "the well-meaning states attorney takes the plea , and they send this man to a mental hospital , based on his va evaluation , which says that he is mentally unstable because of his war experience .",
+            "sentence": "meanwhile , the detective assigned to the case is reading a book called stolen valor , are you familiar with it manny ?",
+        },
+        {
+            "marker": "meanwhile",
+            "output": ('Shell get all of taxas weapons .', 'Taxa had thought she had xiona cornered again but xiona had managed to escape yet again .'),
+            "previous_sentence": "shell get all of taxas weapons .",
+            "sentence": "meanwhile , taxa had thought she had xiona cornered again but xiona had managed to escape yet again .",
+        },
+        {
+            "marker": "for example",
+            "output": None,
+            "previous_sentence": "i feel like i 'm in the self-help section of some bookstore .",
+            "sentence": "where can i find books about something like ? the atonement , for example .",
+        },
+        {
+            "marker": "for example",
+            "output": ('As for my income , i consider myself as a sort of an investor .', 'This building , used to be a warehouse .'),
+            "previous_sentence": "as for my income , i consider myself as a sort of an investor .",
+            "sentence": "this building , for example , used to be a warehouse .",
+        },
+        {
+            "marker": "for example",
+            "output": ('First off is tony salimbene he is dumber than dirt he graduated from high school with a special education diploma first of all , and second he acts like it .', 'I was hanging out with him when I was in college he didnt attend .'),
+            "previous_sentence": "first off is tony salimbene he is dumber than dirt he graduated from high school with a special education diploma first of all , and second he acts like it .",
+            "sentence": "for example , i was hanging out with him when i was in college he didnt attend .",
+        },
+        {
+            "marker": "for example",
+            "output": ('But he had his moments .', 'He ran up over a thousand dollars in phone bills at a week stay in a hotel .'),
+            "previous_sentence": "but he had his moments .",
+            "sentence": "for example , he ran up over a thousand dollars in phone bills at a week stay in a hotel .",
+        },
+        {
+            "marker": "for example",
+            "output": ('Dont believe me , just watch the commercials on tv which are a major cause of this .', 'There was a nestle crunch commercial in which some guy goes to jail .'),
+            "previous_sentence": "dont believe me , just watch the commercials on tv which are a major cause of this .",
+            "sentence": "for example , there was a nestle crunch commercial in which some guy goes to jail .",
+        },
+        {
+            "marker": "for example",
+            "output": None,
+            "previous_sentence": "purists may scream blue murder but i had an obligation to provide the best possible working environment for my pilots .",
+            "sentence": "one of the few down sides to the hunter as a fighter had been its limited range , so an absolute must for all my aircraft were mod.228 wet wings with its distinctive leading edge dog-tooth , as all my aircraft must be able to carry a full internal fuel load , plus four drop tanks when transiting , for example from el campo to the uk .",
+        },
+        {
+            "marker": "for example",
+            "output": None,
+            "previous_sentence": "what about all the other jobs related to operating the aircraft i asked , the safety equipment , photography , paint spraying , anti-corrosion etc ?",
+            "sentence": "multi-tasking he said , for example having two armourer supervisors and two armourers sat around all day on the off chance that an ejection seat might need to be removed was a bit of a waste of time and money , let them be sub trained into looking after the safety equipment and flying clothing .",
+        },
+        {
+            "marker": "for example",
+            "output": None,
+            "previous_sentence": "i had inherited the nose section with one of my aircraft and hha had quickly realised that it could be very useful indeed .",
+            "sentence": "whereas it was a bit dodgy to willy nilly drill holes through the skin of a real aeroplane ( for example when trial fitting the new glass cockpit ) , it was ok to do so on this one , any slip of the drill and a bit of poly filler soon made it as good as new .",
+        },
+        {
+            "marker": "after",
+            "output": None,
+            "previous_sentence": "but i do .",
+            "sentence": "i know it all and starlings is not the place where you want to be after dark .",
+        },
+        {
+            "marker": "after",
+            "output": None,
+            "previous_sentence": "dinner !",
+            "sentence": "after dinner i went straight up stairs to go to sleep .",
+        },
+        {
+            # sure
+            "marker": "after",
+            "output": ('Why I was giggling .', 'What had just happened to us a few minutes ago .'),
+            "previous_sentence": "you have dark blue hair .",
+            "sentence": "i giggled , not knowing why i was giggling after what had just happened to us a few minutes ago .",
+        },
+        {
+            "marker": "after",
+            "output": None,
+            "previous_sentence": "it was like i had been an archer my whole life .",
+            "sentence": "jason threw knife after knife , hitting its mark every time .",
+        },
+        {
+            "marker": "after",
+            "output": None,
+            "previous_sentence": "there were six swings and a tower with four slides attached to it .",
+            "sentence": "i ran after them with emily right behind me .",
+        },
+        {
+            "marker": "after",
+            "output": None,
+            "previous_sentence": "she jumped off the swing and grabbed me by the arm .",
+            "sentence": "she ran over to jason and gripped his arm with her free hand , pulling us both after her .",
+        },
+        {
+            "marker": "after",
+            "output": ('You can hang out in your room .', 'You do that .'),
+            "previous_sentence": "emily , dear , can you put your laundry away ?",
+            "sentence": "after you do that , you can hang out in your room .",
+        },
+        {
+            "marker": "after",
+            "output": None,
+            "previous_sentence": "they were really starting to get on my nerves .",
+            "sentence": "looks like i wasnt sleeping after all .",
+        },
+        {
+            "marker": "after",
+            "output": None,
+            "previous_sentence": "looks like i wasnt sleeping after all .",
+            "sentence": "chapter 3 sneaking out after hours isnt easy , especially at emilys house .",
+        },
+        {
+            "marker": "after",
+            "output": ('We gathered around the barely burning embers .', 'We had re-entered our own world .'),
+            "previous_sentence": "i pointed out and took down the last dwarf .",
+            "sentence": "we gathered around the barely burning embers , after we had re-entered our own world .",
+        },
+        {
+            "marker": "when",
+            "output": ('I started to climb the hill .', 'I froze .'),
+            "previous_sentence": "i turned the corner , and my house came into view .",
+            "sentence": "i started to climb the hill when i froze .",
+        },
+        {
+            "marker": "when",
+            "output": ('Which wasnt fair .', 'He wasnt the one injured .'),
+            "previous_sentence": "i started to slowly limp back to my body but seth just disappeared from my side .",
+            "sentence": "he has this annoying skill to be able to just return to his body without having to be near it , which wasnt fair when he wasnt the one injured .",
+        },
+        {
+            # ok...
+            "marker": "when",
+            "output": ('I have .', 'I become human again , just not as severe .'),
+            "previous_sentence": "i raised the side of my shirt to find the thin , red scratch marks .",
+            "sentence": "any injuries i get in my hunter form i have when i become human again , just not as severe .",
+        },
+        {
+            # i'm ok with this, i guess...
+            "marker": "when",
+            "output": ('I was a little klutzy so it was easy for my parents to believe I still was .', 'I was small .'),
+            "previous_sentence": "the truth is that i have really great balance , which i had gained from so much fighting .",
+            "sentence": "i was a little klutzy when i was small , so it was easy for my parents to believe i still was .",
+        },
+        {
+            "marker": "when",
+            "output": ('Emily stopped in mid-sentence .', 'She noticed me sitting beside her .'),
+            "previous_sentence": "jason , who sat next to her , was pretending to be fascinated by her rant .",
+            "sentence": "emily stopped in mid-sentence when she noticed me sitting beside her .",
+        },
+        {
+            "marker": "when",
+            "output": None,
+            "previous_sentence": "its not like they werent foolish enough already .",
+            "sentence": "the day when it all changed was still a mystery to us .",
+        },
+        {
+            "marker": "when",
+            "output": ('I felt a quiver full of feathered arrows strapped there .', 'I reached behind my back .'),
+            "previous_sentence": "something fell off my back and i picked it up .",
+            "sentence": "it was a wooden bow , and when i reached behind my back i felt a quiver full of feathered arrows strapped there .",
+        },
+        {
+            "marker": "when",
+            "output": ('I realized he had also made an outfit change .', 'I looked back at seth .'),
+            "previous_sentence": "a thick woven jacket was shielding me from the october cold .",
+            "sentence": "when i looked back at seth , i realized he had also made an outfit change .",
+        },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "he has this annoying skill to be able to just return to his body without having to be near it , which wasnt fair when he wasnt the one injured .",
+        #     "sentence": "i , however , had to stiffly make my way to my dormant human body .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "jason threw knives calmly at the other monster while emily casted fire by his side .",
+        #     "sentence": "i , however , was jumped on by something entirely new .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "like alejo had said earlier , most of the guys who had been up here on the mountain were already gone .",
+        #     "sentence": "an older guy wara had n't seen before had appeared , however , watching the scene with displeasure , arms crossed in front of his chest .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "alejo felt sick , not at all ready to get into a discussion of the past with his father .",
+        #     "sentence": "his father 's face , however , was unreadable .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "wara jerked into a sitting position , flipping her gaze over to alejo 's bed , half-expecting it to still be empty .",
+        #     "sentence": "his body was tucked under the covers , however , back towards wara .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "alejo sank back into the couch , hoping the call was his sister in need of a midnight conversation .",
+        #     "sentence": "the odds were against that , however ; there really was n't a good chance a call in the middle of the night would bring good news .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "what kind of man just sat there without saying anything when a woman finds out the guy she loved has died ?",
+        #     "sentence": "alejo did n't even need to run through the possible options in his mind , however , to know that finding something adequate to say to her would be impossible .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "what she really wanted to do was sling the black guitar strap over her shoulder and walk away , never looking back .",
+        #     "sentence": "eduardo was coming up front to sing something , however , and she knew he would need the guitar .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "he deserved to be here ; after all , he had broken the rules and it was only fair to have to pay .",
+        #     "sentence": "panic wanted to mess with his head , however , about wara .",
+        # },
+        # {
+        #     "marker": "however",
+        #     "output": None,
+        #     "previous_sentence": "the reason you 're here is because i have a job offer for you , which i 'll tell you about when you 're ready .",
+        #     "sentence": "but for now , i really want to help you , however i can .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "they dont know the half of it .",
+        #     "sentence": "but i do .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "i kept my eyes on the shadowed road , watching my every step .",
+        #     "sentence": "usually i was more aware of my surroundings , but today i was tired and didnt care if i rammed into a tree .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "i glanced at the nearby woods .",
+        #     "sentence": "my ears heard nothing and i didnt see any movement but my hands shook slightly as i typed , nothing , im fine .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "i placed my bag on the ground and crossed my legs .",
+        #     "sentence": "i started to grab my phone but stopped .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "2 i was hollow and could probably see my own body if i opened my eyes .",
+        #     "sentence": "but i could never get the courage to do that .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "i couldnt take out one of these like , this unless i set it on fire .",
+        #     "sentence": "but emily wasnt here .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "but emily wasnt here .",
+        #     "sentence": "i could take it out with a few arrows but its best to kill thrashers before they realize youre there .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "i pushed him off and grabbed my fallen bow , the familiar feeling of the wood boosting my confidence .",
+        #     "sentence": "i turned back around and started back where i left off , but then a body slammed into me .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "he was definitely angry at me .",
+        #     "sentence": "i tried to place weight on my leg but winced as pain shot up it .",
+        # },
+        # {
+        #     "marker": "but",
+        #     "output": None,
+        #     "previous_sentence": "all you had to do was send me a quick text and i would have showed up to help .",
+        #     "sentence": "but you didnt .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "a thick woven jacket was shielding me from the october cold .",
+        #     "sentence": "when i looked back at seth , i realized he had also made an outfit change .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "i grumbled , trying to pull my head free .",
+        #     "sentence": "i also had no desire to be bald at 16 .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "i killed the others and looked up to find the thrashers dead too , probably courtesy of seth .",
+        #     "sentence": "a few dwarfs were also lying dead in front of emily .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "my mom squealed happily .",
+        #     "sentence": "you also didnt tell us that you were to be picked from the best .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "i needed to find out what that thing was and what it had killed .",
+        #     "sentence": "i also had a horrible feeling , deep down that made me know that this wasnt a dream but some type of vision .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "well we know that the dwarf is dead and that kojas knows we 're here , seth said .",
+        #     "sentence": "we also know he 's going to be looking for all of us .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "i was suddenly really jealous of emily 's long robe .",
+        #     "sentence": "i also was getting hungry and wondered if there was any way to get food in igneeria .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "something was going to happen in those mountains , i just knew .",
+        #     "sentence": "the sky was clearer here and also more windy .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "i can tell you that i 'm not an enemy , she said .",
+        #     "sentence": "i can also tell you to be careful about kojas ; he 's tricky and will use your emotions against you .",
+        # },
+        # {
+        #     "marker": "also",
+        #     "output": None,
+        #     "previous_sentence": "she hinted that she knew who made us this way and who attacked us that day , i said .",
+        #     "sentence": "she also said that kojas would use our emotions against us and try to get us to come to him .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "my legs shot with pain .",
+        #     "sentence": "i heard emily yell the first curse words ive heard her say in a while .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "seth marched over , swinging his sword .",
+        #     "sentence": "jason threw knives calmly at the other monster while emily casted fire by his side .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "i sighed , well , at least we can hang out early .",
+        #     "sentence": "well , while you were arguing with the boys i called home and they said you could come over now .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "he stared down at me , debating whether or not to freeze me right away .",
+        #     "sentence": "that was his mistake because while he was waiting , i had brought my hunting dagger down on him .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "nah theyre boys , let them do what they have to do , i said with a quick sigh .",
+        #     "sentence": "while we were walking the boys appeared in front of us , holding something behind their backs .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "this whole time seth didnt say a word , which was strange .",
+        #     "sentence": "usually seth did all the talking while jason stood watching but now jason was doing all the talking and seth was the one watching .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "it wasnt the seth i was friends with .",
+        #     "sentence": "while emily and jason were bickering i said , seth ?",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "chapter 5 the water war continued with us getting them and them getting us .",
+        #     "sentence": "we attacked them with a pool , and they threw water balloons at us while we were on bikes .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "she unfolded it and placed it in front of us .",
+        #     "sentence": "while we studied it , i tried to catch seths eye , but he didnt look at me .",
+        # },
+        # {
+        #     "marker": "while",
+        #     "output": None,
+        #     "previous_sentence": "im going to go do that .",
+        #     "sentence": "i said quickly , while i backed up towards the stairs .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "its a place where your parents wouldnt even care if you stayed out late biking with your friends .",
+        #     "sentence": "only because everyone felt so safe , so comfy .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "i quickly checked myself for any other injures i might have acquired from my tangle with the thrasher , but all i found was a bunch of bruises .",
+        #     "sentence": "seth seemed to have disappeared , so i trudged down the road to my house .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "dad chuckled .",
+        #     "sentence": "youre so clumsy .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "that was the only way to explain the million of cuts and bruises i gained from fighting creatures .",
+        #     "sentence": "the truth is that i have really great balance , which i had gained from so much fighting .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "the truth is that i have really great balance , which i had gained from so much fighting .",
+        #     "sentence": "i was a little klutzy when i was small , so it was easy for my parents to believe i still was .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "alright , we understand that weve all done stupid , foolish things .",
+        #     "sentence": "so lets just add this accident to my list , okay ?",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "isnt it cool ?",
+        #     "sentence": "she spun around so we could take in all of its bubblegum pink color .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "hanging there were a multitude of thin , dangerous looking knives .",
+        #     "sentence": "he pulled up his sleeve so i could see another one strapped there .",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "i clumsily pulled an arrow out of the quiver on my back and struggled to attach it to my bow .",
+        #     "sentence": "how the heck did those people in movies make this look so easy ?",
+        # },
+        # {
+        #     "marker": "so",
+        #     "output": None,
+        #     "previous_sentence": "what do we do ?",
+        #     "sentence": "were dead so it cant hurt us right ?",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "a long , billowing black cloak spiraled out behind it , completely covering the rest of its body .",
+        #     "sentence": "its eyes shined red and full of hate , although there was a terrible smile that danced on its face .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "a split second later , two more canisters roared in after the first , these two impacting the bluff just below the union 's cannoning .",
+        #     "sentence": "although the projectiles embedded in the earth and exploded , their destructive intention would not be denied .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "moments later , laying in one of the hard , wooden gurneys , he was reminded of his agony as the private snapped the reins , abruptly jarring the wagon , sending excruciating pain through his gaping wound and up his spine .",
+        #     "sentence": "sorry , the private responded sincerely , although there was little he could do to improve the comfort of the wounded .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "tt : chapter 3 june 8th , 2005 elanger hospital was a bustling modern hospital with four branches spread out on each side of the city of chattanooga ; north , south , east , west , and one at the center of the city , accounting for five in total .",
+        #     "sentence": "regarded as a teaching hospital , they developed and performed the latest cutting-edge medical techniques , producing some of the finest medical staff in the country ; although all too often the advancements came as a result of the gang-related violence that erupted within the inner city , many times catching the innocent in its crossfire .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "he observed that a large caliber bullet had indeed passed through the calf , but had left a gaping wound upon exiting .",
+        #     "sentence": "david determined that with careful cleaning and repair , the leg could be saved , although without antibiotics , the post treatment would be problematic .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "no problems with this one .",
+        #     "sentence": "you start out despising him , then start to feel sorry for him , until finally you almost like him and wish him well - although that outcome seems unlikely , the way the story develops .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "that was the gig .",
+        #     "sentence": "the sound of the party from the boat was a headache for them , although no one would dare mention it to papi .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "hed pulled his flippers off and set them on the rear deck , where he could grab them in a hurry .",
+        #     "sentence": "worst case , he could always swim without them , although it would be much rougher going .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "it would be the least-expected escape route given it was the farthest point from the ship .",
+        #     "sentence": "if the security detail still had any fight left in them after losing their meal ticket , theyd deploy to the more obvious areas closer to the yacht , although any pursuit would be hurried due to concerns over the arrival of the marines .",
+        # },
+        # {
+        #     "marker": "although",
+        #     "output": None,
+        #     "previous_sentence": "much as hed liked his mentor , it was clear to him that hed learned all he could and needed to go somewhere designed to produce professionals if he was going to progress as he wanted .",
+        #     "sentence": "hed signed up a few months after his seventeenth birthday , although his new paperwork put his age at eighteen and a half .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "but emily wasnt here .",
+        #     "sentence": "i could take it out with a few arrows but its best to kill thrashers before they realize youre there .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "i turned back around and started back where i left off , but then a body slammed into me .",
+        #     "sentence": "i just had enough time to see the thrasher , before the fur and dirt filled my vision .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "i tried to place weight on my leg but winced as pain shot up it .",
+        #     "sentence": "he kicked the dead thrasher one more time before sheathing his sword .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "he asked giving me a warm smile .",
+        #     "sentence": "i kissed his cheek and my moms before heading toward the stairs .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "so lets just add this accident to my list , okay ?",
+        #     "sentence": "i said quickly before the two started something .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "i heard emily yell the first curse words ive heard her say in a while .",
+        #     "sentence": "i spotted her red arm just before my body felt like fire .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "i rambled as i examined the short hunting knife that was resting in a small sheath on my hip .",
+        #     "sentence": "i ran a finger over the blade before putting it back .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "it hit the thrashers front paw .",
+        #     "sentence": "before i could think , i had notched another one on the bow and drew back the string .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "she screamed .",
+        #     "sentence": "before i could reply , fire shot from her finger .",
+        # },
+        # {
+        #     "marker": "before",
+        #     "output": None,
+        #     "previous_sentence": "i counted two thrashers , which surprised me .",
+        #     "sentence": "i swear we saw more before .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "it had two floors , with a fair sized kitchen and a mini living room .",
+        #     "sentence": "my room was just up the stairs , and it beckoned to me even though i was more interested in dinner .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "the rest of the night was quiet and didnt include singing dwarfs .",
+        #     "sentence": "before we went to bed though there was a lot of furious writing as emily tried to write everything down .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "eventually they stopped , only because three water guns can hold only so much water and emily and me looked like we could kill .",
+        #     "sentence": "we were both completely soaked to the bone and even though in was the middle of summer , we were shivering .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "i felt his shoulder muscle tense under my fingers but he lowered his blade .",
+        #     "sentence": "he did n't sheath it though , because he would need it in the fight .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "yes , we did , that 's right !",
+        #     "sentence": "it does n't matter though ; seth and i would have won anyway .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "i laid there , sucking in painful breaths and staring at the sky .",
+        #     "sentence": "there was something different about it , even though it was gloomy .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "seriously , that 's about all i 'll be good for .",
+        #     "sentence": "nazaret 's dad must be thrilled he got you to translate , though .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "when the group piled out of the car , they discovered the air outside the car was even colder than inside .",
+        #     "sentence": "even though it would look ridiculous , wara almost wished she was wearing snow pants , just like when she was little growing up in montana .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "the lady bringing breakfast introduced herself as doa petronia and patted wara on the forearm in greeting , telling her how happy she was that god had brought wara to this conference .",
+        #     "sentence": "wara smiled back wanly , even though it was a lot of fun to be speaking quechua up in the mountains again .",
+        # },
+        # {
+        #     "marker": "though",
+        #     "output": None,
+        #     "previous_sentence": "it was no one 's fault but her own .",
+        #     "sentence": "but sitting here watching noah , she could tell that he still cared for her as a friend , even though she 'd totally humiliated herself .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "my body felt normal except it was different .",
+        #     "sentence": "i opened my eyes and looked over to where i just had been or still was .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "the truth is that i have really great balance , which i had gained from so much fighting .",
+        #     "sentence": "i was a little klutzy when i was small , so it was easy for my parents to believe i still was .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "its not like they werent foolish enough already .",
+        #     "sentence": "the day when it all changed was still a mystery to us .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "the four of us were already best friends .",
+        #     "sentence": "we were walking through the woods , rambling on about how halloween was almost here and that ms. stecher was still giving us too much homework .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "none of us did , at that time , because we didnt know what was going on .",
+        #     "sentence": "the world was still a normal place to us at the time .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "he didnt answer as he tugged at me to start walking back towards where we had last seen ourselves .",
+        #     "sentence": "we could still see our bodies sleeping peacefully , but this time i noticed that we were all faintly glowing blue .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "ow !",
+        #     "sentence": "it may be green but i still value it !",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "when i reopened them , i stood , stretching my legs .",
+        #     "sentence": "the four of us headed back to the restaurant together , adrenaline still pumping through my veins .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "the three of them raced each other , but i kept my bike behind them .",
+        #     "sentence": "what the dwarf had said was still troubling me and i didnt know if anyone else was feeling the same way .",
+        # },
+        # {
+        #     "marker": "still",
+        #     "output": None,
+        #     "previous_sentence": "jazell was doing that , he grumbled , clearly annoyed .",
+        #     "sentence": "but you were still out alone and you yelled at me for doing the same thing .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "i looked at my own shadow , that danced behind me .",
+        #     "sentence": "the phone buzzed again as seth sent me a reply .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "i glanced at the nearby woods .",
+        #     "sentence": "my ears heard nothing and i didnt see any movement but my hands shook slightly as i typed , nothing , im fine .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "i closed my eyes and began my mental countdown .",
+        #     "sentence": "the wind picked up around me , as if a wind current had just appeared out of nowhere .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "i hated this part .",
+        #     "sentence": "4 power surged through me as i was freed from my human self .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "i opened my eyes and looked over to where i just had been or still was .",
+        #     "sentence": "my human body slightly glowed as it sat in meditation under the tree .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "i aimed for the head again and released the arrow .",
+        #     "sentence": "it whizzed silently into the thrasher and it howled in pain as the arrow dug into its fur .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "a low growl sounded in its throat and it charged .",
+        #     "sentence": "i ducked as it slashed my side and i winced .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "this time i was prepared .",
+        #     "sentence": "i pulled out my hunting knife out just as he landed on me .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "i spit out the clump of wiry hair that had somehow found its way into my gasping mouth .",
+        #     "sentence": "i felt a searing pain as the thrasher raked my left leg .",
+        # },
+        # {
+        #     "marker": "as",
+        #     "output": None,
+        #     "previous_sentence": "he was definitely angry at me .",
+        #     "sentence": "i tried to place weight on my leg but winced as pain shot up it .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "its a small quiet town , the kind where everyone knows your name .",
+        #     "sentence": "its a place where your parents wouldnt even care if you stayed out late biking with your friends .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "i kept my eyes on the shadowed road , watching my every step .",
+        #     "sentence": "usually i was more aware of my surroundings , but today i was tired and didnt care if i rammed into a tree .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "i didnt need to tell the others , it was just one .",
+        #     "sentence": "and if i was lucky , it would be an easy take down .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "i closed my eyes and began my mental countdown .",
+        #     "sentence": "the wind picked up around me , as if a wind current had just appeared out of nowhere .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "the breeze picked up even harder .",
+        #     "sentence": "2 i was hollow and could probably see my own body if i opened my eyes .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "that made me panic a bit .",
+        #     "sentence": "i dont care jazell ; if i hadnt been here i would have found you shredded to small pieces .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "youre so clumsy .",
+        #     "sentence": "i wouldnt be surprised if you tripped on your own feet .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "his eyes widened , and i laughed at the shock on his face .",
+        #     "sentence": "if we were dead , which was my best guess , why not poke fun at him ?",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "he was wearing an all black layered tunic and pants with boots that looked as light as mine .",
+        #     "sentence": "if i didnt know it was jason , i would have taken a huge step backwards at his assassin-like appearance .",
+        # },
+        # {
+        #     "marker": "if",
+        #     "output": None,
+        #     "previous_sentence": "in fact , i realized that my whole body was aching from the strange attack i had experienced .",
+        #     "sentence": "and if i was dead , i wouldnt need to breathe so heavily .",
+        # },
     ]
     curious_cases = [
         {
@@ -992,7 +2025,7 @@ def test():
             "sentence": "In addition to Sega staff from the previous games , development work was also handled by <unk> The original scenario was written Kazuki Yamanobe , while the script was written by Hiroyuki Fujii , Koichi Majima , <unk> Miyagi , Seiki <unk> and Takayuki <unk> .",
             "previous_sentence": "Speaking in an interview , it was stated that the development team considered Valkyria Chronicles III to be the series ' first true sequel : while Valkyria Chronicles II had required a large amount of trial and error during development due to the platform move , the third game gave them a chance to improve upon the best parts of Valkyria Chronicles II due to being on the same platform .",
             "marker": "also",
-            "output": ('while the script was written by Hiroyuki Fujii , Koichi Majima , <unk> Miyagi , Seiki <unk> and Takayuki <unk>', 'In addition to Sega staff from the previous games , development work was handled by <unk> The original scenario was written Kazuki Yamanobe , .')
+            "output": ('While the script was written by Hiroyuki Fujii , Koichi Majima , <unk> Miyagi , Seiki <unk> and Takayuki <unk>', 'In addition to Sega staff from the previous games , development work was handled by <unk> The original scenario was written Kazuki Yamanobe .')
         },
         {
             ## wrong parse :(
@@ -1013,13 +2046,13 @@ def test():
             "sentence": "There are also love simulation elements related to the game 's two main heroines , although they take a very minor role .",
             "previous_sentence": "After the game 's completion , additional episodes are unlocked , some of them having a higher difficulty than those found in the rest of the game .",
             "marker": "although",
-            "output": ("love simulation elements related to the game 's two main heroines ,", 'they take a very minor role')
+            "output": ("Love simulation elements related to the game 's two main heroines ,", 'They take a very minor role .')
         },
         {
             "sentence": "The remainder held professional pilot licences , either a Commercial Pilot Licence or an Airline Transport Pilot Licence , although not all of these would be engaged in GA activities .",
             "previous_sentence": "The number of pilots licensed by the CAA to fly powered aircraft in 2005 was 47 @,@ 000 , of whom 28 @,@ 000 held a Private Pilot Licence .",
             "marker": "although",
-            "output": ('either a Commercial Pilot Licence or an Airline Transport Pilot Licence ,', 'not all of these would be engaged in GA activities')
+            "output": ('Either a Commercial Pilot Licence or an Airline Transport Pilot Licence ,', 'Not all of these would be engaged in GA activities')
         },
         {
         ## parse is just wrong :(
@@ -1043,12 +2076,12 @@ def test():
             "sentence": "Perhaps because Abraham Lincoln had not yet been inaugurated as President , Captain Totten received no instructions from his superiors and was forced to withdraw his troops .",
             "previous_sentence": ".",
             "marker": "because",
-            "output": (', Captain Totten received no instructions from his superiors and was forced to withdraw his troops .', 'Perhaps Abraham Lincoln had not yet been inaugurated as President')
+            "output": ('Captain Totten received no instructions from his superiors and was forced to withdraw his troops .', 'Perhaps Abraham Lincoln had not yet been inaugurated as President')
         },
         {
             ## incorrect parse
             "marker": "while",
-            "output": ('they considered Jordan their role model', 'growing up , including LeBron James and Dwyane Wade'),
+            "output": ('They considered Jordan their role model .', 'Growing up , including LeBron James and Dwyane Wade .'),
             "previous_sentence": "Jordan 's athletic leaping ability , highlighted in his back @-@ to @-@ back slam dunk contest championships in 1987 and 1988 , is credited by many with having influenced a generation of young players .",
             "sentence": "Several current NBA All @-@ Stars have stated that they considered Jordan their role model while growing up , including LeBron James and Dwyane Wade ."
         },
@@ -1063,7 +2096,7 @@ def test():
             "sentence": "One of the primary reasons why Jordan was not drafted sooner was because the first two teams were in need of a center .",
             "previous_sentence": "The Chicago Bulls selected Jordan with the third overall pick , after Hakeem Olajuwon ( Houston Rockets ) and Sam Bowie ( Portland Trail Blazers ) .",
             "marker": "because",
-            "output": ('One of the primary reasons why Jordan was not drafted sooner was .', 'the first two teams were in need of a center')
+            "output": ('One of the primary reasons why Jordan was not drafted sooner was .', 'The first two teams were in need of a center')
         },
         {
             ## not sure what could be done about this
@@ -1077,7 +2110,7 @@ def test():
             "sentence": "The main theme was initially recorded using orchestra , then Sakimoto removed elements such as the guitar and bass , then adjusted the theme using a synthesizer before redoing segments such as the guitar piece on their own before incorporating them into the theme .",
             "previous_sentence": "He <unk> the main theme about seven times through the music production due to this need to reassess the game .",
             "marker": "before",
-            "output": ('redoing segments such as the guitar piece on their own', 'incorporating them into the theme')
+            "output": ('Redoing segments such as the guitar piece on their own', 'Incorporating them into the theme')
         },
         {
             "sentence": "Nothing of this sort had been before attempted on Government account in Arkansas to my knowledge , except for the manufacture of small arms , the machinery for which was taken away by General Van Dorn and there was neither capital nor sufficient enterprise among the citizens to engage in such undertakings <unk> A further supply , along with lead and caps , was procured from the citizens of Little Rock and vicinity by donation , purchases , and impressments .",
@@ -1097,7 +2130,7 @@ def test():
             "sentence": "Two days elapsed before the change could be effected . \"",
             "previous_sentence": "But , after inspecting the work and observing the spirit of the men I decided that a garrison 500 strong could hold out against Fitch and that I would lead the remainder - about 1500 - to Gen 'l Rust as soon as shotguns and rifles could be obtained from Little Rock instead of pikes and lances , with which most of them were armed .",
             "marker": "before",
-            "output": ('elapsed', 'the change could be effected')
+            "output": ('Elapsed', 'The change could be effected')
         },
         ## parse is weird...
         {
@@ -1111,21 +2144,21 @@ def test():
             "sentence": "They extended the streak to four with a win over the Los Angeles Kings before it came to an end with a 4 – 1 loss to the St. Louis Blues .",
             "previous_sentence": "Columbus again defeated the Coyotes three days later to earn their first three @-@ game win streak of the season .",
             "marker": "before",
-            "output": ('with a win over the Los Angeles Kings', 'it came to an end with a 4 \xe2\x80\x93 1 loss to the St. Louis Blues')
+            "output": ('With a win over the Los Angeles Kings', 'It came to an end with a 4 \xe2\x80\x93 1 loss to the St. Louis Blues')
         },
         {
             ## parse is wrong
             "sentence": "Jones had by now moved on to another posting but Eaton took up the squadron 's command as planned .",
             "previous_sentence": "12 ( General Purpose ) Squadron was not formed until 6 February 1939 at Laverton .",
             "marker": "but",
-            "output": ('by now moved on to another posting', "Eaton took up the squadron 's command as planned")
+            "output": ('By now moved on to another posting', "Eaton took up the squadron 's command as planned")
         },
         {
             ## wrong parse
             "sentence": "EW quoted Mindy Kaling as saying , \" I always feel unoriginal bringing up Tina as my inspiration , but she 's everyone 's inspiration for a reason . \"",
             "previous_sentence": "In 2013 , Entertainment Weekly crowned Fey as \" The Once and Future Queen \" ( an allusion to The Once and Future King ) in their feature on \" Women Who Run TV , \" calling her \" the funniest woman in the free world . \"",
             "marker": "but",
-            "output": ('EW quoted Mindy Kaling as saying , " I always feel unoriginal bringing up Tina as my inspiration , . "', "she 's everyone 's inspiration for a reason")
+            "output": ('EW quoted Mindy Kaling as saying , " I always feel unoriginal bringing up Tina as my inspiration . "', "She 's everyone 's inspiration for a reason")
         },
         {
             ## wrong parse, localized is an nmod on sales?
@@ -1181,12 +2214,12 @@ def test():
             "sentence": "Through her relationship with Geoff she had mellowed , however her vanity was still present .",
             "previous_sentence": "Nicole relates to the wild side of Freya , but has no idea how far Freya is going to take it . \"",
             "marker": "however",
-            "output": ('Through her relationship with Geoff she had mellowed , .', 'her vanity was still present')
+            "output": ('Through her relationship with Geoff she had mellowed .', 'Her vanity was still present')
         },
         {
             ## i'm not sure what a good parse of this would be...
             "marker": "while",
-            "output": ('White has a spatial advantage , . "', 'Black often maneuvers his pieces on the last two ranks of the board , but White " has to keep a constant eye on the possible liberating pawn thrusts ... b5 and ... d5'),
+            "output": ('White has a spatial advantage . " .', 'Black often maneuvers his pieces on the last two ranks of the board , but White " has to keep a constant eye on the possible liberating pawn thrusts ... b5 and ... d5 .'),
             "previous_sentence": "@ 0 @-@ 0 e6 6.Nc3 Be7 7.d4 cxd4 <unk> d6 <unk> a6 .",
             "sentence": "White has a spatial advantage , while Black often maneuvers his pieces on the last two ranks of the board , but White \" has to keep a constant eye on the possible liberating pawn thrusts ... b5 and ... d5 . \""
         },
@@ -1203,6 +2236,76 @@ def test():
             "output": None,
             "previous_sentence": "But the young ones , sir — I 'm sure they 'll understand when I explain to them why you 're so upset .",
             "sentence": "We 'll do everything we can to protect you from now on , if only you 'll forgive us , and we 'll be sure to let you know when anything good is going to happen ! \""
+        },
+        {
+            # not sure what's going on, but it's too short anyway
+            "marker": "and",
+            "output": None,
+            "previous_sentence": "the remaining light cast shadows over everything , creating the illusion that there was double of everything .",
+            "sentence": "the world prepared to go into its hours of unreal silence that made it seem magical , and it really was .",
+        },
+        {
+            # wrong depparse
+            "marker": "and",
+            "output": None,
+            "previous_sentence": "but i do .",
+            "sentence": "i know it all and starlings is not the place where you want to be after dark .",
+        },
+        {
+            # wrong parse
+            "marker": "and",
+            "output": None,
+            "previous_sentence": "i kept my eyes on the shadowed road , watching my every step .",
+            "sentence": "usually i was more aware of my surroundings , but today i was tired and didnt care if i rammed into a tree .",
+        },
+        {
+            # wrong parse
+            "marker": "and",
+            "output": None,
+            "previous_sentence": "i flipped open the pad and wrote : walking home .",
+            "sentence": "i shoved it back in my pocket and continued walking .",
+        },
+        {
+            ## should we try to solve "only because"?
+            "marker": "because",
+            "output": None,
+            "previous_sentence": "its a place where your parents wouldnt even care if you stayed out late biking with your friends .",
+            "sentence": "only because everyone felt so safe , so comfy .",
+        },
+        {
+            # wrong parse
+            "marker": "because",
+            "output": None,
+            "previous_sentence": "you will pay heavily in a terrible death worth all the loyal lives youve slayed , the dwarf proclaimed , and his friends bellowed out an agreement .",
+            "sentence": "i dont care what the heck you say about dying because nothing will stop me from killing all of you !",
+        },
+        {
+            # wat
+            "marker": "for example",
+            "output": None,
+            "previous_sentence": "her inward smile and the time and space transcending depth of her peaceful eyes gave him the courage to go on .",
+            "sentence": "for example here , in the copy between the pictures you write , it was a rare adventure to experience fully action oriented people who have no awareness of their vibrational nature or have ever heard of abraham or the law of attraction .",
+        },
+        {
+            # weird writing
+            "marker": "for example",
+            "output": ('Taylor asked .', 'Well , when you feel bad about your legs and you cant find anything good to think about that , you could just think about , there was a dramatic pause , meeeeee .'),
+            "previous_sentence": "taylor asked .",
+            "sentence": "well , for example , when you feel bad about your legs and you cant find anything good to think about that , you could just think about , there was a dramatic pause , meeeeee .",
+        },
+        {
+            # wrong parse
+            "marker": "when",
+            "output": ('We already were .', 'He vanished .'),
+            "previous_sentence": "jason yelled .",
+            "sentence": "i opened my mouth to say that we already were when he vanished .",
+        },
+        {
+            # wrong parse, but to be fair, it's lost its punctuation...
+            "marker": "when",
+            "output": None,
+            "previous_sentence": "emily said angrily .",
+            "sentence": "thats when suddenly a hideous creature appeared in front of us .",
         },
     ]
         

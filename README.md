@@ -3,23 +3,16 @@
 
 ```python
 depdency_patterns = [
-    "still": {
-    "POS": ["RB"],
-    "S2": ["advmod"],
-    "S1": ["parataxis", "dep"],
-    "acceptable_order": "S1 S2"},
-    
-    "for example": {
-    "POS": ["NN"],
-    "S2": ["nmod"],
-    "S1": ["parataxis"],
-    "head": "example"},
-    
-    "but": {
-    "POS": ["CC"],
-    "S2": ["cc"],
-    "S1": ["conj"],
-    "flip": True}
+    "still": [
+        {"POS": "RB", "S2": "advmod", "S1": "parataxis", "acceptable_order": "S1 S2"},
+        {"POS": "RB", "S2": "advmod", "S1": "dep", "acceptable_order": "S1 S2"},
+    ],
+    "for example": [
+        {"POS": "NN", "S2": "nmod", "S1": "parataxis", "head": "example"}
+    ],
+    "but": [
+        {"POS": "CC", "S2": "cc", "S1": "conj", "flip": True}
+    ],
 ]
   
 ```
@@ -35,12 +28,16 @@ then S1 connects to S2.
 ## TODO
 
 [x] switch to better (more automatic) dependency parsing with corenlp
-[ ] refactor extraction code to be prettier
 [x] finish making test cases and editing parser for all discourse markers in english
-[ ] get Chinese and Spanish Wikipedia corpora
+[ ] rewrite filter
+[ ] rewrite producer
 [ ] run filter on English BookCorpus
-[ ] check parser on English BookCorpus data
+[ ] new dependency extraction for BookCorpus
+[ ] run model on new dataset for English
+[ ] get Chinese and Spanish corpora
+[ ] check parser on a few examples of English BookCorpus data
 [ ] record dependency patterns for Chinese and Spanish
+[ ] what if this doesn't work?
 
 ## Parsing performance
 
