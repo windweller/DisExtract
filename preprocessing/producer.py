@@ -74,6 +74,11 @@ def write_to_tsv(data, file_name):
         for line in data:
             f.write(line + '\n')
 
+def add_one_to_dict(dic, entry):
+    if entry in dic:
+        dic[entry] += 1
+    else:
+        dic[entry] = 1
 
 if __name__ == '__main__':
 
@@ -84,6 +89,7 @@ if __name__ == '__main__':
             examples.append(line)
 
     # ==== Filtering =====
+    data_dist = {}
     filtered_examples = []
     for ex in examples:
         s1, s2, label = ex.split('\t')
@@ -96,8 +102,12 @@ if __name__ == '__main__':
             continue
         else:
             filtered_examples.append("\t".join([s1, s2, label]))
+            # collect stats
+            add_one_to_dict(data_dist, label)
 
     print("original number: {}, filtered out number: {}".format(len(examples), len(filtered_examples)))
+
+    print("label distribution: {}".format(data_dist))
 
     examples = filtered_examples
 
