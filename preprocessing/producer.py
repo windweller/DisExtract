@@ -49,6 +49,7 @@ parser.add_argument("--out_prefix", type=str, required=True,
                     help="Prefix the produced files")
 
 args, _ = parser.parse_known_args()
+args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
 
 # ======== Split =========
 
