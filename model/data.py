@@ -6,6 +6,7 @@ https://github.com/facebookresearch/InferSent/blob/master/data.py
 import os
 import numpy as np
 import torch
+import logging
 from os.path import join as pjoin
 from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS
 
@@ -61,12 +62,13 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
     s2 = {}
     target = {}
 
-    if discourse_tag == "DIS_FIVE":
+    if discourse_tag == "books_5":
         dis_label = EN_FIVE_DISCOURSE_MARKERS
         dis_map = {}
         for i, l in enumerate(dis_label):
             dis_map[l] = i
 
+    logging.info(dis_map)
     # dis_map: {'and': 0, ...}
 
     for data_type in ['train', 'valid', 'test']:
