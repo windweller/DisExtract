@@ -82,9 +82,6 @@ if not os.path.exists(params.outputdir):
 file_handler = logging.FileHandler("{0}/log.txt".format(params.outputdir))
 logging.getLogger().addHandler(file_handler)
 
-with open(pjoin(params.outputdir, "args.json"), 'wb') as f:
-    json.dump(params, f)
-
 # print parameters passed, and all parameters
 logger.info('\ntogrep : {0}\n'.format(sys.argv[1:]))
 logger.info(params)
