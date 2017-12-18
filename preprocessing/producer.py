@@ -72,7 +72,7 @@ if args.data_dir == "default":
 def write_to_tsv(data, file_name):
     with open(file_name, 'wb') as f:
         for line in data:
-            f.write(line + '\n')
+            f.write(line)
 
 def add_one_to_dict(dic, entry):
     if entry in dic:
