@@ -96,7 +96,7 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
     train = {'s1': s1['train']['sent'], 's2': s2['train']['sent'],
              'label': target['train']['data']}
     dev = {'s1': s1['valid']['sent'], 's2': s2['valid']['sent'],
-           'label': target['dev']['data']}
+           'label': target['valid']['data']}
     test = {'s1': s1['test']['sent'], 's2': s2['test']['sent'],
             'label': target['test']['data']}
     return train, dev, test
