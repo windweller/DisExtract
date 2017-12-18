@@ -309,8 +309,8 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
         valid_preds.extend(preds.tolist())
         valid_labels.extend(labels.tolist())
 
-    mean_multi_recall = get_multiclass_recall(valid_preds, valid_labels)
-    mean_multi_prec = get_multiclass_prec(valid_preds, valid_labels)
+    mean_multi_recall = get_multiclass_recall(np.array(valid_preds), np.array(valid_labels))
+    mean_multi_prec = get_multiclass_prec(np.array(valid_preds), np.array(valid_labels))
 
     multiclass_recall_msg = 'Multiclass Recall - '
     for k, v in mean_multi_recall.iteritems():
