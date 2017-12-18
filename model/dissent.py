@@ -218,7 +218,7 @@ class DisSent(nn.Module):
 
         # classifier
         self.fc_dim = config['fc_dim']
-        self.n_classes = config['dis_num']
+        self.n_classes = config['n_classes']
         self.enc_lstm_dim = config['enc_lstm_dim']
         self.encoder_type = config['encoder_type']
         self.dpout_fc = config['dpout_fc']
