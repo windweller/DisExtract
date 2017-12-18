@@ -135,5 +135,5 @@ if __name__ == '__main__':
 
     # Note that under default setting, corpus is already appended
     write_to_tsv(train, pjoin(args.data_dir, args.out_prefix + "_train.tsv"))
-    write_to_tsv(train, pjoin(args.data_dir, args.out_prefix + "_valid.tsv"))
-    write_to_tsv(train, pjoin(args.data_dir, args.out_prefix + "_test.tsv"))
+    write_to_tsv(valid, pjoin(args.data_dir, args.out_prefix + "_valid.tsv"))
+    write_to_tsv(test, pjoin(args.data_dir, args.out_prefix + "_test.tsv"))
