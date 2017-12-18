@@ -23,3 +23,4 @@ The data distribution for Discourse 5 is:
 'and': 818634}
 
 We extended InferSent code to include logging and automatically saves log files, and save hyperparameters.
+We also save models for more than one training epoch.

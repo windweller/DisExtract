@@ -7,10 +7,12 @@ with minor modifications
 
 import os
 import sys
+import csv
 import time
 import json
 import argparse
 from os.path import join as pjoin
+from itertools import izip
 
 import numpy as np
 
@@ -29,7 +31,7 @@ parser = argparse.ArgumentParser(description='NLI training')
 parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_8|gw_5|gw_8")
 parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
 parser.add_argument("--outputdir", type=str, default='exp/', help="Output directory")
-parser.add_argument("--outputmodelname", type=str, default='model.pickle')
+parser.add_argument("--outputmodelname", type=str, default='dis-model')
 
 # training
 parser.add_argument("--n_epochs", type=int, default=10)
@@ -290,8 +292,6 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     target = valid['label'] if eval_type == 'valid' else test['label']
 
     valid_preds, valid_labels = [], []
-    total_labels_recall = None
-    total_labels_prec = None
 
     for i in range(0, len(s1), params.batch_size):
         # prepare batch
@@ -336,13 +336,30 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
               {2}'.format(epoch, eval_type, eval_acc))
         # print out multi-class recall and precision
 
+    if save_confusion:
+        with open(pjoin(params.outputdir, 'confusion_test.csv'), 'wb') as csvfile:
+            fieldnames = ['preds', 'labels']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for pair in izip(valid_preds, valid_labels):
+                writer.writerow({'preds': pair[0], 'labels': pair[1]})
+
+    # there is no re-loading of previous best model btw
     if eval_type == 'valid' and epoch <= params.n_epochs:
         if eval_acc > val_acc_best:
             logger.info('saving model at epoch {0}'.format(epoch))
             if not os.path.exists(params.outputdir):
                 os.makedirs(params.outputdir)
             torch.save(dis_net, os.path.join(params.outputdir,
-                                             params.outputmodelname))
+                                             params.outputmodelname + ".pickle"))
+            # monitor memory usage
+            try:
+                torch.save(dis_net, os.path.join(params.outputdir,
+                                                 params.outputmodelname + "-" + str(epoch) + ".pickle"))
+            except:
+                print("saving by epoch error, maybe due to disk space limit")
+
             val_acc_best = eval_acc
         else:
             if 'sgd' in params.optimizer:
@@ -371,12 +388,12 @@ while not stop_training and epoch <= params.n_epochs:
 
 # Run best model on test set.
 del dis_net
-dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname))
+dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
 
 logger.info('\nTEST : Epoch {0}'.format(epoch))
-evaluate(1e6, 'valid', True, True)  # save confusion results on valid data
-evaluate(0, 'test', True)
+evaluate(1e6, 'valid', True)
+evaluate(0, 'test', True, True)  # save confusion results on test data
 
 # Save encoder instead of full model
 torch.save(dis_net.encoder,
-           os.path.join(params.outputdir, params.outputmodelname + '.encoder'))
+           os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
