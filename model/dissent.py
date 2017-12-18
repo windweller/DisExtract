@@ -228,11 +228,22 @@ class DisSent(nn.Module):
 
         # If fully connected layer dimension is set to 0, we are not using it
         if self.fc_dim != 0:
-            self.classifier = nn.Sequential(
-                nn.Linear(self.inputdim, self.fc_dim),
-                nn.Linear(self.fc_dim, self.fc_dim),
-                nn.Linear(self.fc_dim, self.n_classes)
-            )
+            if self.dpout_fc == 0.:
+                self.classifier = nn.Sequential(
+                    nn.Linear(self.inputdim, self.fc_dim),
+                    nn.Linear(self.fc_dim, self.fc_dim),
+                    nn.Linear(self.fc_dim, self.n_classes)
+                )
+            else:
+                # this is input-dropout
+                self.classifier = nn.Sequential(
+                    nn.Dropout(p=self.dpout_fc),
+                    nn.Linear(self.inputdim, self.fc_dim),
+                    nn.Dropout(p=self.dpout_fc),
+                    nn.Linear(self.fc_dim, self.fc_dim),
+                    nn.Dropout(p=self.dpout_fc),
+                    nn.Linear(self.fc_dim, self.n_classes)
+                )
         else:
             self.classifier = nn.Linear(self.inputdim, self.n_classes)
 
@@ -241,7 +252,7 @@ class DisSent(nn.Module):
         u = self.encoder(s1)
         v = self.encoder(s2)
 
-        features = torch.cat((u, v, u - v, u * v, u + v), 1)
+        features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1)
         output = self.classifier(features)
         return output
 

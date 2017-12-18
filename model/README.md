@@ -13,3 +13,13 @@ LSTM.
 
 
 If you want to take a look at the old Tensorflow code, here's the repo: [https://github.com/windweller/discourse](https://github.com/windweller/discourse)
+
+The data distribution for Discourse 5 is:
+
+{'but': 508648, 
+'when': 552540, 
+'because': 116444, 
+'if': 491394, 
+'and': 818634}
+
+We extended InferSent code to include logging and automatically saves log files, and save hyperparameters.
