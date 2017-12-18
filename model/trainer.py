@@ -138,8 +138,7 @@ dis_net = DisSent(config_dis_model)
 logger.info(dis_net)
 
 # loss
-weight = torch.FloatTensor(params.n_classes).fill_(1)
-loss_fn = nn.CrossEntropyLoss(weight=weight)
+loss_fn = nn.CrossEntropyLoss()
 loss_fn.size_average = False
 
 # optimizer
