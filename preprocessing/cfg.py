@@ -20,8 +20,13 @@ EN_DISCOURSE_MARKERS = [
 ]
 DISCOURSE_MARKER_SET_TAG = "ALL18"
 
-CH_DISCOURSE_MARKERS = []
-SP_DISCOURSE_MARKERS = []
+EN_FIVE_DISCOURSE_MARKERS = [
+    "and",
+    "because",
+    "but",
+    "if",
+    "when"
+]
 
 _PAD = b"<pad>" # no need to pad
 _UNK = b"<unk>"
@@ -29,3 +34,11 @@ _START_VOCAB = [_PAD, _UNK]
 
 PAD_ID = 0
 UNK_ID = 1
+
+CH_DISCOURSE_MARKERS = [
+
+]
+
+SP_DISCOURSE_MARKERS = [
+
+]

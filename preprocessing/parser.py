@@ -43,6 +43,8 @@ parser = argparse.ArgumentParser(description='Split by discourse marker using de
 parser.add_argument("--lang", type=str, default="en", help="en|ch|es")
 args, _ = parser.parse_known_args()
 
+logging.getLogger('requests').setLevel(logging.CRITICAL)
+
 PUNCTUATION = '.,:;— '
 
 # dependency_patterns = None
