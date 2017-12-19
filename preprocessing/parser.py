@@ -39,9 +39,12 @@ logger = logging.getLogger(__name__)
 dependency_patterns = {"en": en_dependency_patterns, "ch": ch_dependency_patterns, "sp": sp_dependency_patterns}
 discourse_marker_set = {"en": EN_DISCOURSE_MARKERS, "ch": CH_DISCOURSE_MARKERS, "sp": SP_DISCOURSE_MARKERS}
 
-parser = argparse.ArgumentParser(description='Split by discourse marker using dependency patterns')
-parser.add_argument("--lang", type=str, default="en", help="en|ch|es")
-args, _ = parser.parse_known_args()
+argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
+argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
+
+# parser = argparse.ArgumentParser(description='Split by discourse marker using dependency patterns')
+# parser.add_argument("--lang", type=str, default="en", help="en|ch|es")
+# args, _ = parser.parse_known_args()
 
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 
@@ -76,39 +79,14 @@ top_level_deps_to_ignore_if_extra = [
     # ("advmod", "WRB") ## this would solve several minor problems but introduce a few major problems
 ]
 
-# search for pattern:
-# "[discourse marker] S2, S1" (needs dependency parse)
-def search_for_reverse_pattern_pair(sent, marker, words, previous_sentence):
-    parse_string = get_parse(sent, depparse=True)
-    parse_string = parse_string.replace('\r\n', '')
-
-    # book corpus maybe has carriage returns and new lines and other things?
-    try: 
-        parse = json.loads(parse_string.replace('\r\n', ''))
-    except ValueError:
-        parse = json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))        
-    sentence = Sentence(parse["sentences"][0], sent)
-    return sentence.find_pair(marker, "s2 discourse_marker s1", previous_sentence)
-
-
 def is_verb_tag(tag):
     return tag[0] == "V" and not tag[-2:] in ["BG", "BN"]
-
-"""
-POS-tag string as if it's a sentence
-and see if it has a verb that could plausibly be the predicate.
-"""
-def has_verb(string):
-    parse = get_parse(string, depparse=False)
-    tokens = json.loads(parse)["sentences"][0]["tokens"]
-    return any([is_verb_tag(t["pos"]) for t in tokens])
-
 
 """
 using the depparse, look for the desired pattern, in any order
 """
 def search_for_dep_pattern(marker, current_sentence, previous_sentence):  
-    parse_string = get_parse(current_sentence, depparse=True)
+    parse_string = get_parse(current_sentence, depparse=True, args={"lang": "en"})
 
     # book corpus maybe has carriage returns and new lines and other things?
     try: 
@@ -210,20 +188,20 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices):
 use corenlp server (see https://github.com/erindb/corenlp-ec2-startup)
 to parse sentences: tokens, dependency parse
 """
-def get_parse(sentence, depparse=True):
+def get_parse(sentence, depparse=True, lang="en"):
     sentence = sentence.replace("'t ", " 't ")
-    if args.lang == 'en':
+    if lang == 'en':
         if depparse:
             url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
         else:
             url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
-    elif args.lang == 'ch':
+    elif lang == 'ch':
         # maybe there might be different?
         if depparse:
             url = "http://localhost:12346?properties={annotators:'tokenize,ssplit,pos,depparse'}"
         else:
             url = "http://localhost:12346?properties={annotators:'tokenize,ssplit,pos'}"
-    elif args.lang == 'sp':
+    elif lang == 'sp':
         if depparse:
             url = "http://localhost:12347?properties={annotators:'tokenize,ssplit,pos,depparse'}"
         else:
@@ -433,7 +411,7 @@ class Sentence():
             needs_verb=needs_verb
         )
 
-    def find_pair(self, marker, order, previous_sentence):
+    def find_pair(self, marker, order, previous_sentence, lang="en"):
         assert(order in ["s2 discourse_marker s1", "any"])
         # fix me
         # (this won't quite work if there are multiple matching connections)
@@ -449,7 +427,7 @@ class Sentence():
         #     print " ".join([t["word"] for t in self.tokens])
         #     print self.get_valid_marker_indices(marker)
 
-        for dep_pattern in dependency_patterns[args.lang][marker]:
+        for dep_pattern in dependency_patterns[lang][marker]:
 
             for marker_index in self.get_valid_marker_indices(marker, dep_pattern):
 
@@ -537,25 +515,26 @@ class Sentence():
 
         return None
 
-def setup_corenlp():
+def setup_corenlp(lang="en"):
     try:
         test_sentences = {"en": "The quick brown fox jumped over the lazy dog.", "ch": "", "sp": ""}
-        get_parse(test_sentences[args.lang])
+        get_parse(test_sentences[lang], lang)
     except:
         # TODO
         # run the server if we can
         # otherwise ask to install the server and install it if we can
         raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
 
-def depparse_ssplit(sentence, previous_sentence, marker):
+def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
     sentence = sentence.strip()
     previous_sentence = previous_sentence.strip()
     sentence = cleanup(sentence)
-    parse = get_parse(sentence)
+    parse = get_parse(sentence, lang)
     # print(json.dumps(parse, indent=4))
     sentence = Sentence(parse, sentence)
-    return(sentence.find_pair(marker, "any", previous_sentence))
+    return(sentence.find_pair(marker, "any", previous_sentence, lang))
 
 if __name__ == '__main__':
-    pass
+    parser = argparse.ArgumentParser()
+    parser.parse_args()
 

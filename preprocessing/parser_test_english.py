@@ -36,7 +36,7 @@ def setup_args():
     return parser.parse_args()
 
 
-def test():
+def test(args):
     test_items = [
         {
             "sentence": "After release , it received downloadable content , along with an expanded edition in November of that year .",
@@ -2339,7 +2339,7 @@ def test():
 
     for item in test_items:
         # if i < n_tests:
-            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"])
+            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"], "en")
             try:
                 assert(output == item["output"])
             except AssertionError:
@@ -2357,6 +2357,5 @@ def test():
 
 if __name__ == '__main__':
     args = setup_args()
-    dependency_patterns = en_dependency_patterns
-    test()
+    test(args)
 
