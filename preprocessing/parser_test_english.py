@@ -13,7 +13,7 @@ import pickle
 import requests
 import re
 
-from parser import depparse_ssplit
+from parser import depparse_ssplit, setup_corenlp
 from dep_patterns import en_dependency_patterns, ch_dependency_patterns, sp_dependency_patterns
 dependency_patterns = None
 
@@ -2309,7 +2309,7 @@ def test(args):
     ]
         
     print("{} cases are weird and I can't figure out how to handle them. :(".format(len(curious_cases)))
-    print("{} of those incorrectly return None".format(len([c for c in curious_cases if depparse_ssplit(c["sentence"], c["previous_sentence"], c["marker"])==None])))
+    # print("{} of those incorrectly return None".format(len([c for c in curious_cases if depparse_ssplit(c["sentence"], c["previous_sentence"], c["marker"], "en")==None])))
     print("{} parsable cases are being tested".format(len(test_items)))
     curious=False
     if curious:
@@ -2357,5 +2357,6 @@ def test(args):
 
 if __name__ == '__main__':
     args = setup_args()
+    setup_corenlp("en")
     test(args)
 
