@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # grab test cases
-cn_dependency_patterns = {
+ch_dependency_patterns = {
   "然后": [{ # then
     "POS": ["AD"],
     "S1": ["conj"],  # the dep tag S1 -> S2
@@ -30,7 +30,7 @@ cn_dependency_patterns = {
   }
 }
 
-es_dependency_patterns = {
+sp_dependency_patterns = {
   "luego": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
   "después": [{"S1": "advcl", "S2": "advmod", "POS": "rg"}],
   "también": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],

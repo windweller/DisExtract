@@ -20,6 +20,9 @@ EN_DISCOURSE_MARKERS = [
 ]
 DISCOURSE_MARKER_SET_TAG = "ALL18"
 
+CH_DISCOURSE_MARKERS = []
+SP_DISCOURSE_MARKERS = []
+
 _PAD = b"<pad>" # no need to pad
 _UNK = b"<unk>"
 _START_VOCAB = [_PAD, _UNK]

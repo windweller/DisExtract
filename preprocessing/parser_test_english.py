@@ -14,7 +14,8 @@ import requests
 import re
 
 from parser import depparse_ssplit
-from dep_patterns import en_dependency_patterns
+from dep_patterns import en_dependency_patterns, ch_dependency_patterns, sp_dependency_patterns
+dependency_patterns = None
 
 import sys
 reload(sys)
@@ -29,8 +30,6 @@ from itertools import izip
 from copy import deepcopy as cp
 
 np.random.seed(123)
-
-dependency_patterns = None
 
 def setup_args():
     parser = argparse.ArgumentParser()

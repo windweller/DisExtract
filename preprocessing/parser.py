@@ -15,7 +15,7 @@ import requests
 import re
 import logging
 
-from dep_patterns import en_dependency_patterns as dependency_patterns
+from dep_patterns import en_dependency_patterns, ch_dependency_patterns, sp_dependency_patterns
 
 import sys
 reload(sys)
@@ -28,7 +28,7 @@ import json
 from itertools import izip
 
 from copy import deepcopy as cp
-from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS, CH_DISCOURSE_MARKERS, SP_DISCOURSE_MARKERS
 
 np.random.seed(123)
 
@@ -36,8 +36,12 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
-argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
+dependency_patterns = {"en": en_dependency_patterns, "ch": ch_dependency_patterns, "sp": sp_dependency_patterns}
+discourse_marker_set = {"en": EN_DISCOURSE_MARKERS, "ch": CH_DISCOURSE_MARKERS, "sp": SP_DISCOURSE_MARKERS}
+
+parser = argparse.ArgumentParser(description='Split by discourse marker using dependency patterns')
+parser.add_argument("--lang", type=str, default="en", help="en|ch|es")
+args, _ = parser.parse_known_args()
 
 PUNCTUATION = '.,:;— '
 
@@ -204,20 +208,20 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices):
 use corenlp server (see https://github.com/erindb/corenlp-ec2-startup)
 to parse sentences: tokens, dependency parse
 """
-def get_parse(sentence, depparse=True, language='en'):
+def get_parse(sentence, depparse=True):
     sentence = sentence.replace("'t ", " 't ")
-    if language == 'en':
+    if args.lang == 'en':
         if depparse:
             url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
         else:
             url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
-    elif language == 'zh':
+    elif args.lang == 'ch':
         # maybe there might be different?
         if depparse:
             url = "http://localhost:12346?properties={annotators:'tokenize,ssplit,pos,depparse'}"
         else:
             url = "http://localhost:12346?properties={annotators:'tokenize,ssplit,pos'}"
-    elif language == 'es':
+    elif args.lang == 'sp':
         if depparse:
             url = "http://localhost:12347?properties={annotators:'tokenize,ssplit,pos,depparse'}"
         else:
@@ -443,7 +447,7 @@ class Sentence():
         #     print " ".join([t["word"] for t in self.tokens])
         #     print self.get_valid_marker_indices(marker)
 
-        for dep_pattern in dependency_patterns[marker]:
+        for dep_pattern in dependency_patterns[args.lang][marker]:
 
             for marker_index in self.get_valid_marker_indices(marker, dep_pattern):
 
@@ -533,7 +537,8 @@ class Sentence():
 
 def setup_corenlp():
     try:
-        get_parse("The quick brown fox jumped over the lazy dog.")
+        test_sentences = {"en": "The quick brown fox jumped over the lazy dog.", "ch": "", "sp": ""}
+        get_parse(test_sentences[args.lang])
     except:
         # TODO
         # run the server if we can
@@ -550,6 +555,5 @@ def depparse_ssplit(sentence, previous_sentence, marker):
     return(sentence.find_pair(marker, "any", previous_sentence))
 
 if __name__ == '__main__':
-    args = setup_args()
-    dependency_patterns = en_dependency_patterns
+    pass
 
