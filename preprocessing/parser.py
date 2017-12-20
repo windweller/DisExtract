@@ -31,7 +31,9 @@ import json
 from itertools import izip
 
 from copy import deepcopy as cp
-from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS, CH_DISCOURSE_MARKERS, SP_DISCOURSE_MARKERS
+from cfg import DISCOURSE_MARKER_SET_TAG
+from cfg import EN_DISCOURSE_MARKERS, CH_DISCOURSE_MARKERS, SP_DISCOURSE_MARKERS
+from cfg import EN_PORT, SP_PORT, CH_PORT
 
 np.random.seed(123)
 
@@ -201,21 +203,17 @@ to parse sentences: tokens, dependency parse
 def get_parse(sentence, lang="en", depparse=True):
     sentence = sentence.replace("'t ", " 't ")
     if lang == 'en':
-        if depparse:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
-        else:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
-    elif lang == 'ch':
-        # maybe there might be different?
-        if depparse:
-            url = "http://localhost:12346?properties={annotators:'tokenize,ssplit,pos,depparse'}"
-        else:
-            url = "http://localhost:12346?properties={annotators:'tokenize,ssplit,pos'}"
-    elif lang == 'sp':
-        if depparse:
-            url = "http://localhost:12347?properties={annotators:'tokenize,ssplit,pos,depparse'}"
-        else:
-            url = "http://localhost:12347?properties={annotators:'tokenize,ssplit,pos'}"
+        port = SP_PORT
+    elif lang == "ch":
+        port = CH_PORT
+    elif lang == "sp":
+        port = SP_PORT
+
+    if depparse:
+        url = "http://localhost:" + str(port) + "?properties={annotators:'tokenize,ssplit,pos,depparse'}"
+    else:
+        url = "http://localhost:" + str(port) + "?properties={annotators:'tokenize,ssplit,pos'}"
+
     data = sentence
     parse_string = requests.post(url, data=data).text
     parse_string = parse_string.replace('\r\n', '')

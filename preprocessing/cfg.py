@@ -28,6 +28,11 @@ EN_FIVE_DISCOURSE_MARKERS = [
     "when"
 ]
 
+# corenlp server port on localhost
+EN_PORT = 12345
+CH_PORT = 12346
+SP_PORT = 12347
+
 _PAD = b"<pad>" # no need to pad
 _UNK = b"<unk>"
 _START_VOCAB = [_PAD, _UNK]
@@ -40,5 +45,5 @@ CH_DISCOURSE_MARKERS = [
 ]
 
 SP_DISCOURSE_MARKERS = [
-
+    "porque"
 ]

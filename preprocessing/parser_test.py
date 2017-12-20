@@ -33,28 +33,23 @@ np.random.seed(123)
 
 def setup_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--lang", type=str, default='en', help="en|ch|es")
     return parser.parse_args()
 
-def test(args):
-    test_items = [
-        {
-            "sentence": "esto sucedió porque eso sucedió .",
-            "previous_sentence": ".",
-            "marker": "porque",
-            "output": ("Esto sucedió .", "Eso sucedió .")
-        },
-    ]
-    curious_cases = [
-        {
-            "sentence": "",
-            "previous_sentence": "",
-            "marker": "after",
-            "output": None
-        },
-    ]
+
+def test(lang):
+    if lang == "en":
+        data = json.load(open("en_tests.json"))
+    elif lang == "sp":
+        data = json.load(open("sp_tests.json"))
+    elif lang == "ch":
+        data = json.load(open("ch_tests.json"))
+
+    test_items = data["test_items"]
+    curious_cases = data["curious_cases"]
         
     print("{} cases are weird and I can't figure out how to handle them. :(".format(len(curious_cases)))
-    # print("{} of those incorrectly return None".format(len([c for c in curious_cases if depparse_ssplit(c["sentence"], c["previous_sentence"], c["marker"], "sp")==None])))
+    # print("{} of those incorrectly return None".format(len([c for c in curious_cases if depparse_ssplit(c["sentence"], c["previous_sentence"], c["marker"], "en")==None])))
     print("{} parsable cases are being tested".format(len(test_items)))
     curious=False
     if curious:
@@ -62,7 +57,9 @@ def test(args):
         for item in curious_cases:
             print("====================")
             print(item["sentence"])
-            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"], "sp")
+            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"], lang)
+            if output:
+                output = list(output)
             print(output)
         print("====================")
         print("====================")
@@ -84,7 +81,9 @@ def test(args):
 
     for item in test_items:
         # if i < n_tests:
-            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"], "sp")
+            output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"], lang)
+            if output:
+                output = list(output)
             try:
                 assert(output == item["output"])
             except AssertionError:
@@ -102,5 +101,6 @@ def test(args):
 
 if __name__ == '__main__':
     args = setup_args()
-    setup_corenlp("sp")
-    test(args)
+    setup_corenlp(args.lang)
+    test(args.lang)
+
