@@ -28,6 +28,17 @@ EN_FIVE_DISCOURSE_MARKERS = [
     "when"
 ]
 
+EN_EIGHT_DISCOURSE_MARKERS = [
+    "and"
+    "because"
+    "but",
+    "if",
+    "when",
+    "so",
+    "though",
+    "before"
+]
+
 # corenlp server port on localhost
 EN_PORT = 12345
 CH_PORT = 12346

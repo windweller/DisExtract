@@ -66,7 +66,7 @@ def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
 
-def cleanup(s):
+def cleanup(s, lang="en"):
     s = s.replace(" @-@ ", "-")
     s = s.replace(" i ", " I ")
     s = s.replace(" im ", " I'm ")
@@ -75,7 +75,10 @@ def cleanup(s):
             s = "I'm " + s[3:]
     if len(s) > 0:
         s = s[0].capitalize() + s[1:]
-    s = re.sub(' " (.*) " ', ' "\\1" ', s)
+    if lang == "en":
+        s = re.sub(' " (.*) " ', ' "\\1" ', s)
+    elif lang == "sp":
+        s = s.replace(" del ", " de el ")
     return s
 
 def capitalize(s):
@@ -203,7 +206,7 @@ to parse sentences: tokens, dependency parse
 def get_parse(sentence, lang="en", depparse=True):
     sentence = sentence.replace("'t ", " 't ")
     if lang == 'en':
-        port = SP_PORT
+        port = EN_PORT
     elif lang == "ch":
         port = CH_PORT
     elif lang == "sp":
@@ -214,11 +217,17 @@ def get_parse(sentence, lang="en", depparse=True):
     else:
         url = "http://localhost:" + str(port) + "?properties={annotators:'tokenize,ssplit,pos'}"
 
-    data = sentence
+    if lang == "sp":
+        # for some reason that is completely beyond me, the parser decided to cut off the data when it ended in "ONU ."
+        data = sentence + " . wtf ?"
+    else:
+        data = sentence
+
     parse_string = requests.post(url, data=data).text
+
     parse_string = parse_string.replace('\r\n', '')
     parse_string = parse_string.replace('\x19', '')
-    # if len(parse_string) >= 12478: print([parse_string[12478]])
+
     try:
         parsed_output = json.loads(parse_string)
     except ValueError:
@@ -380,15 +389,30 @@ class Sentence():
         # make string of subordinate phrase from parse
         parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
 
+        # if "ONU" in parse_subordinate_string:
+        #     print parse_subordinate_string
+
         # correct subordinate phrase from parsed version to wikitext version
         # (tokenization systems are different)
         orig_words = self.original_sentence.split()
         parsed_words = [t["word"] for t in self.tokens]
 
-        # print orig_words
-        # print parsed_words
+        # if "estudios" in parse_subordinate_string:
+        #     # print orig_words
+        #     # print len(orig_words)
+        #     # print parsed_words
+        #     # print len(parsed_words)
+        #     for i in range(len(parsed_words)):
+        #         try:
+        #             print parsed_words[i],
+        #             print orig_words[i]
+        #         except:
+        #             print parsed_words[i]
 
         subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices)
+
+        # if "ONU" in subordinate_phrase:
+        #     print subordinate_phrase
 
         # make a string from this to return
         if subordinate_phrase:
@@ -479,6 +503,7 @@ class Sentence():
                             s1_head_index,
                             exclude_indices=[s2_head_index]
                         )
+
                         # we'll lose some stuff here because of alignment between
                         # wikitext tokenization and corenlp tokenization.
                         # if we can't get a phrase, reject this pair
@@ -550,12 +575,14 @@ def setup_corenlp(lang="en"):
 def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
     sentence = sentence.strip()
     previous_sentence = previous_sentence.strip()
-    sentence = cleanup(sentence)
+    sentence = cleanup(sentence, lang)
+
     parse = get_parse(sentence, lang=lang)
-    # pp.pprint(parse["tokens"])
-    # pp.pprint(parse["basicDependencies"])
     if parse:
-        # print(json.dumps(parse, indent=4))
+        # if "ONU" in str(sentence):
+        #     pp.pprint(parse["tokens"])
+        #     # pp.pprint(parse["basicDependencies"])
+        #     # print(json.dumps(parse["tokens"], indent=4))
         sentence = Sentence(parse, sentence)
         return(sentence.find_pair(marker, "any", previous_sentence, lang=lang))
     else:
