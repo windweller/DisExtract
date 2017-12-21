@@ -36,8 +36,8 @@ parser.add_argument("--outputmodelname", type=str, default='dis-model')
 # training
 parser.add_argument("--n_epochs", type=int, default=10)
 parser.add_argument("--cur_epochs", type=int, default=1)
-parser.add_argument("--cur_lr", type=int, default=0.1)
-parser.add_argument("--cur_valid", type=int, default=-1e10, help="must set this otherwise resumed model will be saved by default")
+parser.add_argument("--cur_lr", type=float, default=0.1)
+parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set this otherwise resumed model will be saved by default")
 
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
@@ -147,7 +147,7 @@ else:
     # 2. resume with the previous learning rate
     model_path = pjoin(params.outputdir, params.outputmodelname + ".pickle")  # this is the best model
     # this might have conflicts with gpu_idx...
-    dis_net = torch.load(model_path, map_location={'cuda:1' : 'cuda:0', 'cuda:2' : 'cuda:0'})
+    dis_net = torch.load(model_path)
 
 # loss
 loss_fn = nn.CrossEntropyLoss()
