@@ -24,8 +24,8 @@ sys.setdefaultencoding('utf8')
 Unlike Wikitext, we don't have sentence tokenization, and don't need to cache that.
 But we do need to cache dependency parses.
 
-This does filtering on max, min, ratio already (ratio should not be there...)
-, to save dependency parsing time
+This does filtering on max, min, ratio already (ratio should not be there...), 
+to save dependency parsing time
 """
 
 parser = argparse.ArgumentParser(description='DisExtract BookCorpus')

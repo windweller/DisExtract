@@ -2,39 +2,22 @@
 
 # grab test cases
 ch_dependency_patterns = {
-  "然后": [
-    { # then
-      "POS": "AD",
-      "S1": "conj",  # the dep tag S1 -> S2
-      "S2": "advmod"  # the dep tag S2 -> marker
-    },
-    { # then
-      "POS": "AD",
-      "S1": "dep",  # the dep tag S1 -> S2
-      "S2": "advmod"  # the dep tag S2 -> marker
-    }
-  ],
-  "但是": [
-    { # but
-      "POS": "AD",
-      "S1": "conj",  # nsubj
-      "S2": "advmod"
-    },
-  ],
-  "也": [
-    { # also
-      "POS": "AD",
-      "S1": "conj",
-      "S2": "advmod"
-    },
-  ],
-  "因为": [
-    { # because
-      "POS": "P",
-      "S1": "nmod:prep",
-      "S2": "case"
-    }
-  ]
+  # and
+  "并且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
+  "而且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
+  "因为": [{"S2": "case", "S1": "nmod:prep", "POS": "P"}],
+  "之前": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
+  "但是": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  "可是": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  "不过": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  "但": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  "如果": [{"POS": "CS", "S1": "dep","S2": "advmod"}],
+  "因此": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  "所以": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  # "然后": [{"POS": "AD", "S1": "conj", "S2": "advmod"}, {"POS": "AD", "S1": "dep", "S2": "advmod"}],
+  "虽然": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
+  "尽管": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
+  "当": [{"POS": "P", "S1": "nmod:prep","S2": "case"}],
 }
 
 sp_dependency_patterns = {

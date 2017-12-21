@@ -26,7 +26,12 @@ from cfg import CH_DISCOURSE_MARKERS
 """
 1. Scan through the directory, save all folders
 2. Unzip each file, parse them (XML), extract stories
-3. Save 
+3. Build: 
+    1). Take out English words/characters (no need to do this step for Spanish)
+    2). Map HTML entities back to normal characters
+    3). Remove parentheses and their content
+    4). <P> tag is not entirely "paragraphs", need to merge all paragraph and then sent tokenization
+    5). Map 「 and 」to “ ” (which is more common) 
 """
 
 parser = argparse.ArgumentParser(description='DisExtract Gigaword Chinese')
