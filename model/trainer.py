@@ -35,6 +35,10 @@ parser.add_argument("--outputmodelname", type=str, default='dis-model')
 
 # training
 parser.add_argument("--n_epochs", type=int, default=10)
+parser.add_argument("--cur_epochs", type=int, default=1)
+parser.add_argument("--cur_lr", type=float, default=0.1)
+parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set this otherwise resumed model will be saved by default")
+
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
 parser.add_argument("--dpout_fc", type=float, default=0., help="classifier dropout")
@@ -134,8 +138,16 @@ config_dis_model = {
     'use_cuda': True,
 }
 
-dis_net = DisSent(config_dis_model)
-logger.info(dis_net)
+if params.cur_epochs == 1:
+    dis_net = DisSent(config_dis_model)
+    logger.info(dis_net)
+else:
+    # if starting epoch is not 1, we resume training
+    # 1. load in model
+    # 2. resume with the previous learning rate
+    model_path = pjoin(params.outputdir, params.outputmodelname + ".pickle")  # this is the best model
+    # this might have conflicts with gpu_idx...
+    dis_net = torch.load(model_path)
 
 # loss
 loss_fn = nn.CrossEntropyLoss()
@@ -145,6 +157,9 @@ loss_fn.size_average = False
 optim_fn, optim_params = get_optimizer(params.optimizer)
 optimizer = optim_fn(dis_net.parameters(), **optim_params)
 
+if params.cur_epochs != 1:
+    optimizer.param_groups[0]['lr'] = params.cur_lr
+
 # cuda by default
 dis_net.cuda()
 loss_fn.cuda()
@@ -152,7 +167,7 @@ loss_fn.cuda()
 """
 TRAIN
 """
-val_acc_best = -1e10
+val_acc_best = -1e10 if params.cur_epochs == 1 else params.cur_valid
 adam_stop = False
 stop_training = False
 lr = optim_params['lr'] if 'sgd' in params.optimizer else None
@@ -314,11 +329,11 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 
     multiclass_recall_msg = 'Multiclass Recall - '
     for k, v in mean_multi_recall.iteritems():
-        multiclass_recall_msg += dis_labels[k] + ": " + str(v) + " "
+        multiclass_recall_msg += dis_labels[k] + ": " + str(v[0]) + " "
 
     multiclass_prec_msg = 'Multiclass Precision - '
     for k, v in mean_multi_prec.iteritems():
-        multiclass_prec_msg += dis_labels[k] + ": " + str(v) + " "
+        multiclass_prec_msg += dis_labels[k] + ": " + str(v[0]) + " "
 
     logger.info(multiclass_recall_msg)
     logger.info(multiclass_prec_msg)
@@ -375,21 +390,22 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 """
 Train model on Discourse Classification task
 """
-epoch = 1
+if __name__ == '__main__':
+    epoch = params.cur_epochs  # start at 1
 
-while not stop_training and epoch <= params.n_epochs:
-    train_acc = trainepoch(epoch)
-    eval_acc = evaluate(epoch, 'valid')
-    epoch += 1
+    while not stop_training and epoch <= params.n_epochs:
+        train_acc = trainepoch(epoch)
+        eval_acc = evaluate(epoch, 'valid')
+        epoch += 1
 
-# Run best model on test set.
-del dis_net
-dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
+    # Run best model on test set.
+    del dis_net
+    dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
 
-logger.info('\nTEST : Epoch {0}'.format(epoch))
-evaluate(1e6, 'valid', True)
-evaluate(0, 'test', True, True)  # save confusion results on test data
+    logger.info('\nTEST : Epoch {0}'.format(epoch))
+    evaluate(1e6, 'valid', True)
+    evaluate(0, 'test', True, True)  # save confusion results on test data
 
-# Save encoder instead of full model
-torch.save(dis_net.encoder,
-           os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
+    # Save encoder instead of full model
+    torch.save(dis_net.encoder,
+               os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
