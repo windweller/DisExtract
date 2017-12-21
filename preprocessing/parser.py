@@ -564,7 +564,7 @@ class Sentence():
 
 def setup_corenlp(lang="en"):
     try:
-        test_sentences = {"en": "The quick brown fox jumped over the lazy dog.", "ch": "", "sp": "Que voy a hacer?"}
+        test_sentences = {"en": "The quick brown fox jumped over the lazy dog.", "ch": "当周二开始申购时,有数万人涌入索取MTRC的申请表,可以说是盛况空前。", "sp": "Que voy a hacer?"}
         get_parse(test_sentences[lang], lang=lang)
     except:
         # TODO

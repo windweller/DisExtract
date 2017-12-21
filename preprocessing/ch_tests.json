@@ -9,7 +9,7 @@
     ],
     "curious_cases": [
         {
-            "sentence": "",
+            "sentence": "当周二开始申购时,有数万人涌入索取MTRC的申请表,可以说是盛况空前。",
             "previous_sentence": ".",
             "marker": "",
             "output": null
