@@ -1,36 +1,43 @@
 # -*- coding: utf-8 -*-
 
 # grab test cases
-cn_dependency_patterns = {
-  "然后": [{ # then
-    "POS": ["AD"],
-    "S1": ["conj"],  # the dep tag S1 -> S2
-    "S2": ["advmod"]  # the dep tag S2 -> marker
-  },
-  { # then
-    "POS": ["AD"],
-    "S1": ["dep"],  # the dep tag S1 -> S2
-    "S2": ["advmod"]  # the dep tag S2 -> marker
-  }
+ch_dependency_patterns = {
+  "然后": [
+    { # then
+      "POS": "AD",
+      "S1": "conj",  # the dep tag S1 -> S2
+      "S2": "advmod"  # the dep tag S2 -> marker
+    },
+    { # then
+      "POS": "AD",
+      "S1": "dep",  # the dep tag S1 -> S2
+      "S2": "advmod"  # the dep tag S2 -> marker
+    }
   ],
-  "但是": { # but
-    "POS": ["AD"],
-    "S1": ["conj"],  # nsubj
-    "S2": ["advmod"]
-  },
-  "也": { # also
-    "POS": ["AD"],
-    "S1": ["conj"],
-    "S2": ["advmod"]
-  },
-  "因为": { # because
-    "POS": ["P"],
-    "S1": ["nmod:prep"],
-    "S2": ["case"]
-  }
+  "但是": [
+    { # but
+      "POS": "AD",
+      "S1": "conj",  # nsubj
+      "S2": "advmod"
+    },
+  ],
+  "也": [
+    { # also
+      "POS": "AD",
+      "S1": "conj",
+      "S2": "advmod"
+    },
+  ],
+  "因为": [
+    { # because
+      "POS": "P",
+      "S1": "nmod:prep",
+      "S2": "case"
+    }
+  ]
 }
 
-es_dependency_patterns = {
+sp_dependency_patterns = {
   "luego": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
   "después": [{"S1": "advcl", "S2": "advmod", "POS": "rg"}],
   "también": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
