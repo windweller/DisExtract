@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -53,7 +52,7 @@ argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 
-PUNCTUATION = '.,:;— '
+PUNCTUATION = '.,:;— ,。,'
 
 # dependency_patterns = None
 
@@ -217,11 +216,7 @@ def get_parse(sentence, lang="en", depparse=True):
     else:
         url = "http://localhost:" + str(port) + "?properties={annotators:'tokenize,ssplit,pos'}"
 
-    if lang == "sp":
-        # for some reason that is completely beyond me, the parser decided to cut off the data when it ended in "ONU ."
-        data = sentence + " . wtf ?"
-    else:
-        data = sentence
+    data = sentence
 
     parse_string = requests.post(url, data=data).text
 
@@ -241,17 +236,20 @@ def get_parse(sentence, lang="en", depparse=True):
 
 
 class Sentence():
-    def __init__(self, json_sentence, original_sentence):
+    def __init__(self, json_sentence, original_sentence, lang):
         self.json = json_sentence
         self.dependencies = json_sentence["basicDependencies"]
         self.tokens = json_sentence["tokens"]
         self.original_sentence = original_sentence
+        self.lang = lang
     def indices(self, word):
         if len(word.split(" ")) > 1:
             words = word.split(" ")
             indices = [i for lst in [self.indices(w) for w in words] for i in lst]
             return indices
         else:
+            # print " ".join([t["word"].lower() for t in self.tokens])
+            # print word.lower()
             return [i+1 for i in get_indices([t["word"].lower() for t in self.tokens], word)]
     def token(self, index):
         return self.tokens[int(index)-1]
@@ -328,7 +326,10 @@ class Sentence():
         return [d["dep"] for d in deps]
 
     def __str__(self):
-        return " ".join([t["word"] for t in self.tokens])
+        if self.lang == "ch":
+            return "".join([t["word"] for t in self.tokens])
+        else:
+            return " ".join([t["word"] for t in self.tokens])
 
     def get_subordinate_indices(self, acc, explore, depth=0, exclude_indices=[], exclude_types=[]):
         # print("acc: {}\nexplore: {}\ndepth: {}\nexclude_indices: {}".format(acc, explore, depth, exclude_indices))
@@ -386,30 +387,35 @@ class Sentence():
         while self.is_punct(subordinate_indices[0]):
             subordinate_indices = subordinate_indices[1:]
         
-        # make string of subordinate phrase from parse
-        parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
+        if self.lang == "ch":
+            subordinate_phrase = "".join([self.word(i) for i in subordinate_indices])
+        else:
+            # filter so that lengths are nicely behaved, unless it's chinese where tokenization is harder...
 
-        # if "ONU" in parse_subordinate_string:
-        #     print parse_subordinate_string
+            # make string of subordinate phrase from parse
+            parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
 
-        # correct subordinate phrase from parsed version to wikitext version
-        # (tokenization systems are different)
-        orig_words = self.original_sentence.split()
-        parsed_words = [t["word"] for t in self.tokens]
+            # if "ONU" in parse_subordinate_string:
+            #     print parse_subordinate_string
 
-        # if "estudios" in parse_subordinate_string:
-        #     # print orig_words
-        #     # print len(orig_words)
-        #     # print parsed_words
-        #     # print len(parsed_words)
-        #     for i in range(len(parsed_words)):
-        #         try:
-        #             print parsed_words[i],
-        #             print orig_words[i]
-        #         except:
-        #             print parsed_words[i]
+            # correct subordinate phrase from parsed version to wikitext version
+            # (tokenization systems are different)
+            orig_words = self.original_sentence.split()
+            parsed_words = [t["word"] for t in self.tokens]
 
-        subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices)
+            # if "estudios" in parse_subordinate_string:
+            #     # print orig_words
+            #     # print len(orig_words)
+            #     # print parsed_words
+            #     # print len(parsed_words)
+            #     for i in range(len(parsed_words)):
+            #         try:
+            #             print parsed_words[i],
+            #             print orig_words[i]
+            #         except:
+            #             print parsed_words[i]
+
+            subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices)
 
         # if "ONU" in subordinate_phrase:
         #     print subordinate_phrase
@@ -426,6 +432,7 @@ class Sentence():
             marker_head = dep_pattern["head"]
         else:
             marker_head = marker
+
         valid_marker_indices = [i for i in self.indices(marker_head) if self.token(i)["pos"] in pos ]
         # if marker=="so":
         #     for i in valid_marker_indices:
@@ -573,17 +580,26 @@ def setup_corenlp(lang="en"):
         raise Exception("corenlp parser needs to be running for language '{}'. see https://github.com/erindb/corenlp-ec2-startup".format(lang))
 
 def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
+    # print sentence
+    orig_sentence = sentence.encode("utf-8")
     sentence = sentence.strip()
     previous_sentence = previous_sentence.strip()
     sentence = cleanup(sentence, lang)
 
-    parse = get_parse(sentence, lang=lang)
+    parse = get_parse(sentence.encode("utf-8"), lang=lang)
     if parse:
         # if "ONU" in str(sentence):
         #     pp.pprint(parse["tokens"])
         #     # pp.pprint(parse["basicDependencies"])
         #     # print(json.dumps(parse["tokens"], indent=4))
-        sentence = Sentence(parse, sentence)
+        sentence = Sentence(parse, sentence, lang)
+
+        # print orig_sentence
+        # print len(orig_sentence)
+        # print str(sentence)
+        # print len(str(sentence))
+
+        # print sentence
         return(sentence.find_pair(marker, "any", previous_sentence, lang=lang))
     else:
         return None

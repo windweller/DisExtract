@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 EN_DISCOURSE_MARKERS = [
     "after",
     "also",
@@ -52,7 +58,21 @@ PAD_ID = 0
 UNK_ID = 1
 
 CH_DISCOURSE_MARKERS = [
-
+  "并且",
+  "而且",
+  "因为",
+  "之前",
+  "但是",
+  "可是",
+  "不过",
+  "但",
+  "如果",
+  "因此",
+  "所以",
+  # "然后": [{"POS": "AD", "S1": "conj", "S2": "advmod"}, {"POS": "AD", "S1": "dep", "S2": "advmod"}],
+  "虽然",
+  "尽管",
+  "当"
 ]
 
 SP_DISCOURSE_MARKERS = [

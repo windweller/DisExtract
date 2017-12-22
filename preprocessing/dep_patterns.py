@@ -1,23 +1,37 @@
 # -*- coding: utf-8 -*-
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 # grab test cases
 ch_dependency_patterns = {
   # and
-  "并且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
-  "而且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
-  "因为": [{"S2": "case", "S1": "nmod:prep", "POS": "P"}],
-  "之前": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
-  "但是": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
-  "可是": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
-  "不过": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
-  "但": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
-  "如果": [{"POS": "CS", "S1": "dep","S2": "advmod"}],
-  "因此": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
-  "所以": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  u"并且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
+  u"而且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
+  u"因为": [{"S2": "case", "S1": "nmod:prep", "POS": "P"}],
+  u"之前": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
+  u"但是": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  u"可是": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  u"不过": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  u"但": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  u"如果": [{"POS": "CS", "S1": "dep","S2": "advmod"}],
+  u"因此": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
+  u"所以": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
   # "然后": [{"POS": "AD", "S1": "conj", "S2": "advmod"}, {"POS": "AD", "S1": "dep", "S2": "advmod"}],
-  "虽然": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
-  "尽管": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
-  "当": [{"POS": "P", "S1": "nmod:prep","S2": "case"}],
+  u"虽然": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
+  u"尽管": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
+  u"当": [{
+    "POS": "P",
+    "S1": "nmod:prep",
+    "S2": "case",
+    "enclosing_marker": {
+      "POS": "LC",
+      "marker": "时",
+      "dep_to_S": "case",
+      "note": "this appears at the end of S2 and would make the classifier's job too easy (even tho it would be a well-formed sentence with the marker)"
+    }
+  }],
 }
 
 sp_dependency_patterns = {

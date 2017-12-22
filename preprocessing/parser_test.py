@@ -83,7 +83,7 @@ def test(lang):
         # if i < n_tests:
             output = depparse_ssplit(item["sentence"], item["previous_sentence"], item["marker"], lang)
             if output:
-                output = list(output)
+                output = "[\"" + "\", \"".join(list(output)) + "\"]"
             try:
                 assert(output == item["output"])
             except AssertionError:
