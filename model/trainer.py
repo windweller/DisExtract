@@ -54,7 +54,7 @@ parser.add_argument("--encoder_type", type=str, default='BLSTMEncoder', help="se
 parser.add_argument("--enc_lstm_dim", type=int, default=2048, help="encoder nhid dimension")
 parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
-parser.add_argument("--n_classes", type=int, default=5, help="5 or 8")
+# parser.add_argument("--n_classes", type=int, default=5, help="5 or 8")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 
 # gpu
@@ -132,7 +132,7 @@ config_dis_model = {
     'dpout_fc': params.dpout_fc,
     'fc_dim': params.fc_dim,
     'bsize': params.batch_size,
-    'n_classes': params.n_classes,
+    'n_classes': label_size,
     'pool_type': params.pool_type,
     'encoder_type': params.encoder_type,
     'use_cuda': True,
