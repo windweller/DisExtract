@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(description='NLI training')
 # paths
 parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_8|books_all|gw_5|gw_8")
 parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
-parser.add_argument("--outputdir", type=str, default='exp/', help="Output directory")
+parser.add_argument("--outputdir", type=str, default='sandbox/', help="Output directory")
 parser.add_argument("--outputmodelname", type=str, default='dis-model')
 
 # training

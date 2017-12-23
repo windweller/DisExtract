@@ -35,8 +35,8 @@ EN_FIVE_DISCOURSE_MARKERS = [
 ]
 
 EN_EIGHT_DISCOURSE_MARKERS = [
-    "and"
-    "because"
+    "and",
+    "because",
     "but",
     "if",
     "when",
