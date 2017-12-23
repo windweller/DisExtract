@@ -13,10 +13,10 @@ EN_DISCOURSE_MARKERS = [
     "because",
     "before",
     "but",
-    "for example",
-    "however",
+    # "for example",
+    # "however",
     "if",
-    "meanwhile",
+    # "meanwhile",
     "so",
     "still",
     "then",
@@ -24,7 +24,7 @@ EN_DISCOURSE_MARKERS = [
     "when",
     "while"
 ]
-DISCOURSE_MARKER_SET_TAG = "ALL18"
+DISCOURSE_MARKER_SET_TAG = "ALL18"  # ALL15 now
 
 EN_FIVE_DISCOURSE_MARKERS = [
     "and",

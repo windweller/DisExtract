@@ -8,7 +8,8 @@ import numpy as np
 import torch
 import logging
 from os.path import join as pjoin
-from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS
+from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
+    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS
 
 
 def get_batch(batch, word_vec):
