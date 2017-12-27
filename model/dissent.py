@@ -20,9 +20,11 @@ class BLSTMEncoder(nn.Module):
         self.enc_lstm_dim = config['enc_lstm_dim']
         self.pool_type = config['pool_type']
         self.dpout_model = config['dpout_model']
+        self.dpout_emb = config['dpout_emb']
 
         self.enc_lstm = nn.LSTM(self.word_emb_dim, self.enc_lstm_dim, 1,
                                 bidirectional=True, dropout=self.dpout_model)
+        self.emb_drop = nn.Dropout(self.dpout_emb)
 
     def is_cuda(self):
         # either all weights are on cpu or they are on gpu
@@ -40,6 +42,9 @@ class BLSTMEncoder(nn.Module):
         idx_sort = torch.from_numpy(idx_sort).cuda() if self.is_cuda() \
             else torch.from_numpy(idx_sort)
         sent = sent.index_select(1, Variable(idx_sort))
+
+        # apply input dropout
+        sent = self.emb_drop(sent)
 
         # Handling padding in Recurrent Networks
         sent_packed = nn.utils.rnn.pack_padded_sequence(sent, sent_len)
@@ -235,9 +240,8 @@ class DisSent(nn.Module):
                     nn.Linear(self.fc_dim, self.n_classes)
                 )
             else:
-                # this is input-dropout
+                # this is middle-layer-dropout
                 self.classifier = nn.Sequential(
-                    nn.Dropout(p=self.dpout_fc),
                     nn.Linear(self.inputdim, self.fc_dim),
                     nn.Dropout(p=self.dpout_fc),
                     nn.Linear(self.fc_dim, self.fc_dim),

@@ -41,6 +41,7 @@ parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set thi
 
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
+parser.add_argument("--dpout_emb", type=float, default=0., help="embedding dropout")
 parser.add_argument("--dpout_fc", type=float, default=0., help="classifier dropout")
 parser.add_argument("--optimizer", type=str, default="sgd,lr=0.1", help="adam or sgd,lr=0.1")
 parser.add_argument("--lrshrink", type=float, default=5, help="shrink factor for sgd")
@@ -128,6 +129,7 @@ config_dis_model = {
     'word_emb_dim': params.word_emb_dim,
     'enc_lstm_dim': params.enc_lstm_dim,
     'n_enc_layers': params.n_enc_layers,
+    'dpout_emb': params.dpout_emb,
     'dpout_model': params.dpout_model,
     'dpout_fc': params.dpout_fc,
     'fc_dim': params.fc_dim,
