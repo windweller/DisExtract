@@ -34,6 +34,14 @@ EN_FIVE_DISCOURSE_MARKERS = [
     "when"
 ]
 
+EN_OLD_FIVE_DISCOURSE_MARKERS = [
+    "so",
+    "but",
+    "because",
+    "if",
+    "when"
+]
+
 EN_EIGHT_DISCOURSE_MARKERS = [
     "and",
     "because",
