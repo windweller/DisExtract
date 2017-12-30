@@ -274,9 +274,10 @@ class DisSent(nn.Module):
         self.enc_lstm_dim = config['enc_lstm_dim']
         self.encoder_type = config['encoder_type']
         self.dpout_fc = config['dpout_fc']
+        self.tied_weights = config['tied_weights']
 
         self.encoder = eval(self.encoder_type)(config)
-        self.inputdim = 5 * 2 * self.enc_lstm_dim
+        self.inputdim = 5 * 2 * self.enc_lstm_dim if not self.tied_weights else 5 * self.enc_lstm_dim
 
         # If fully connected layer dimension is set to 0, we are not using it
         if self.fc_dim != 0:
