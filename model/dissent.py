@@ -94,7 +94,7 @@ class BLSTMEncoder(nn.Module):
             sent_rev = reverse_padded_sequence(sent, sent_len)
             sent_rev_packed = nn.utils.rnn.pack_padded_sequence(sent_rev, sent_len)
             rev_sent_output = self.enc_lstm(sent_rev_packed)[0]
-            # no need to unpack here, we simply reverse the hidden states back
+            rev_sent_output = nn.utils.rnn.pad_packed_sequence(rev_sent_output)[0]
             back_sent_output = reverse_padded_sequence(rev_sent_output, sent_len)
             sent_output = sent_output + back_sent_output
 
