@@ -6,10 +6,45 @@ Code from https://github.com/facebookresearch/InferSent/blob/master/models.py
 
 import numpy as np
 import time
+import logging
 
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
+
+logger = logging.getLogger(__name__)
+
+
+def reverse_padded_sequence(inputs, lengths, batch_first=False):
+    """Reverses sequences according to their lengths.
+    Inputs should have size ``T x B x *`` if ``batch_first`` is False, or
+    ``B x T x *`` if True. T is the length of the longest sequence (or larger),
+    B is the batch size, and * is any number of dimensions (including 0).
+    Arguments:
+        inputs (Variable): padded batch of variable length sequences.
+        lengths (list[int]): list of sequence lengths
+        batch_first (bool, optional): if True, inputs should be B x T x *.
+    Returns:
+        A Variable with the same size as inputs, but with each sequence
+        reversed according to its length.
+    """
+    if batch_first:
+        inputs = inputs.transpose(0, 1)
+    max_length, batch_size = inputs.size(0), inputs.size(1)
+    if len(lengths) != batch_size:
+        raise ValueError('inputs is incompatible with lengths.')
+    ind = [list(reversed(range(0, length))) + list(range(length, max_length))
+           for length in lengths]
+    ind = Variable(torch.LongTensor(ind).transpose(0, 1))
+    for dim in range(2, inputs.dim()):
+        ind = ind.unsqueeze(dim)
+    ind = ind.expand_as(inputs)
+    if inputs.is_cuda:
+        ind = ind.cuda(inputs.get_device())
+    reversed_inputs = torch.gather(inputs, 0, ind)
+    if batch_first:
+        reversed_inputs = reversed_inputs.transpose(0, 1)
+    return reversed_inputs
 
 
 class BLSTMEncoder(nn.Module):
@@ -21,9 +56,13 @@ class BLSTMEncoder(nn.Module):
         self.pool_type = config['pool_type']
         self.dpout_model = config['dpout_model']
         self.dpout_emb = config['dpout_emb']
+        self.tied_weights = config['tied_weights']
 
+        bidrectional = True if not self.tied_weights else False
+
+        logger.info("tied weights = {}, using biredictional cell: {}".format(self.tied_weights, bidrectional))
         self.enc_lstm = nn.LSTM(self.word_emb_dim, self.enc_lstm_dim, 1,
-                                bidirectional=True, dropout=self.dpout_model)
+                                bidirectional=bidrectional, dropout=self.dpout_model)
         self.emb_drop = nn.Dropout(self.dpout_emb)
 
     def is_cuda(self):
@@ -50,6 +89,14 @@ class BLSTMEncoder(nn.Module):
         sent_packed = nn.utils.rnn.pack_padded_sequence(sent, sent_len)
         sent_output = self.enc_lstm(sent_packed)[0]  # seqlen x batch x 2*nhid
         sent_output = nn.utils.rnn.pad_packed_sequence(sent_output)[0]
+        if self.tied_weights:
+            # we also compute reverse
+            sent_rev = reverse_padded_sequence(sent, sent_len)
+            sent_rev_packed = nn.utils.rnn.pack_padded_sequence(sent_rev, sent_len)
+            rev_sent_output = self.enc_lstm(sent_rev_packed)[0]
+            # no need to unpack here, we simply reverse the hidden states back
+            back_sent_output = reverse_padded_sequence(rev_sent_output, sent_len)
+            sent_output = sent_output + back_sent_output
 
         # Un-sort by length
         idx_unsort = torch.from_numpy(idx_unsort).cuda() if self.is_cuda() \

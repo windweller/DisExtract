@@ -55,8 +55,8 @@ parser.add_argument("--encoder_type", type=str, default='BLSTMEncoder', help="se
 parser.add_argument("--enc_lstm_dim", type=int, default=2048, help="encoder nhid dimension")
 parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
-# parser.add_argument("--n_classes", type=int, default=5, help="5 or 8")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
+parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -137,6 +137,7 @@ config_dis_model = {
     'n_classes': label_size,
     'pool_type': params.pool_type,
     'encoder_type': params.encoder_type,
+    'tied_weights': params.tied_weights,
     'use_cuda': True,
 }
 
