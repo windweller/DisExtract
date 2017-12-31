@@ -8,6 +8,7 @@ We are only process text type of "story", and ignore the rest.
 """
 
 import os
+import re
 import io
 import sys
 import json
@@ -17,8 +18,6 @@ import argparse
 import logging
 from util import rephrase
 from os.path import join as pjoin
-
-import xml.etree.ElementTree as ET
 
 from parser import depparse_ssplit, setup_corenlp
 from cfg import CH_DISCOURSE_MARKERS
@@ -55,20 +54,85 @@ with open(args.json, 'rb') as f:
     json_config = json.load(f)
 
 gigaword_cn_dir = json_config['gigaword_cn_dir']
+gigaword_cn_file = 'gigaword_cn.txt'
+
+def process_sent(sent, lang="ch"):
+    sent = re.sub(r"\(.+\)", "", sent)  # get rid of parentheses (many content inside are English/other languages)
+
+    sent = sent.replace("&amp;gt;", "")
+
+    # HTML entities
+    sent = sent.replace("&lt;", '<')
+    sent = sent.replace("&gt;", '>')
+    sent = sent.replace("&amp;", '&')
+    sent = sent.replace("&apos;", '\'')
+    sent = sent.replace("&quot;", '"')
+
+    if lang == "ch":
+        sent = re.sub(r'[A-Z a-z.]+', "", sent)  # get rid of English characters
+        # and all spaces in the sentence. This will only work in Chinese
+        sent = re.sub(r'[0-9]+', "", sent)
+
+    sent = re.sub(r"\(", "", sent)
+    sent = re.sub(r"\)", "", sent)
+
+    # resolve weird 「 symbol
+    sent = sent.replace("「", '“')
+    sent = sent.replace("」", "”")
+
+    return sent
+
+
+def extract_stories(lines):
+    # pass in all lines from a gigaword xml file
+    sentences = []
+
+    story_doc = False
+    paragraph = False
+    paragraph_text = []
+    for line in lines:
+        if 'DOC' in line and 'type="story"' in line:
+            story_doc = True
+        if '<P>' in line and story_doc:
+            paragraph = True
+            continue
+        if '</P>' in line and story_doc:
+            paragraph = False
+            sentence = "".join(paragraph_text).strip()
+            # preprocess the sentence
+            sentence = process_sent(sentence)
+            sentences.append(sentence)
+            paragraph_text = []
+        if '</DOC>' in line and story_doc:
+            story_doc = False
+
+        if paragraph:
+            paragraph_text.append(line)
+
+    return sentences
+
 
 def extrat_raw_gigaword():
     news_sources = os.listdir(pjoin(gigaword_cn_dir, 'data'))
+    articles_processed = 0
+    sentences = []
     for news_source in news_sources:
         files = os.listdir(pjoin(gigaword_cn_dir, 'data', news_source))
         files = filter(lambda s: '.gz' in s, files)
+        for file in files:
+            with gzip.open(pjoin(gigaword_cn_dir, 'data', news_source, file), 'rb') as f:
+                file_content = f.read()
+                lines = file_content.split('\n')
+                sents = extract_stories(lines)
+                sentences.extend(sents)
+            articles_processed += 1
+            if articles_processed % 1000 == 0:
+                print("processed {} articles".format(articles_processed))
 
-def parse_one_file():
-    file = "/Users/Aimingnie/Documents/School/Stanford/LING 236/DisExtract/data/cmn_gw_5/data/afp_cmn/afp_cmn_200010.gz"
-    with gzip.open(file, 'rb') as f:
-        file_content = f.read()
-
-    root = ET.fromstring(file_content)
+    with open(pjoin(gigaword_cn_dir, gigaword_cn_file), 'wb') as f:
+        for sent in sentences:
+            f.write(sent + '\n')
 
 if __name__ == '__main__':
     if args.extract:
-        parse_one_file()
+        extrat_raw_gigaword()
