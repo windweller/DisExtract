@@ -23,14 +23,10 @@ from parser import depparse_ssplit, setup_corenlp
 from cfg import CH_DISCOURSE_MARKERS
 
 """
-1. Scan through the directory, save all folders
-2. Unzip each file, parse them (XML), extract stories
-3. Build: 
-    1). Take out English words/characters (no need to do this step for Spanish)
-    2). Map HTML entities back to normal characters
-    3). Remove parentheses and their content
-    4). <P> tag is not entirely "paragraphs", need to merge all paragraph and then sent tokenization
-    5). Map 「 and 」to “ ” (which is more common) 
+Stats:
+Raw gigaword cn file has: 36,249,282 (36M) sentences
+
+Unlike bookcorpus.py, we are not filtering anything (due to difficulty in tokenization for raw string)
 """
 
 parser = argparse.ArgumentParser(description='DisExtract Gigaword Chinese')
@@ -49,6 +45,14 @@ parser.add_argument("--parse", action='store_false',
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 
 args, _ = parser.parse_known_args()
+
+"""
+Logging
+"""
+
+logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 with open(args.json, 'rb') as f:
     json_config = json.load(f)
@@ -134,6 +138,69 @@ def extrat_raw_gigaword():
         for sent in sentences:
             f.write(sent + '\n')
 
+def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
+    """
+    This function needs to be implemented differently for each corpus
+    since it contains crucial corpus-specific functions, though
+    the main logic remains the same
+
+    :param source_dir:
+    :param filenames:
+    :param marker_set_tag:
+    :param discourse_markers:
+    :return:
+    """
+    markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
+    output_dir = pjoin(markers_dir, "sentences")
+
+    if not os.path.exists(markers_dir):
+        os.makedirs(markers_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    sentences = {marker: {"sentence": [], "previous": []} for marker in discourse_markers}
+
+    for filename in filenames:
+        logger.info("reading {}".format(filename))
+        file_path = pjoin(source_dir, filename)
+
+        previous_sentence = ""
+        with io.open(file_path, 'rU', encoding="utf-8") as f:
+            for i, sentence in enumerate(f):
+                for marker in discourse_markers:
+
+                    # all bookcorpus text are lower case
+                    if marker in sentence:
+                        sentences[marker]["sentence"].append(sentence)
+                        sentences[marker]["previous"].append(previous_sentence)
+
+                previous_sentence = sentence
+
+                if i % args.filter_print_every == 0:
+                    logger.info("processed {}".format(i))
+
+        logger.info("{} file finished".format(filename))
+
+    logger.info('writing files')
+
+    with open(pjoin(output_dir, "{}.json".format(marker_set_tag)), 'wb') as f:
+        json.dump(sentences, f)
+
+    logger.info('file writing complete')
+
+    statistics_lines = []
+    for marker in sentences:
+        n_sentences = len(sentences[marker]["sentence"])
+        statistics_lines.append("{}\t{}".format(marker, n_sentences))
+
+    statistics_report = "\n".join(statistics_lines)
+    with open(pjoin(markers_dir, "VERSION.txt"), "wb") as f:
+        f.write(
+            "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
+        )
+
 if __name__ == '__main__':
     if args.extract:
         extrat_raw_gigaword()
+    elif args.filter:
+        collect_raw_sentences(gigaword_cn_dir, gigaword_cn_file, "ALL14", CH_DISCOURSE_MARKERS)

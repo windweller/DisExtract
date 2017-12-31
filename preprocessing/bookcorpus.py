@@ -90,8 +90,6 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         logger.info("reading {}".format(filename))
         file_path = pjoin(source_dir, filename)
 
-        filtered_out = 0
-
         previous_sentence = ""
         previous_sentence_split = None
         FIRST = True
@@ -104,19 +102,17 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     else:
                         proxy_marker = marker
 
+                    # [min_len, max_len) like [5, 10)
+                    if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
+                        continue
+
                     # length-based filtering
                     if not FIRST:
-                        # [min_len, max_len) like [5, 10)
-                        if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
-                            filtered_out += 1
-                            continue
-
                         # this part might be uncalled for...
                         len2 = len(previous_sentence_split)
                         ratio = float(len2) / len(words)
 
                         if ratio <= args.min_ratio or ratio >= args.max_ratio:
-                            filtered_out += 1
                             continue
 
                     # all bookcorpus text are lower case
