@@ -197,8 +197,75 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
         )
 
+def parse_filtered_sentences(source_dir, marker_set_tag):
+    """
+    This function can be the same for each corpus
+
+    :param source_dir:
+    :param marker_set_tag:
+    :return:
+    """
+
+    markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
+    input_dir = pjoin(markers_dir, "sentences")
+    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
+    output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
+
+    if not os.path.exists(markers_dir):
+        raise Exception("{} does not exist".format(markers_dir))
+    if not os.path.exists(input_dir):
+        raise Exception("{} does not exist".format(input_dir))
+    if not os.path.exists(input_file_path):
+        raise Exception("{} does not exist".format(input_file_path))
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    logger.info("setting up parser (actually just testing atm)")
+    setup_corenlp()
+
+    # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
+    with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'a') as w:
+        # header = "{}\t{}\t{}\n".format("s1", "s2", "marker")
+        # w.write(header)
+
+        with open(input_file_path, 'rb') as f:
+            logger.info("reading {}".format(input_file_path))
+            sentences = json.load(f)
+            logger.info("total sentences: {}".format(
+                sum([len(sentences[marker]["sentence"]) for marker in sentences])
+            ))
+            i = 0
+            for marker, slists in sentences.iteritems():
+                for sentence, previous in zip(slists["sentence"], slists["previous"]):
+                    i += 1
+                    if i > 0:
+                        parsed_output = dependency_parsing(sentence, previous, marker)
+                        if parsed_output:
+                            s1, s2 = parsed_output
+
+                            # parsed_sentence_pairs[marker]["s1"].append(s1)
+                            # parsed_sentence_pairs[marker]["s2"].append(s2)
+                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                            w.write(line_to_print)
+
+                        if i % args.filter_print_every == 0:
+                            logger.info("processed {}".format(i))
+
+    # logger.info('writing files')
+
+    # with open(pjoin(output_dir, "{}_parsed_sentence_pairs.json".format(marker_set_tag)), 'wb') as f:
+    #     json.dump(parsed_sentence_pairs, f)
+
+    logger.info('file writing complete')
+
+def dependency_parsing(sentence, previous_sentence, marker):
+    return depparse_ssplit(sentence, previous_sentence, marker)
+
 if __name__ == '__main__':
     if args.extract:
         extrat_raw_gigaword()
     elif args.filter:
-        collect_raw_sentences(gigaword_cn_dir, gigaword_cn_file, "ALL14", CH_DISCOURSE_MARKERS)
+        collect_raw_sentences(gigaword_cn_dir, [gigaword_cn_file], "ALL14", CH_DISCOURSE_MARKERS)
+    elif args.parse:
+        parse_filtered_sentences(gigaword_cn_dir, "ALL14")

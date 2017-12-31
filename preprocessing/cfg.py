@@ -77,11 +77,27 @@ CH_DISCOURSE_MARKERS = [
   "如果",
   "因此",
   "所以",
-  # "然后": [{"POS": "AD", "S1": "conj", "S2": "advmod"}, {"POS": "AD", "S1": "dep", "S2": "advmod"}],
   "虽然",
   "尽管",
   "当"
 ]
+
+CH_FIVE_DISCOURSE_MARKERS = [
+    "and",
+    "because",
+    "but",
+    "if",
+    "when"
+]
+
+CH_EIGHT_DISCOURSE_MARKERS = [
+    "and",
+    "because",
+    "but",
+    "if",
+    "when"
+]
+
 
 SP_DISCOURSE_MARKERS = [
     "porque"
