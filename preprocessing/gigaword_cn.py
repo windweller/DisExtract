@@ -260,7 +260,7 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
     logger.info('file writing complete')
 
 def dependency_parsing(sentence, previous_sentence, marker):
-    return depparse_ssplit(sentence, previous_sentence, marker)
+    return depparse_ssplit(sentence, previous_sentence, marker, lang='ch')
 
 if __name__ == '__main__':
     if args.extract:
