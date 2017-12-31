@@ -126,8 +126,9 @@ def extrat_raw_gigaword():
                 sents = extract_stories(lines)
                 sentences.extend(sents)
             articles_processed += 1
-            if articles_processed % 1000 == 0:
+            if articles_processed % 20 == 0:
                 print("processed {} articles".format(articles_processed))
+                print("{} sentences are collected".format(len(sentences)))
 
     with open(pjoin(gigaword_cn_dir, gigaword_cn_file), 'wb') as f:
         for sent in sentences:
