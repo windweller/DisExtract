@@ -34,13 +34,11 @@ parser = argparse.ArgumentParser(description='DisExtract Gigaword Chinese')
 parser.add_argument("--json", type=str, default="example_config.json", help="corpus parameter setting to load")
 parser.add_argument("--extract", action='store_true')
 
-parser.add_argument("--filter", action='store_false',
+parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
-parser.add_argument("--max_seq_len", default=50, type=int)
-parser.add_argument("--min_seq_len", default=5, type=int)
 parser.add_argument("--filter_print_every", default=10000, type=int)
 
-parser.add_argument("--parse", action='store_false',
+parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 
