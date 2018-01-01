@@ -268,4 +268,5 @@ if __name__ == '__main__':
     elif args.filter:
         collect_raw_sentences(gigaword_cn_dir, [gigaword_cn_file], "ALL14", CH_DISCOURSE_MARKERS)
     elif args.parse:
+        setup_corenlp("ch")
         parse_filtered_sentences(gigaword_cn_dir, "ALL14")
