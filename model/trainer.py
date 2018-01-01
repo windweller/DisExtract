@@ -57,6 +57,7 @@ parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num lay
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
+parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -294,6 +295,8 @@ def get_multiclass_prec(preds, y_label):
 
 
 def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
+    global dis_net
+
     dis_net.eval()
     correct = 0.
     global val_acc_best, lr, stop_training, adam_stop
@@ -376,6 +379,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 
             val_acc_best = eval_acc
         else:
+            # can reload previous best model
             if 'sgd' in params.optimizer:
                 optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] / params.lrshrink
                 logger.info('Shrinking lr by : {0}. New lr = {1}'
@@ -387,6 +391,12 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
                 # early stopping (at 2nd decrease in accuracy)
                 stop_training = adam_stop
                 adam_stop = True
+
+            # now we finished annealing, we can reload
+            if params.reload_val:
+                del dis_net
+                dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
+                logger.info("Load in previous best epoch")
     return eval_acc
 
 
