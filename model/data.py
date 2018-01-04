@@ -8,7 +8,8 @@ import numpy as np
 import torch
 import logging
 from os.path import join as pjoin
-from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS
+from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
+    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS
 
 
 def get_batch(batch, word_vec):
@@ -56,6 +57,11 @@ def get_glove(word_dict, glove_path):
         len(word_vec), len(word_dict)))
     return word_vec
 
+def list_to_map(dis_label):
+    dis_map = {}
+    for i, l in enumerate(dis_label):
+        dis_map[l] = i
+    return dis_map
 
 def get_dis(data_dir, prefix, discourse_tag="books_5"):
     s1 = {}
@@ -63,10 +69,15 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
     target = {}
 
     if discourse_tag == "books_5":
-        dis_label = EN_FIVE_DISCOURSE_MARKERS
-        dis_map = {}
-        for i, l in enumerate(dis_label):
-            dis_map[l] = i
+        dis_map = list_to_map(EN_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "books_8":
+        dis_map = list_to_map(EN_EIGHT_DISCOURSE_MARKERS)
+    elif discourse_tag == "books_all":
+        dis_map = list_to_map(EN_DISCOURSE_MARKERS)
+    elif discourse_tag == "books_old_5":
+        dis_map = list_to_map(EN_OLD_FIVE_DISCOURSE_MARKERS)
+    else:
+        raise Exception("Corpus/Discourse Tag Set {} not found".format(discourse_tag))
 
     logging.info(dis_map)
     # dis_map: {'and': 0, ...}

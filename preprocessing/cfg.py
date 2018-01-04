@@ -13,10 +13,10 @@ EN_DISCOURSE_MARKERS = [
     "because",
     "before",
     "but",
-    "for example",
-    "however",
+    # "for example",
+    # "however",
     "if",
-    "meanwhile",
+    # "meanwhile",
     "so",
     "still",
     "then",
@@ -24,7 +24,7 @@ EN_DISCOURSE_MARKERS = [
     "when",
     "while"
 ]
-DISCOURSE_MARKER_SET_TAG = "ALL18"
+DISCOURSE_MARKER_SET_TAG = "ALL18"  # ALL15 now
 
 EN_FIVE_DISCOURSE_MARKERS = [
     "and",
@@ -34,9 +34,17 @@ EN_FIVE_DISCOURSE_MARKERS = [
     "when"
 ]
 
+EN_OLD_FIVE_DISCOURSE_MARKERS = [
+    "so",
+    "but",
+    "because",
+    "if",
+    "when"
+]
+
 EN_EIGHT_DISCOURSE_MARKERS = [
-    "and"
-    "because"
+    "and",
+    "because",
     "but",
     "if",
     "when",
@@ -74,6 +82,23 @@ CH_DISCOURSE_MARKERS = [
   "尽管",
   "当"
 ]
+
+CH_FIVE_DISCOURSE_MARKERS = [
+    "and",
+    "because",
+    "but",
+    "if",
+    "when"
+]
+
+CH_EIGHT_DISCOURSE_MARKERS = [
+    "and",
+    "because",
+    "but",
+    "if",
+    "when"
+]
+
 
 SP_DISCOURSE_MARKERS = [
   "y",

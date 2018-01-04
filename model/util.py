@@ -7,11 +7,18 @@ import re
 import inspect
 from torch import optim
 
-from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS
+from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, EN_EIGHT_DISCOURSE_MARKERS, \
+    EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS
 
 def get_labels(corpus):
     if corpus == "books_5":
         labels = EN_FIVE_DISCOURSE_MARKERS
+    elif corpus == "books_old_5":
+        labels = EN_OLD_FIVE_DISCOURSE_MARKERS
+    elif corpus == "books_8":
+        labels = EN_EIGHT_DISCOURSE_MARKERS
+    elif corpus == "books_all":
+        labels = EN_DISCOURSE_MARKERS
     else:
         raise Exception("corpus not found")
 

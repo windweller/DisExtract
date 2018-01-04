@@ -28,9 +28,9 @@ import logging
 
 parser = argparse.ArgumentParser(description='NLI training')
 # paths
-parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_8|gw_5|gw_8")
+parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_old_5|books_8|books_all|gw_5|gw_8")
 parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
-parser.add_argument("--outputdir", type=str, default='exp/', help="Output directory")
+parser.add_argument("--outputdir", type=str, default='sandbox/', help="Output directory")
 parser.add_argument("--outputmodelname", type=str, default='dis-model')
 
 # training
@@ -41,6 +41,7 @@ parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set thi
 
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
+parser.add_argument("--dpout_emb", type=float, default=0., help="embedding dropout")
 parser.add_argument("--dpout_fc", type=float, default=0., help="classifier dropout")
 parser.add_argument("--optimizer", type=str, default="sgd,lr=0.1", help="adam or sgd,lr=0.1")
 parser.add_argument("--lrshrink", type=float, default=5, help="shrink factor for sgd")
@@ -54,8 +55,9 @@ parser.add_argument("--encoder_type", type=str, default='BLSTMEncoder', help="se
 parser.add_argument("--enc_lstm_dim", type=int, default=2048, help="encoder nhid dimension")
 parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
-parser.add_argument("--n_classes", type=int, default=5, help="5 or 8")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
+parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
+parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -128,13 +130,15 @@ config_dis_model = {
     'word_emb_dim': params.word_emb_dim,
     'enc_lstm_dim': params.enc_lstm_dim,
     'n_enc_layers': params.n_enc_layers,
+    'dpout_emb': params.dpout_emb,
     'dpout_model': params.dpout_model,
     'dpout_fc': params.dpout_fc,
     'fc_dim': params.fc_dim,
     'bsize': params.batch_size,
-    'n_classes': params.n_classes,
+    'n_classes': label_size,
     'pool_type': params.pool_type,
     'encoder_type': params.encoder_type,
+    'tied_weights': params.tied_weights,
     'use_cuda': True,
 }
 
@@ -291,6 +295,8 @@ def get_multiclass_prec(preds, y_label):
 
 
 def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
+    global dis_net
+
     dis_net.eval()
     correct = 0.
     global val_acc_best, lr, stop_training, adam_stop
@@ -373,6 +379,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 
             val_acc_best = eval_acc
         else:
+            # can reload previous best model
             if 'sgd' in params.optimizer:
                 optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] / params.lrshrink
                 logger.info('Shrinking lr by : {0}. New lr = {1}'
@@ -384,6 +391,12 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
                 # early stopping (at 2nd decrease in accuracy)
                 stop_training = adam_stop
                 adam_stop = True
+
+            # now we finished annealing, we can reload
+            if params.reload_val:
+                del dis_net
+                dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
+                logger.info("Load in previous best epoch")
     return eval_acc
 
 
