@@ -186,22 +186,24 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
             logger.info("total sentences: {}".format(
                 sum([len(sentences[marker]["sentence"]) for marker in sentences])
             ))
-            i = 0
             for marker, slists in sentences.iteritems():
-                for sentence, previous in zip(slists["sentence"], slists["previous"]):
-                    i += 1
-                    if i > 0:
-                        parsed_output = dependency_parsing(sentence, previous, marker)
-                        if parsed_output:
-                            s1, s2 = parsed_output
+		i = 0
+                if marker in discourse_markers:
+			#if marker == "because":
+				for sentence, previous in set(zip(slists["sentence"], slists["previous"])):
+				    i += 1
+                                    if True:
+					parsed_output = dependency_parsing(sentence, previous, marker)
+					if parsed_output:
+					    s1, s2 = parsed_output
 
-                            # parsed_sentence_pairs[marker]["s1"].append(s1)
-                            # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-                            w.write(line_to_print)
+					    # parsed_sentence_pairs[marker]["s1"].append(s1)
+					    # parsed_sentence_pairs[marker]["s2"].append(s2)
+					    line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+					    w.write(line_to_print)
 
-                        if i % args.filter_print_every == 0:
-                            logger.info("processed {}".format(i))
+					if i % args.filter_print_every == 0:
+					    logger.info("processed {}".format(i))
 
     # logger.info('writing files')
 
@@ -211,7 +213,11 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
     logger.info('file writing complete')
 
 def dependency_parsing(sentence, previous_sentence, marker):
-    return depparse_ssplit(sentence, previous_sentence, marker)
+    try:
+        return depparse_ssplit(sentence, previous_sentence, marker)
+    except:
+        return None
+
 
 if __name__ == '__main__':
     if args.filter:

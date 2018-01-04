@@ -36,6 +36,12 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+#for key in logging.Logger.manager.loggerDict:
+#	print(key)
+
+logging.getLogger("requests").setLevel(logging.CRITICAL)
+logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
+
 argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
 argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
@@ -223,7 +229,10 @@ def get_parse(sentence, depparse=True, language='en'):
     try:
         return json.loads(parse_string)["sentences"][0]
     except ValueError:
-        return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]   
+	try:
+        	return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
+	except:
+		return None
 
 
 class Sentence():
@@ -320,7 +329,10 @@ class Sentence():
         exclude_indices.sort()
         acc.sort()
         explore.sort()
-        # print("exclude: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in exclude_indices]))
+        
+	if depth > 15:
+		return None
+	# print("exclude: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in exclude_indices]))
         # print("acc: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in acc]))
         # print("explore: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in explore]))
         # print("*****")
@@ -363,9 +375,13 @@ class Sentence():
             return None
         subordinate_indices.sort()
 
+	#print subordinate_indices
+        #print self
         # exclude any punctuation not followed by a non-punctuation token
-        while self.is_punct(subordinate_indices[-1]):
+        while len(subordinate_indices)>0 and self.is_punct(subordinate_indices[-1]):
             subordinate_indices = subordinate_indices[:-1]
+	if len(subordinate_indices)==0:
+		return None
         
         # make string of subordinate phrase from parse
         parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
@@ -519,9 +535,10 @@ def setup_corenlp():
 def depparse_ssplit(sentence, previous_sentence, marker):
     sentence = cleanup(sentence)
     parse = get_parse(sentence)
-    # print(json.dumps(parse, indent=4))
-    sentence = Sentence(parse, sentence)
-    return(sentence.find_pair(marker, "any", previous_sentence))
+    if parse:
+    	# print(json.dumps(parse, indent=4))
+    	sentence = Sentence(parse, sentence)
+    	return(sentence.find_pair(marker, "any", previous_sentence))
 
 if __name__ == '__main__':
     args = setup_args()
