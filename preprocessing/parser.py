@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -15,7 +14,10 @@ import requests
 import re
 import logging
 
-from dep_patterns import en_dependency_patterns as dependency_patterns
+import pprint
+pp = pprint.PrettyPrinter(indent=1)
+
+from dep_patterns import en_dependency_patterns, ch_dependency_patterns, sp_dependency_patterns
 
 import sys
 reload(sys)
@@ -28,7 +30,9 @@ import json
 from itertools import izip
 
 from copy import deepcopy as cp
-from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
+from cfg import DISCOURSE_MARKER_SET_TAG
+from cfg import EN_DISCOURSE_MARKERS, CH_DISCOURSE_MARKERS, SP_DISCOURSE_MARKERS
+from cfg import EN_PORT, SP_PORT, CH_PORT
 
 np.random.seed(123)
 
@@ -42,8 +46,19 @@ logger = logging.getLogger(__name__)
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("urllib3.connectionpool").setLevel(logging.CRITICAL)
 
+dependency_patterns = {"en": en_dependency_patterns, "ch": ch_dependency_patterns, "sp": sp_dependency_patterns}
+discourse_marker_set = {"en": EN_DISCOURSE_MARKERS, "ch": CH_DISCOURSE_MARKERS, "sp": SP_DISCOURSE_MARKERS}
+
 argparser = argparse.ArgumentParser(sys.argv[0], conflict_handler='resolve')
 argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
+
+# parser = argparse.ArgumentParser(description='Split by discourse marker using dependency patterns')
+# parser.add_argument("--lang", type=str, default="en", help="en|ch|es")
+# args, _ = parser.parse_known_args()
+
+logging.getLogger('requests').setLevel(logging.CRITICAL)
+
+PUNCTUATION = '.,:;— ,。,'
 
 # dependency_patterns = None
 
@@ -56,10 +71,40 @@ def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
 
-def cleanup(s):
+def cleanup(s, lang="en"):
     s = s.replace(" @-@ ", "-")
-    s = re.sub(' " (.*) " ', ' "\\1" ', s)
+    s = s.replace(" i ", " I ")
+    s = s.replace(" im ", " I'm ")
+    if len(s) > 3:
+        if s[0:3] == "im ":
+            s = "I'm " + s[3:]
+    if len(s) > 0:
+        s = s[0].capitalize() + s[1:]
+    if lang == "en":
+        s = re.sub(' " (.*) " ', ' "\\1" ', s)
+    elif lang == "sp":
+        s = s.replace(" del ", " de el ")
     return s
+
+def capitalize(s):
+    return s[0].capitalize() + s[1:]
+
+def standardize_sentence_output(s):
+    if len(s) == 0:
+        return None
+    else:
+        s = capitalize(s)
+        # keep final quotations and don't add an additional .
+        if len(s)>3 and s[-3:] in ". \". '":
+            return s
+        else:
+            # strip original final punctuation
+            while s[-1] in PUNCTUATION:
+                s = s[:-1]
+                if len(s)==0:
+                    return None
+            # add new standard . at end of sentence
+            return s + " ."
 
 # this was chosen for english, but it's probably fine for other languages, too
 # basically, if there are multiple discourse markers,
@@ -69,48 +114,8 @@ top_level_deps_to_ignore_if_extra = [
     # ("advmod", "WRB") ## this would solve several minor problems but introduce a few major problems
 ]
 
-# search for pattern:
-# "[discourse marker] S2, S1" (needs dependency parse)
-def search_for_reverse_pattern_pair(sent, marker, words, previous_sentence):
-    parse_string = get_parse(sent, depparse=True)
-    parse_string = parse_string.replace('\r\n', '')
-
-    # book corpus maybe has carriage returns and new lines and other things?
-    try: 
-        parse = json.loads(parse_string.replace('\r\n', ''))
-    except ValueError:
-        parse = json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))        
-    sentence = Sentence(parse["sentences"][0], sent)
-    return sentence.find_pair(marker, "s2 discourse_marker s1", previous_sentence)
-
-
 def is_verb_tag(tag):
     return tag[0] == "V" and not tag[-2:] in ["BG", "BN"]
-
-"""
-POS-tag string as if it's a sentence
-and see if it has a verb that could plausibly be the predicate.
-"""
-def has_verb(string):
-    parse = get_parse(string, depparse=False)
-    tokens = json.loads(parse)["sentences"][0]["tokens"]
-    return any([is_verb_tag(t["pos"]) for t in tokens])
-
-
-"""
-using the depparse, look for the desired pattern, in any order
-"""
-def search_for_dep_pattern(marker, current_sentence, previous_sentence):  
-    parse_string = get_parse(current_sentence, depparse=True)
-
-    # book corpus maybe has carriage returns and new lines and other things?
-    try: 
-        parse = json.loads(parse_string.replace('\r\n', ''))
-    except ValueError:
-        parse = json.loads(re.sub("[^A-z0-9.,!?:\"'*&/\{\}\[\]()=+-]", "", parse_string))
-
-    sentence = Sentence(parse["sentences"][0], current_sentence)
-    return sentence.find_pair(marker, "any", previous_sentence)
 
 # https://stackoverflow.com/a/18669080
 def get_indices(lst, element, case="sensitive"):
@@ -203,50 +208,58 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices):
 use corenlp server (see https://github.com/erindb/corenlp-ec2-startup)
 to parse sentences: tokens, dependency parse
 """
-def get_parse(sentence, depparse=True, language='en'):
+def get_parse(sentence, lang="en", depparse=True):
     sentence = sentence.replace("'t ", " 't ")
-    if language == 'en':
-        if depparse:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
-        else:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
-    elif language == 'zh':
-        # maybe there might be different?
-        if depparse:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
-        else:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
-    elif language == 'es':
-        if depparse:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos,depparse'}"
-        else:
-            url = "http://localhost:12345?properties={annotators:'tokenize,ssplit,pos'}"
+    if lang == 'en':
+        port = EN_PORT
+    elif lang == "ch":
+        port = CH_PORT
+    elif lang == "sp":
+        port = SP_PORT
+
+    if depparse:
+        url = "http://localhost:" + str(port) + "?properties={annotators:'tokenize,ssplit,pos,depparse'}"
+    else:
+        url = "http://localhost:" + str(port) + "?properties={annotators:'tokenize,ssplit,pos'}"
+
     data = sentence
+
     parse_string = requests.post(url, data=data).text
+
     parse_string = parse_string.replace('\r\n', '')
     parse_string = parse_string.replace('\x19', '')
-    # if len(parse_string) >= 12478: print([parse_string[12478]])
+
     try:
-        return json.loads(parse_string)["sentences"][0]
+        parsed_output = json.loads(parse_string)
     except ValueError:
 	try:
         	return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
 	except:
 		return None
+#        parsed_output = json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))
+#
+#    sentences = parsed_output["sentences"]
+#    if len(sentences)>0:
+#        return sentences[0]
+#    else:
+#        return None
 
 
 class Sentence():
-    def __init__(self, json_sentence, original_sentence):
+    def __init__(self, json_sentence, original_sentence, lang):
         self.json = json_sentence
         self.dependencies = json_sentence["basicDependencies"]
         self.tokens = json_sentence["tokens"]
         self.original_sentence = original_sentence
+        self.lang = lang
     def indices(self, word):
         if len(word.split(" ")) > 1:
             words = word.split(" ")
             indices = [i for lst in [self.indices(w) for w in words] for i in lst]
             return indices
         else:
+            # print " ".join([t["word"].lower() for t in self.tokens])
+            # print word.lower()
             return [i+1 for i in get_indices([t["word"].lower() for t in self.tokens], word)]
     def token(self, index):
         return self.tokens[int(index)-1]
@@ -257,7 +270,7 @@ class Sentence():
         deps = self.find_deps(index, dir="parents", filter_types=filter_types)
 
         if needs_verb:
-            deps = [d for d in deps if self.gov_is_verb(d) or self.dep_is_verb(d)]
+            deps = [d for d in deps if self.gov_is_verb(d)]
 
         return [d["governor"] for d in deps]
 
@@ -278,7 +291,8 @@ class Sentence():
 
     def is_punct(self, index):
         pos = self.token(index)["pos"]
-        return pos in '.,"-RRB--LRB-:;'
+        # return pos in '.,"-RRB--LRB-:;'
+        return pos in PUNCTUATION
 
     def is_verb(self, index):
         pos = self.token(index)["pos"]
@@ -322,7 +336,10 @@ class Sentence():
         return [d["dep"] for d in deps]
 
     def __str__(self):
-        return " ".join([t["word"] for t in self.tokens])
+        if self.lang == "ch":
+            return "".join([t["word"] for t in self.tokens])
+        else:
+            return " ".join([t["word"] for t in self.tokens])
 
     def get_subordinate_indices(self, acc, explore, depth=0, exclude_indices=[], exclude_types=[]):
         # print("acc: {}\nexplore: {}\ndepth: {}\nexclude_indices: {}".format(acc, explore, depth, exclude_indices))
@@ -363,6 +380,7 @@ class Sentence():
             )
 
     def get_phrase_from_head(self, head_index, exclude_indices=[], exclude_types=[]):
+
         # given an index,
         # grab every index that's a child of it in the dependency graph
         subordinate_indices = self.get_subordinate_indices(
@@ -382,29 +400,56 @@ class Sentence():
             subordinate_indices = subordinate_indices[:-1]
 	if len(subordinate_indices)==0:
 		return None
+
+#        while self.is_punct(subordinate_indices[0]):
+#            subordinate_indices = subordinate_indices[1:]
         
-        # make string of subordinate phrase from parse
-        parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
+        if self.lang == "ch":
+            subordinate_phrase = "".join([self.word(i) for i in subordinate_indices])
+        else:
+            # filter so that lengths are nicely behaved, unless it's chinese where tokenization is harder...
 
-        # correct subordinate phrase from parsed version to wikitext version
-        # (tokenization systems are different)
-        orig_words = self.original_sentence.split()
-        parsed_words = [t["word"] for t in self.tokens]
+            # make string of subordinate phrase from parse
+            parse_subordinate_string = " ".join([self.word(i) for i in subordinate_indices])
 
-        subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices)
+            # if "ONU" in parse_subordinate_string:
+            #     print parse_subordinate_string
+
+            # correct subordinate phrase from parsed version to wikitext version
+            # (tokenization systems are different)
+            orig_words = self.original_sentence.split()
+            parsed_words = [t["word"] for t in self.tokens]
+
+            # if "estudios" in parse_subordinate_string:
+            #     # print orig_words
+            #     # print len(orig_words)
+            #     # print parsed_words
+            #     # print len(parsed_words)
+            #     for i in range(len(parsed_words)):
+            #         try:
+            #             print parsed_words[i],
+            #             print orig_words[i]
+            #         except:
+            #             print parsed_words[i]
+
+            subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices)
+
+        # if "ONU" in subordinate_phrase:
+        #     print subordinate_phrase
 
         # make a string from this to return
         if subordinate_phrase:
-            return subordinate_phrase.capitalize() + "."
+            return standardize_sentence_output(subordinate_phrase)
         else:
             return None
 
-    def get_valid_marker_indices(self, marker):
-        pos = dependency_patterns[marker]["POS"]
-        if "head" in dependency_patterns[marker]:
-            marker_head = dependency_patterns[marker]["head"]
+    def get_valid_marker_indices(self, marker, dep_pattern):
+        pos = dep_pattern["POS"]
+        if "head" in dep_pattern:
+            marker_head = dep_pattern["head"]
         else:
             marker_head = marker
+
         valid_marker_indices = [i for i in self.indices(marker_head) if self.token(i)["pos"] in pos ]
         # if marker=="so":
         #     for i in valid_marker_indices:
@@ -412,13 +457,13 @@ class Sentence():
         valid_marker_indices = [i for i in valid_marker_indices if len(self.find_children(i))==(len(marker.split(" "))-1)]
         return valid_marker_indices
 
-    def get_candidate_S2_indices(self, marker, marker_index, needs_verb=False):
-        connection_types = dependency_patterns[marker]["S2"]
+    def get_candidate_S2_indices(self, marker, marker_index, dep_pattern, needs_verb=False):
+        connection_types = [dep_pattern["S2"]]
         # Look for S2
         return self.find_parents(marker_index, filter_types=connection_types, needs_verb=needs_verb)
 
-    def get_candidate_S1_indices(self, marker, s2_head_index, needs_verb=False):
-        valid_connection_types = dependency_patterns[marker]["S1"]
+    def get_candidate_S1_indices(self, marker, s2_head_index, dep_pattern, needs_verb=False):
+        valid_connection_types = [dep_pattern["S1"]]
         return self.find_parents(
             s2_head_index,
             filter_types=valid_connection_types,
@@ -429,7 +474,7 @@ class Sentence():
             needs_verb=needs_verb
         )
 
-    def find_pair(self, marker, order, previous_sentence):
+    def find_pair(self, marker, order, previous_sentence, lang="en"):
         assert(order in ["s2 discourse_marker s1", "any"])
         # fix me
         # (this won't quite work if there are multiple matching connections)
@@ -441,81 +486,99 @@ class Sentence():
 
         extracted_pairs = []
 
+        if lang == "en":
+            needs_verb = True
+        else:
+            needs_verb = False
+
         # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
         #     print " ".join([t["word"] for t in self.tokens])
         #     print self.get_valid_marker_indices(marker)
 
-        for marker_index in self.get_valid_marker_indices(marker):
+        for dep_pattern in dependency_patterns[lang][marker]:
 
-            # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
-            #     print marker_index
+            for marker_index in self.get_valid_marker_indices(marker, dep_pattern):
 
-            for s2_head_index in self.get_candidate_S2_indices(marker, marker_index, needs_verb=True):
-                s2_ind = s2_head_index
+                # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
+                #     print marker_index
 
-                possible_S1s = []
+                # if marker=="and" and "magical" in str(self):
+                #     print marker_index
 
-                s1_candidates = self.get_candidate_S1_indices(marker, s2_head_index, needs_verb=True)
+                s2_candidates = self.get_candidate_S2_indices(marker, marker_index, dep_pattern, needs_verb=needs_verb)
 
-                if "acceptable_order" in dependency_patterns[marker]:
-                    if dependency_patterns[marker]["acceptable_order"]=="S1 S2":
-                        s1_candidates = [s1_ind for s1_ind in s1_candidates if s1_ind < s2_ind]
-                        
+                for s2_head_index in s2_candidates:
+                    s2_ind = s2_head_index
 
-                for s1_head_index in s1_candidates:
-                    # print(marker_index, s2_ind, s1_head_index)
+                    possible_S1s = []
 
-                    # store S1 if we have one
-                    S1 = self.get_phrase_from_head(
-                        s1_head_index,
-                        exclude_indices=[s2_head_index]
+                    s1_candidates = self.get_candidate_S1_indices(marker, s2_head_index, dep_pattern, needs_verb=needs_verb)
+
+                    if "acceptable_order" in dep_pattern:
+                        if dep_pattern["acceptable_order"]=="S1 S2":
+                            s1_candidates = [s1_ind for s1_ind in s1_candidates if s1_ind < s2_ind]
+                            
+
+                    for s1_head_index in s1_candidates:
+                        # print(marker_index, s2_ind, s1_head_index)
+
+                        # store S1 if we have one
+                        S1 = self.get_phrase_from_head(
+                            s1_head_index,
+                            exclude_indices=[s2_head_index]
+                        )
+
+                        # we'll lose some stuff here because of alignment between
+                        # wikitext tokenization and corenlp tokenization.
+                        # if we can't get a phrase, reject this pair
+                        if not S1:
+                            break
+
+                        # if we are only checking for the "reverse" order, reject anything else
+                        if order=="s2 discourse_marker s1":
+                            if s1_ind < s2_ind:
+                                break
+
+                        possible_S1s.append((s1_head_index, S1))
+
+                    # to do: fix this. it is wrong. we're just grabbing the first if there are multiple matches for the S1 pattern rather than choosing in a principled way
+                    # if len(possible_S1s) > 1:
+                        # could sort by something here...
+                        # possible_S1s = sorted(possible_S1s, key=lambda t: -abs(marker_index - t[0]))
+                        # print self
+                        # print possible_S1s
+                    if len(possible_S1s) > 0:
+                        s1_ind, S1 = possible_S1s[0]
+
+                    # store S2 if we have one
+                    S2 = self.get_phrase_from_head(
+                        s2_head_index,
+                        exclude_indices=[marker_index, s1_ind],
+                        # exclude_types=dependency_patterns[marker]["S1"]
                     )
+
                     # we'll lose some stuff here because of alignment between
                     # wikitext tokenization and corenlp tokenization.
                     # if we can't get a phrase, reject this pair
-                    if not S1:
-                        break
+                    # update: we fixed some of these with the @ correction
+                    if not S2:
+                        return None
 
-                    # if we are only checking for the "reverse" order, reject anything else
-                    if order=="s2 discourse_marker s1":
-                        if s1_ind < s2_ind:
-                            break
-
-                    possible_S1s.append((s1_head_index, S1))
-
-                # to do: fix this. it is wrong. we're just grabbing the first if there are multiple matches for the S1 pattern rather than choosing in a principled way
-                if len(possible_S1s) > 0:
-                    s1_ind, S1 = possible_S1s[0]
-
-                # store S2 if we have one
-                S2 = self.get_phrase_from_head(
-                    s2_head_index,
-                    exclude_indices=[marker_index, s1_ind],
-                    # exclude_types=dependency_patterns[marker]["S1"]
-                )
-
-                # we'll lose some stuff here because of alignment between
-                # wikitext tokenization and corenlp tokenization.
-                # if we can't get a phrase, reject this pair
-                # update: we fixed some of these with the @ correction
-                if not S2:
-                    return None
-
-            extracted_pairs.append((S1, S2))
+                extracted_pairs.append((S1, S2))
 
         for S1, S2 in extracted_pairs:
 
             # if S2 is the whole sentence *and* we're missing S1, let S1 be the previous sentence
-            words_in_marker = len(marker.split())
+            words_in_marker = marker.split()
             if S2 and not S1:
-                words_in_sentence = len(self.tokens)
-                words_in_s2 = len(S2.split())
-                if words_in_sentence - words_in_marker == words_in_s2:
-                    S1 = previous_sentence
+                words_in_sentence = [t["word"] for t in self.tokens if not self.is_punct(t["index"])]
+                words_in_s2 = [t for t in S2.split() if not t in PUNCTUATION]
+                if len(words_in_sentence) - len(words_in_marker) == len(words_in_s2):
+                    S1 = previous_sentence[0].capitalize() + previous_sentence[1:]
             else:
                 # if we don't choose S1 to be the previous sentence, then
                 # we might have to switch S1 and S2 because of the way the cc conj pattern works
-                if S1 and S2 and "flip" in dependency_patterns[marker] and dependency_patterns[marker]["flip"]:
+                if S1 and S2 and "flip" in dep_pattern and dep_pattern["flip"]:
                     return S2, S1
 
             if S1 and S2:
@@ -523,24 +586,52 @@ class Sentence():
 
         return None
 
-def setup_corenlp():
+def setup_corenlp(lang="en"):
     try:
-        get_parse("The quick brown fox jumped over the lazy dog.")
+        test_sentences = {"en": "The quick brown fox jumped over the lazy dog.", "ch": "当周二开始申购时,有数万人涌入索取MTRC的申请表,可以说是盛况空前。", "sp": "Que voy a hacer?"}
+        get_parse(test_sentences[lang], lang=lang)
     except:
         # TODO
         # run the server if we can
         # otherwise ask to install the server and install it if we can
-        raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
+        #raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
+        raise Exception("corenlp parser needs to be running for language '{}'. see https://github.com/erindb/corenlp-ec2-startup".format(lang))
 
-def depparse_ssplit(sentence, previous_sentence, marker):
-    sentence = cleanup(sentence)
-    parse = get_parse(sentence)
+#def depparse_ssplit(sentence, previous_sentence, marker):
+#    sentence = cleanup(sentence)
+#    parse = get_parse(sentence)
+#    if parse:
+#    	# print(json.dumps(parse, indent=4))
+#    	sentence = Sentence(parse, sentence)
+#    	return(sentence.find_pair(marker, "any", previous_sentence))
+
+def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
+    # print sentence
+    orig_sentence = sentence.encode("utf-8")
+    sentence = sentence.strip()
+    previous_sentence = previous_sentence.strip()
+    sentence = cleanup(sentence, lang)
+
+    parse = get_parse(sentence.encode("utf-8"), lang=lang)
     if parse:
-    	# print(json.dumps(parse, indent=4))
-    	sentence = Sentence(parse, sentence)
-    	return(sentence.find_pair(marker, "any", previous_sentence))
+        # if "ONU" in str(sentence):
+        #     pp.pprint(parse["tokens"])
+        #     # pp.pprint(parse["basicDependencies"])
+        #     # print(json.dumps(parse["tokens"], indent=4))
+        sentence = Sentence(parse, sentence, lang)
+
+        # print orig_sentence
+        # print len(orig_sentence)
+        # print str(sentence)
+        # print len(str(sentence))
+
+        # print sentence
+        return(sentence.find_pair(marker, "any", previous_sentence, lang=lang))
+    else:
+        return None
 
 if __name__ == '__main__':
-    args = setup_args()
-    dependency_patterns = en_dependency_patterns
+    parser = argparse.ArgumentParser()
+    parser.parse_args()
+    setup_corenlp()
 

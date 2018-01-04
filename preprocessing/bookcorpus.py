@@ -23,22 +23,25 @@ sys.setdefaultencoding('utf8')
 """
 Unlike Wikitext, we don't have sentence tokenization, and don't need to cache that.
 But we do need to cache dependency parses.
+
+This does filtering on max, min, ratio already (ratio should not be there...), 
+to save dependency parsing time
 """
 
 parser = argparse.ArgumentParser(description='DisExtract BookCorpus')
 
-parser.add_argument("--json", type=str, default="allen_corpus.json", help="corpus parameter setting to load")
+parser.add_argument("--json", type=str, default="example_config.json", help="corpus parameter setting to load")
 
-parser.add_argument("--filter", action='store_false',
+parser.add_argument("--filter", action='store_true',
                     help="Stage 1: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
 parser.add_argument("--max_ratio", default=5.0, type=float)
 parser.add_argument("--filter_print_every", default=10000, type=int)
 
-parser.add_argument("--parse", action='store_false',
+parser.add_argument("--parse", action='store_true',
                     help="Stage 2: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
-parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
+# parser.add_argument("--no_dep_cache", action='store_true', help="not caching dependency parsed result")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
@@ -87,8 +90,6 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         logger.info("reading {}".format(filename))
         file_path = pjoin(source_dir, filename)
 
-        filtered_out = 0
-
         previous_sentence = ""
         previous_sentence_split = None
         FIRST = True
@@ -101,18 +102,17 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     else:
                         proxy_marker = marker
 
+                    # [min_len, max_len) like [5, 10)
+                    if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
+                        continue
+
                     # length-based filtering
                     if not FIRST:
-                        # [min_len, max_len) like [5, 10)
-                        if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
-                            filtered_out += 1
-                            continue
-
+                        # this part might be uncalled for...
                         len2 = len(previous_sentence_split)
                         ratio = float(len2) / len(words)
 
                         if ratio <= args.min_ratio or ratio >= args.max_ratio:
-                            filtered_out += 1
                             continue
 
                     # all bookcorpus text are lower case
