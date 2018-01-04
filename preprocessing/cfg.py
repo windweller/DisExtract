@@ -69,12 +69,35 @@ CH_DISCOURSE_MARKERS = [
   "如果",
   "因此",
   "所以",
-  # "然后": [{"POS": "AD", "S1": "conj", "S2": "advmod"}, {"POS": "AD", "S1": "dep", "S2": "advmod"}],
+  # "然后",
   "虽然",
   "尽管",
   "当"
 ]
 
 SP_DISCOURSE_MARKERS = [
-    "porque"
+  "y",
+  "pero",
+  "porque",
+  "si",
+  "cuando",
+  "entonces",
+  "por eso",
+  "por lo cual",
+  "aunque",
+  "antes",
+  "después",
+  "mientras",
+  "también",
+  "por ejemplo",
+  "además"
+  # "luego",
+  # # "a pesar de que",
+  # # "ya que",
+  # # "dado que",
+  # "puesto que",
+  # "sin embargo",
+  # "por lo tanto",
+  # # "en consecuencia",
+  # "todavía"
 ]
