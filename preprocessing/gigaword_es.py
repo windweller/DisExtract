@@ -216,7 +216,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
         )
 
-def parse_filtered_sentences(source_dir, marker_set_tag):
+def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set_tag):
     """
     This function can be the same for each corpus
 
@@ -225,9 +225,9 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
     :return:
     """
 
-    markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
+    markers_dir = pjoin(source_dir, "markers_" + input_marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
-    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
+    input_file_path = pjoin(input_dir, "{}.json".format(input_marker_set_tag))
     output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
 
     if not os.path.exists(markers_dir):
@@ -244,7 +244,7 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
     setup_corenlp()
 
     # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
-    with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'a') as w:
+    with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(output_marker_set_tag)), 'a') as w:
         # header = "{}\t{}\t{}\n".format("s1", "s2", "marker")
         # w.write(header)
 
@@ -285,16 +285,14 @@ if __name__ == '__main__':
     if args.extract:
         extrat_raw_gigaword()
     elif args.filter:
-        if args.marker_set_tag == "ALL":
-            collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", SP_DISCOURSE_MARKERS)
-        elif args.marker_set_tag == "FIVE":
-            collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "FIVE", SP_FIVE_DISCOURSE_MARKERS)
-        elif args.marker_set_tag == "EIGHT":
-            collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "EIGHT", SP_EIGHT_DISCOURSE_MARKERS)
-        else:
-            raise Exception("provide a valid marker set: ALL|FIV")
+        collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", SP_DISCOURSE_MARKERS)
     elif args.parse:
         setup_corenlp("sp")
-        parse_filtered_sentences(gigaword_es_dir, "ALL14")
+        if args.marker_set_tag=="ALL":
+            parse_filtered_sentences(gigaword_es_dir, "ALL14", "ALL14")
+        elif args.marker_set_tag=="FIVE"
+            parse_filtered_sentences(gigaword_es_dir, "ALL14", "FIVE")
+        elif args.marker_set_tag=="EIGHT"
+            parse_filtered_sentences(gigaword_es_dir, "ALL14", "EIGHT")
 
 
