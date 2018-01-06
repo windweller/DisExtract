@@ -171,7 +171,22 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                 for marker in discourse_markers:
 
                     # all bookcorpus text are lower case
-                    if marker in sentence:
+                    marker_at_start = marker.capitalize()
+                    marker_in_middle = marker
+
+                    if marker == "y":
+                        marker_at_start = "Y "
+                        marker_in_middle = " y "
+
+                    if marker == "si":
+                        marker_at_start = "Si "
+                        marker_in_middle = " si "
+
+                    if marker == "pero":
+                        marker_at_start = "Pero "
+                        marker_in_middle = " pero "
+
+                    if marker_at_start in sentence or marker_in_middle in sentence:
                         sentences[marker]["sentence"].append(sentence)
                         sentences[marker]["previous"].append(previous_sentence)
 
