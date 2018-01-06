@@ -99,6 +99,30 @@ CH_EIGHT_DISCOURSE_MARKERS = [
     "when"
 ]
 
+SP_FIVE_DISCOURSE_MARKERS = [
+    "y",
+    "porque",
+    "pero",
+    "si",
+    "cuando"
+]
+
+SP_EIGHT_DISCOURSE_MARKERS = [
+    "y",
+    "porque",
+    "pero",
+    "si",
+    "cuando",
+    ### SO
+    # "entonces",
+    # "por eso",
+    # "por lo cual",
+    ### THOUGH
+    "aunque",
+    ### BEFORE
+    "antes"
+]
+
 
 SP_DISCOURSE_MARKERS = [
   "y",
