@@ -290,9 +290,9 @@ if __name__ == '__main__':
         setup_corenlp("sp")
         if args.marker_set_tag=="ALL":
             parse_filtered_sentences(gigaword_es_dir, "ALL14", "ALL14")
-        elif args.marker_set_tag=="FIVE"
+        elif args.marker_set_tag=="FIVE":
             parse_filtered_sentences(gigaword_es_dir, "ALL14", "FIVE")
-        elif args.marker_set_tag=="EIGHT"
+        elif args.marker_set_tag=="EIGHT":
             parse_filtered_sentences(gigaword_es_dir, "ALL14", "EIGHT")
 
 
