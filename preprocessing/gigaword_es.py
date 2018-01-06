@@ -13,6 +13,7 @@ import sys
 import json
 import gzip
 import argparse
+import re
 
 import logging
 from util import rephrase
@@ -262,14 +263,15 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
     logger.info('file writing complete')
 
 def dependency_parsing(sentence, previous_sentence, marker):
-    return depparse_ssplit(sentence, previous_sentence, marker, lang='es')
+    return depparse_ssplit(sentence, previous_sentence, marker, lang='sp')
 
 if __name__ == '__main__':
     if args.extract:
         extrat_raw_gigaword()
     elif args.filter:
-        collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", CH_DISCOURSE_MARKERS)
+        collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", SP_DISCOURSE_MARKERS)
     elif args.parse:
-        setup_corenlp("ch")
+        setup_corenlp("sp")
         parse_filtered_sentences(gigaword_es_dir, "ALL14")
+
 

@@ -214,7 +214,7 @@ def get_parse(sentence, lang="en", depparse=True):
         port = EN_PORT
     elif lang == "ch":
         port = CH_PORT
-    elif lang == "sp":
+    elif lang == "sp" or lang=="es":
         port = SP_PORT
 
     if depparse:
