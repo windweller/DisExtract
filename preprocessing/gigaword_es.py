@@ -44,6 +44,7 @@ parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
+parser.add_argument("--marker_set_tag", default="ALL", type=str, help="ALL|FIVE|EIGHT")
 
 args, _ = parser.parse_known_args()
 
@@ -284,7 +285,14 @@ if __name__ == '__main__':
     if args.extract:
         extrat_raw_gigaword()
     elif args.filter:
-        collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", SP_DISCOURSE_MARKERS)
+        if args.marker_set_tag == "ALL":
+            collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", SP_DISCOURSE_MARKERS)
+        elif args.marker_set_tag == "FIVE":
+            collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "FIVE", SP_FIVE_DISCOURSE_MARKERS)
+        elif args.marker_set_tag == "EIGHT":
+            collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "EIGHT", SP_EIGHT_DISCOURSE_MARKERS)
+        else:
+            raise Exception("provide a valid marker set: ALL|FIV")
     elif args.parse:
         setup_corenlp("sp")
         parse_filtered_sentences(gigaword_es_dir, "ALL14")
