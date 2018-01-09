@@ -209,8 +209,8 @@ use corenlp server (see https://github.com/erindb/corenlp-ec2-startup)
 to parse sentences: tokens, dependency parse
 """
 def get_parse(sentence, lang="en", depparse=True):
-    sentence = sentence.replace("'t ", " 't ")
     if lang == 'en':
+        sentence = sentence.replace("'t ", " 't ")
         port = EN_PORT
     elif lang == "ch":
         port = CH_PORT
@@ -232,6 +232,12 @@ def get_parse(sentence, lang="en", depparse=True):
 
       try:
           parsed_output = json.loads(parse_string)
+          sentences = parsed_output["sentences"]
+          if len(sentences)>0:
+            return sentences[0]
+          else:
+            return None
+
       except ValueError:
           try:
             return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
@@ -240,13 +246,6 @@ def get_parse(sentence, lang="en", depparse=True):
     except:
       print(sentence)
       return None
-#        parsed_output = json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))
-#
-#    sentences = parsed_output["sentences"]
-#    if len(sentences)>0:
-#        return sentences[0]
-#    else:
-#        return None
 
 
 class Sentence():
