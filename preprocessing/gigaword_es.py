@@ -14,6 +14,7 @@ import json
 import gzip
 import argparse
 import re
+import nltk.data
 
 import logging
 from util import rephrase
@@ -27,7 +28,7 @@ from cfg import SP_DISCOURSE_MARKERS
 
 """
 Stats:
-Raw gigaword cn file has: 36,249,282 (36M) sentences
+Raw gigaword es file has: ???? (??M) sentences
 
 Unlike bookcorpus.py, we are not filtering anything (due to difficulty in tokenization for raw string)
 """
@@ -165,36 +166,45 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     for filename in filenames:
         logger.info("reading {}".format(filename))
         file_path = pjoin(source_dir, filename)
+        i = 0
 
         previous_sentence = ""
         with io.open(file_path, 'rU', encoding="utf-8") as f:
-            for i, sentence in enumerate(f):
-                for marker in discourse_markers:
+            for raw_section in f:
 
-                    # all bookcorpus text are lower case
-                    marker_at_start = marker.capitalize()
-                    marker_in_middle = marker
+                # # TODO: use
+                # spanish_tokenizer = nltk.data.load('tokenizers/punkt/spanish.pickle')
+                section = raw_section.replace("\n", "")
+                sentences = spanish_tokenizer.tokenize(section)
+                for sentence in sentences:
+                    i+=1
 
-                    if marker == "y":
-                        marker_at_start = "Y "
-                        marker_in_middle = " y "
+                    for marker in discourse_markers:
 
-                    if marker == "si":
-                        marker_at_start = "Si "
-                        marker_in_middle = " si "
+                        # all bookcorpus text are lower case
+                        marker_at_start = marker.capitalize()
+                        marker_in_middle = marker
 
-                    if marker == "pero":
-                        marker_at_start = "Pero "
-                        marker_in_middle = " pero "
+                        if marker == "y":
+                            marker_at_start = "Y "
+                            marker_in_middle = " y "
 
-                    if marker_at_start in sentence or marker_in_middle in sentence:
-                        sentences[marker]["sentence"].append(sentence)
-                        sentences[marker]["previous"].append(previous_sentence)
+                        if marker == "si":
+                            marker_at_start = "Si "
+                            marker_in_middle = " si "
 
-                previous_sentence = sentence
+                        if marker == "pero":
+                            marker_at_start = "Pero "
+                            marker_in_middle = " pero "
 
-                if i % args.filter_print_every == 0:
-                    logger.info("processed {}".format(i))
+                        if marker_at_start in sentence or marker_in_middle in sentence:
+                            sentences[marker]["sentence"].append(sentence)
+                            sentences[marker]["previous"].append(previous_sentence)
+
+                    previous_sentence = sentence
+
+                    if i % args.filter_print_every == 0:
+                        logger.info("processed {}".format(i))
 
         logger.info("{} file finished".format(filename))
 
@@ -290,9 +300,9 @@ if __name__ == '__main__':
         setup_corenlp("sp")
         if args.marker_set_tag=="ALL":
             parse_filtered_sentences(gigaword_es_dir, "ALL14", "ALL14")
-        elif args.marker_set_tag=="FIVE"
+        elif args.marker_set_tag=="FIVE":
             parse_filtered_sentences(gigaword_es_dir, "ALL14", "FIVE")
-        elif args.marker_set_tag=="EIGHT"
+        elif args.marker_set_tag=="EIGHT":
             parse_filtered_sentences(gigaword_es_dir, "ALL14", "EIGHT")
 
 
