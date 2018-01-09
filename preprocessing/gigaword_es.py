@@ -163,6 +163,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
 
     sentences = {marker: {"sentence": [], "previous": []} for marker in discourse_markers}
 
+    spanish_tokenizer = nltk.data.load('tokenizers/punkt/spanish.pickle')
+
     for filename in filenames:
         logger.info("reading {}".format(filename))
         file_path = pjoin(source_dir, filename)
@@ -173,10 +175,9 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
             for raw_section in f:
 
                 # # TODO: use
-                # spanish_tokenizer = nltk.data.load('tokenizers/punkt/spanish.pickle')
                 section = raw_section.replace("\n", "")
-                sentences = spanish_tokenizer.tokenize(section)
-                for sentence in sentences:
+                sentences_in_section = spanish_tokenizer.tokenize(section)
+                for sentence in sentences_in_section:
                     i+=1
 
                     for marker in discourse_markers:
