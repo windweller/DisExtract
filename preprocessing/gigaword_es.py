@@ -252,7 +252,7 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
         os.makedirs(output_dir)
 
     logger.info("setting up parser (actually just testing atm)")
-    setup_corenlp()
+    setup_corenlp("sp")
 
     # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
     with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(output_marker_set_tag)), 'a') as w:
