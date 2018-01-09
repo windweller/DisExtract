@@ -224,18 +224,22 @@ def get_parse(sentence, lang="en", depparse=True):
 
     data = sentence
 
-    parse_string = requests.post(url, data=data).text
-
-    parse_string = parse_string.replace('\r\n', '')
-    parse_string = parse_string.replace('\x19', '')
-
     try:
-        parsed_output = json.loads(parse_string)
-    except ValueError:
-	try:
-        	return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
-	except:
-		return None
+      parse_string = requests.post(url, data=data).text
+  
+      parse_string = parse_string.replace('\r\n', '')
+      parse_string = parse_string.replace('\x19', '')
+
+      try:
+          parsed_output = json.loads(parse_string)
+      except ValueError:
+          try:
+            return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
+          except:
+            return None
+    except:
+      print(sentence)
+      return None
 #        parsed_output = json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))
 #
 #    sentences = parsed_output["sentences"]
