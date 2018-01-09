@@ -35,30 +35,34 @@ ch_dependency_patterns = {
 }
 
 sp_dependency_patterns = {
-  "luego": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
-  "después": [{"S1": "advcl", "S2": "advmod", "POS": "rg"}],
-  "también": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
-  "además": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
-  "aunque": [{"S1": "advcl", "S2": "mark", "POS": "cs"}],
+  "luego": [{"S1": "parataxis", "S2": "advmod", "POS": "ADV"}],
+  "después": [{"S1": "advcl", "S2": "advmod", "POS": "ADV"}],
+  "también": [{"S1": "parataxis", "S2": "advmod", "POS": "ADV"}],
+  "además": [{"S1": "parataxis", "S2": "advmod", "POS": "ADV"}],
+  "aunque": [{"S1": "advcl", "S2": "mark", "POS": "SCONJ"}],
   # "a pesar de que": [{"S1": "", "S2": "", "POS": ""}],
-  "y": [{"S1": "conj", "S2": "cc", "POS": "cc", "flip": True}],
-  "porque": [{"S1": "advcl", "S2": "mark", "POS": "cs"}],
-  "ya que": [{"S1": "advcl", "S2": "mark", "POS": "rg", "head": "ya"}],
+
+  "y": [{"S1": "conj", "S2": "cc", "POS": "CONJ", "flip": True}],
+  "porque": [{"S1": "advcl", "S2": "mark", "POS": "SCONJ"}],
+
+  "ya que": [{"S1": "advcl", "S2": "mark", "POS": "ADV", "head": "ya"}],
   # "dado que": [{"S1": "", "S2": "", "POS": "", "head": ""}],
-  "puesto que": [{"S1": "advcl", "S2": "mark", "POS": "nc0s000", "head": "puesto"}],
-  "antes": [{"S1": "advcl", "S2": "advmod", "POS": "rg"}],
-  "pero": [{"S1": "conj", "S2": "cc", "POS": "cc", "flip": True}],
-  "por ejemplo": [{"S1": "advcl", "S2": "nmod", "POS": "ejemplo"}],
-  "sin embargo": [{"S1": "conj", "S2": "cc", "POS": "sp000", "head": "sin"}],
-  "si": [{"S1": "advcl", "S2": "mark", "POS": "cs"}],
-  "mientras": [{"S1": "advcl", "S2": "mark", "POS": "cs", "alternative": "mientras tanto"}],
-  "entonces": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
-  "por lo tanto": [{"S1": "parataxis", "S2": "nmod", "POS": "vmis000", "head": "tanto"}],
-  "por eso": [{"S1": "advcl", "S2": "nmod", "POS": "pd000000", "head": "eso"}],
-  "por lo cual": [{"S1": "parataxis", "S2": "nmod", "POS": "pr000000", "head": "cual"}],
-  "en consecuencia": [{"S1": "advcl", "S2": "nmod", "POS": "nc0s000", "head": "consecuencia"}],
-  "todavía": [{"S1": "parataxis", "S2": "advmod", "POS": "rg"}],
-  "cuando": [{"S1": "advcl", "S2": "mark", "POS": "cs"}]
+  # "puesto que": [{"S1": "advcl", "S2": "mark", "POS": "nc0s000", "head": "puesto"}],
+  "antes": [{"S1": "advcl", "S2": "advmod", "POS": "ADV"}],
+  "pero": [{"S1": "conj", "S2": "cc", "POS": "CONJ", "flip": True}],
+  "por ejemplo": [{"S1": "advcl", "S2": "advmod", "POS": "ADP", "head": "por"}],
+  "sin embargo": [{"S1": "conj", "S2": "cc", "POS": "ADP", "head": "sin"}],
+  "si": [{"S1": "advcl", "S2": "mark", "POS": "SCONJ"}],
+  "mientras": [{"S1": "advcl", "S2": "mark", "POS": "SCONJ", "alternative": "mientras tanto"}],
+  "entonces": [{"S1": "parataxis", "S2": "advmod", "POS": "ADV"}],
+
+  # "por lo tanto": [{"S1": "parataxis", "S2": "nmod", "POS": "vmis000", "head": "por"}],
+  # "por eso": [{"S1": "advcl", "S2": "nmod", "POS": "pd000000", "head": "por"}],
+  # "por lo cual": [{"S1": "parataxis", "S2": "nmod", "POS": "pr000000", "head": "por"}],
+  # "en consecuencia": [{"S1": "advcl", "S2": "nmod", "POS": "nc0s000", "head": "consecuencia"}],
+
+  "todavía": [{"S1": "parataxis", "S2": "advmod", "POS": "ADV"}],
+  "cuando": [{"S1": "advcl", "S2": "mark", "POS": "SCONJ"}]
 }
 
 en_dependency_patterns = {
