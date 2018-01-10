@@ -17,6 +17,7 @@ from parser import depparse_ssplit, setup_corenlp
 from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
 
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -146,6 +147,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
         )
 
+
 def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
     """
     This function can be the same for each corpus
@@ -187,23 +189,23 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
                 sum([len(sentences[marker]["sentence"]) for marker in sentences])
             ))
             for marker, slists in sentences.iteritems():
-		i = 0
+                i = 0
                 if marker in discourse_markers:
-			#if marker == "because":
-				for sentence, previous in set(zip(slists["sentence"], slists["previous"])):
-				    i += 1
-                                    if True:
-					parsed_output = dependency_parsing(sentence, previous, marker)
-					if parsed_output:
-					    s1, s2 = parsed_output
+                    # if marker == "because":
+                    for sentence, previous in set(zip(slists["sentence"], slists["previous"])):
+                        i += 1
+                        if True:
+                            parsed_output = dependency_parsing(sentence, previous, marker)
+                            if parsed_output:
+                                s1, s2 = parsed_output
 
-					    # parsed_sentence_pairs[marker]["s1"].append(s1)
-					    # parsed_sentence_pairs[marker]["s2"].append(s2)
-					    line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-					    w.write(line_to_print)
+                                # parsed_sentence_pairs[marker]["s1"].append(s1)
+                                # parsed_sentence_pairs[marker]["s2"].append(s2)
+                                line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                                w.write(line_to_print)
 
-					if i % args.filter_print_every == 0:
-					    logger.info("processed {}".format(i))
+                            if i % args.filter_print_every == 0:
+                                logger.info("processed {}".format(i))
 
     # logger.info('writing files')
 
@@ -211,6 +213,7 @@ def parse_filtered_sentences(source_dir, filenames, marker_set_tag, discourse_ma
     #     json.dump(parsed_sentence_pairs, f)
 
     logger.info('file writing complete')
+
 
 def dependency_parsing(sentence, previous_sentence, marker):
     try:

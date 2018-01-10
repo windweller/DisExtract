@@ -37,6 +37,8 @@ parser.add_argument("--extract", action='store_true')
 parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
 parser.add_argument("--filter_print_every", default=10000, type=int)
+parser.add_argument("--max_seq_len", default=50, type=int)
+parser.add_argument("--min_seq_len", default=5, type=int)
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
@@ -57,6 +59,7 @@ with open(args.json, 'rb') as f:
 
 gigaword_cn_dir = json_config['gigaword_cn_dir']
 gigaword_cn_file = 'gigaword_cn.txt'
+
 
 def process_sent(sent, lang="ch"):
     sent = re.sub(r"\(.+\)", "", sent)  # get rid of parentheses (many content inside are English/other languages)
@@ -136,6 +139,9 @@ def extrat_raw_gigaword():
         for sent in sentences:
             f.write(sent + '\n')
 
+def sent_segment(sentence):
+    pass
+
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
     """
     This function needs to be implemented differently for each corpus
@@ -165,17 +171,76 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         previous_sentence = ""
         with io.open(file_path, 'rU', encoding="utf-8") as f:
             for i, sentence in enumerate(f):
-                for marker in discourse_markers:
 
-                    # all bookcorpus text are lower case
-                    if marker in sentence:
-                        sentences[marker]["sentence"].append(sentence)
-                        sentences[marker]["previous"].append(previous_sentence)
+                # TODO: sentence tokenization here!!! <P> is not sentence.
+                sents = sentence.split(";")  # ";" indicates a sentence
 
-                previous_sentence = sentence
+                for sent in sents:
 
-                if i % args.filter_print_every == 0:
-                    logger.info("processed {}".format(i))
+                    # a single marker match, so continue is fine
+                    for marker in discourse_markers:
+
+                        if marker == "当时" and "当时的" not in sent:
+                            s1, s2 = sent.split(marker)
+                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                    s2.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            sentences[marker]["sentence"].append(sent)
+                            sentences[marker]["previous"].append(previous_sentence)
+                            continue
+
+                        if marker == "而且" and ",而且" in sent:
+                            s1, s2 = sent.split(",而")
+                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                    s2.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            sentences[marker]["sentence"].append(sent)
+                            sentences[marker]["previous"].append(previous_sentence)
+                            continue
+
+                        if marker == "而" and ",而" in sent:
+                            s1, s2 = sent.split(",而")
+                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                    s2.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            sentences[marker]["sentence"].append(sent)
+                            sentences[marker]["previous"].append(previous_sentence)
+                            continue
+
+                        if marker == "但" and ",但" in sent:
+                            if ",但是" in sent:
+                                s1, s2 = sent.split(",但是")
+                            else:
+                                s1, s2 = sent.split(",但")
+                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                    s2.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            sentences[marker]["sentence"].append(sent)
+                            sentences[marker]["previous"].append(previous_sentence)
+                            continue
+
+                        if marker in sent:
+                            s1, s2 = sent.split(marker)
+                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                    s2.decode("utf-8")) < args.min_seq_len:
+                                continue
+                            sentences[marker]["sentence"].append(sent)
+                            sentences[marker]["previous"].append(previous_sentence)
+
+                    previous_sentence = sent
+
+                    if i % args.filter_print_every == 0:
+                        logger.info("processed {}".format(i))
 
         logger.info("{} file finished".format(filename))
 
@@ -196,6 +261,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         f.write(
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
         )
+
 
 def parse_filtered_sentences(source_dir, marker_set_tag):
     """
@@ -259,8 +325,10 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
     logger.info('file writing complete')
 
+
 def dependency_parsing(sentence, previous_sentence, marker):
     return depparse_ssplit(sentence, previous_sentence, marker, lang='ch')
+
 
 if __name__ == '__main__':
     if args.extract:
