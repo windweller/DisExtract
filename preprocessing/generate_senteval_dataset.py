@@ -54,7 +54,6 @@ def write_to_file(file_name, contents, assignments, label_list=None):
                 f.write(contents[a] + '\n')
         else:
             # if it's label, we map it to original label
-            contents = contents.tolist()
             contents = map(lambda l: label_list[l], contents)
             for a in assignments:
                 f.write(contents[a] + '\n')
