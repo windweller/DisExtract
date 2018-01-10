@@ -48,7 +48,7 @@ DIS_dir = pjoin(params.senteval, "DIS")
 
 
 def write_to_file(file_name, contents, assignments, label_list=None):
-    with open(pjoin(DIS_dir, file_name)) as f:
+    with open(pjoin(DIS_dir, file_name), 'w') as f:
         if label_list is None:
             for a in assignments:
                 f.write(contents[a] + '\n')
