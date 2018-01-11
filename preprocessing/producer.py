@@ -49,6 +49,7 @@ parser.add_argument("--out_prefix", type=str, required=True,
                     help="Prefix the produced files")
 parser.add_argument("--balanced", action='store_true', help="use this flag to cut all markers off at the minimum count")
 parser.add_argument("--count_per_marker", type=int, default=-1, help="use this for modifying the cutoff for a 'balanced' dataset, by default perfectly balanced")
+parser.add_argument("--exclude", type=str, default="")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
@@ -120,17 +121,22 @@ if __name__ == '__main__':
 
     minimum_count_per_marker = min(data_dist.values())
 
+    exclude_marker_list = args.exclude.split(",")
+
     examples = []
     for label in filtered_examples:
-        if args.balanced:
-            random.shuffle(filtered_examples[label])
-            if args.count_per_marker == -1:
-                count_per_marker = minimum_count_per_marker
-            else:
-                count_per_marker = args.count_per_marker
-            examples += filtered_examples[label][:count_per_marker]
+        if label in exclude_marker_list:
+            pass
         else:
-            examples += filtered_examples[label]
+            if args.balanced:
+                random.shuffle(filtered_examples[label])
+                if args.count_per_marker == -1:
+                    count_per_marker = minimum_count_per_marker
+                else:
+                    count_per_marker = args.count_per_marker
+                examples += filtered_examples[label][:count_per_marker]
+            else:
+                examples += filtered_examples[label]
 
     print "total number in produced dataset: {}".format(len(examples))
 
