@@ -124,7 +124,7 @@ if __name__ == '__main__':
     for label in filtered_examples:
         if args.balanced:
             random.shuffle(filtered_examples[label])
-            if args.count_per_number == -1:
+            if args.count_per_marker == -1:
                 count_per_marker = minimum_count_per_marker
             else:
                 count_per_marker = args.count_per_marker
