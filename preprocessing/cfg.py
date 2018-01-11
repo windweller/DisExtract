@@ -66,26 +66,27 @@ PAD_ID = 0
 UNK_ID = 1
 
 CH_DISCOURSE_MARKERS = [
-  "并且",
+  "并且",  # while
   "而且",
-  "因为",
-  "之前",
-  "但是",
-  "可是",
-  "不过",
-  "但",
-  "如果",
-  "因此",
-  "所以",
+  "而",  # and
+  "因为", # because
+  "之前", # before
+  "但",  # but
+  # "但是", # but
+  "可是", # but...
+  "不过", # however
+  "如果", # if
+  "因此", # because of
+  "所以", # so
   # "然后",
-  "虽然",
-  "尽管",
-  "当"
+  "虽然", # however
+  "尽管", # although
+  "当时"  # when, but take out "当时的"
 ]
 
 CH_FIVE_DISCOURSE_MARKERS = [
-    "and",
-    "because",
+    "而",
+    "因为",
     "but",
     "if",
     "when"
