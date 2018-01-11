@@ -93,18 +93,21 @@ def standardize_sentence_output(s):
     if len(s) == 0:
         return None
     else:
-        s = capitalize(s)
-        # keep final quotations and don't add an additional .
-        if len(s)>3 and s[-3:] in ". \". '":
+        s = s.strip()
+        s = capitalize(s[0]) + s[1:]
+        # strip original final punctuation
+        while s[-1] in (PUNCTUATION + '"\''):
+
+          # keep final quotations and don't add an additional .
+          if len(s)>3 and s[-3:] in ", ', \". \". '":
             return s
-        else:
-            # strip original final punctuation
-            while s[-1] in PUNCTUATION:
-                s = s[:-1]
-                if len(s)==0:
-                    return None
-            # add new standard . at end of sentence
-            return s + " ."
+          else:
+            # otherwise, strip ending punct
+            s = s[:-1].strip()
+            if len(s)==0:
+              return None
+        # add new standard . at end of sentence
+        return s + " ."
 
 # this was chosen for english, but it's probably fine for other languages, too
 # basically, if there are multiple discourse markers,
@@ -134,13 +137,16 @@ def get_nearest(lst, element):
     return lst[np.argmin(distances)]
 
 
-def redo_tokenization(lst):
-    s = " ".join(lst)
-    separated_s = re.sub(" @([^ ]+)@ ", " @ \1 @ ", s)
-    separated_s = re.sub(" 't", " ' t", separated_s)
-    separated_s = re.sub(' "', ' " ', separated_s)
-    separated_s = re.sub('" ', ' " ', separated_s)
-    return separated_s.split()
+def redo_tokenization(lst, lang="en"):
+    if lang == "en":
+      s = " ".join(lst)
+      separated_s = re.sub(" @([^ ]+)@ ", " @ \1 @ ", s)
+      separated_s = re.sub(" 't", " ' t", separated_s)
+      separated_s = re.sub(' "', ' " ', separated_s)
+      separated_s = re.sub('" ', ' " ', separated_s)
+      return separated_s.split()
+    else:
+      return lst
 
 
 """
@@ -150,13 +156,14 @@ extraction_indices (which are 1-indexed into parsed_words)
 
 fix me to catch more cases?
 """
-def extract_subphrase(orig_words, parsed_words, extraction_indices):
+def extract_subphrase(orig_words, parsed_words, extraction_indices, lang="en"):
     extraction_indices = [i-1 for i in extraction_indices]
 
-    orig_words = redo_tokenization(orig_words)
-    # print(" ".join(orig_words))
-    # print(" ".join(parsed_words))
+    if lang == "sp":
+      return " ".join([parsed_words[i] for i in extraction_indices])
 
+    orig_words = redo_tokenization(orig_words, lang=lang)
+    
     if len(orig_words) == len(parsed_words):
         return " ".join([orig_words[i] for i in extraction_indices])
     else:
@@ -178,6 +185,9 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices):
             else:
                 # or maybe there's funny stuff happening inside the subphrase
                 # in which case T-T
+                print "wonky subphrase:"
+                print orig_words
+                print parsed_words
                 return None
         else:
             if len(first_word_indices)>0 and abs(last_parse_index-len(parsed_words))<3:
@@ -224,28 +234,28 @@ def get_parse(sentence, lang="en", depparse=True):
 
     data = sentence
 
-    try:
-      parse_string = requests.post(url, data=data).text
+    parse_string = requests.post(url, data=data).text
   
-      parse_string = parse_string.replace('\r\n', '')
-      parse_string = parse_string.replace('\x19', '')
+    parse_string = parse_string.replace('\r\n', '')
+    parse_string = parse_string.replace('\x19', '')
 
-      try:
-          parsed_output = json.loads(parse_string)
-          sentences = parsed_output["sentences"]
-          if len(sentences)>0:
-            return sentences[0]
-          else:
-            return None
+    try:
+      parsed_output = json.loads(parse_string)
+      sentences = parsed_output["sentences"]
+      if len(sentences)>0:
+        return sentences[0]
+      else:
+        print "error in parse:"
+        print sentences
+        return None
 
-      except ValueError:
-          try:
-            return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
-          except:
-            return None
-    except:
-      print(sentence)
-      return None
+    except ValueError:
+        try:
+          return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
+        except:
+          print "error loading json:"
+          print sentences
+          return None
 
 
 class Sentence():
@@ -392,6 +402,9 @@ class Sentence():
             exclude_indices=exclude_indices,
             exclude_types=exclude_types
         )
+        #print subordinate_indices
+        #print " ".join([self.word(i) for i in subordinate_indices])
+ 
         if not subordinate_indices:
             return None
         subordinate_indices.sort()
@@ -422,6 +435,7 @@ class Sentence():
             # (tokenization systems are different)
             orig_words = self.original_sentence.split()
             parsed_words = [t["word"] for t in self.tokens]
+            #print subordinate_indices
 
             # if "estudios" in parse_subordinate_string:
             #     # print orig_words
@@ -435,7 +449,7 @@ class Sentence():
             #         except:
             #             print parsed_words[i]
 
-            subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices)
+            subordinate_phrase = extract_subphrase(orig_words, parsed_words, subordinate_indices, lang="sp")
 
         # if "ONU" in subordinate_phrase:
         #     print subordinate_phrase
@@ -499,9 +513,9 @@ class Sentence():
         #     print self.get_valid_marker_indices(marker)
 
         for dep_pattern in dependency_patterns[lang][marker]:
-
+            #print dep_pattern
             for marker_index in self.get_valid_marker_indices(marker, dep_pattern):
-
+                #print marker_index
                 # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
                 #     print marker_index
 
@@ -509,28 +523,30 @@ class Sentence():
                 #     print marker_index
 
                 s2_candidates = self.get_candidate_S2_indices(marker, marker_index, dep_pattern, needs_verb=needs_verb)
-
+                #print s2_candidates
+                
                 for s2_head_index in s2_candidates:
                     s2_ind = s2_head_index
-
+                    #print s2_ind
                     possible_S1s = []
 
                     s1_candidates = self.get_candidate_S1_indices(marker, s2_head_index, dep_pattern, needs_verb=needs_verb)
-
+                    
                     if "acceptable_order" in dep_pattern:
                         if dep_pattern["acceptable_order"]=="S1 S2":
                             s1_candidates = [s1_ind for s1_ind in s1_candidates if s1_ind < s2_ind]
                             
-
+                    
                     for s1_head_index in s1_candidates:
                         # print(marker_index, s2_ind, s1_head_index)
-
+                        #print s1_head_index
                         # store S1 if we have one
                         S1 = self.get_phrase_from_head(
                             s1_head_index,
                             exclude_indices=[s2_head_index]
                         )
 
+                        #print S1
                         # we'll lose some stuff here because of alignment between
                         # wikitext tokenization and corenlp tokenization.
                         # if we can't get a phrase, reject this pair
@@ -559,6 +575,7 @@ class Sentence():
                         exclude_indices=[marker_index, s1_ind],
                         # exclude_types=dependency_patterns[marker]["S1"]
                     )
+                    #print S2
 
                     # we'll lose some stuff here because of alignment between
                     # wikitext tokenization and corenlp tokenization.
@@ -622,14 +639,17 @@ def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
         #     # pp.pprint(parse["basicDependencies"])
         #     # print(json.dumps(parse["tokens"], indent=4))
         sentence = Sentence(parse, sentence, lang)
-
+        #print sentence
         # print orig_sentence
         # print len(orig_sentence)
         # print str(sentence)
         # print len(str(sentence))
 
         # print sentence
-        return(sentence.find_pair(marker, "any", previous_sentence, lang=lang))
+        pair = sentence.find_pair(marker, "any", previous_sentence, lang=lang)
+        #print pair
+        #stop
+        return pair
     else:
         return None
 

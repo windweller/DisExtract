@@ -23,7 +23,7 @@ from os.path import join as pjoin
 import xml.etree.ElementTree as ET
 
 from parser import depparse_ssplit, setup_corenlp
-from cfg import SP_DISCOURSE_MARKERS
+from cfg import SP_DISCOURSE_MARKERS, SP_EIGHT_DISCOURSE_MARKERS, SP_FIVE_DISCOURSE_MARKERS
 
 
 """
@@ -236,6 +236,13 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
     :return:
     """
 
+    if output_marker_set_tag == "FIVE":
+      marker_set = SP_FIVE_DISCOURSE_MARKERS
+    elif output_marker_set_tag == "EIGHT":
+      marker_set = SP_EIGHT_DISCOURSE_MARKERS
+    elif output_marker_set_tag == "ALL14":
+      marker_set = SP_DISCOURSE_MARKERS
+
     markers_dir = pjoin(source_dir, "markers_" + input_marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
     input_file_path = pjoin(input_dir, "{}.json".format(input_marker_set_tag))
@@ -267,20 +274,21 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
             ))
             i = 0
             for marker, slists in sentences.iteritems():
-                for sentence, previous in zip(slists["sentence"], slists["previous"]):
-                    i += 1
-                    if i > 0:
-                        parsed_output = dependency_parsing(sentence, previous, marker)
-                        if parsed_output:
-                            s1, s2 = parsed_output
+                if marker in marker_set:
+			for sentence, previous in zip(slists["sentence"], slists["previous"]):
+			    i += 1
+			    if i > 0:
+				parsed_output = dependency_parsing(sentence, previous, marker)
+				if parsed_output:
+				    s1, s2 = parsed_output
 
-                            # parsed_sentence_pairs[marker]["s1"].append(s1)
-                            # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-                            w.write(line_to_print)
+				    # parsed_sentence_pairs[marker]["s1"].append(s1)
+				    # parsed_sentence_pairs[marker]["s2"].append(s2)
+				    line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+				    w.write(line_to_print)
 
-                        if i % args.filter_print_every == 0:
-                            logger.info("processed {}".format(i))
+				if i % args.filter_print_every == 0:
+				    logger.info("processed {}".format(i))
 
     # logger.info('writing files')
 
