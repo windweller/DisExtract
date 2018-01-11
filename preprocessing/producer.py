@@ -104,7 +104,7 @@ if __name__ == '__main__':
         elif ratio < args.min_ratio or args.max_ratio < ratio:
             continue
         else:
-            example_line = "\t".join([s1, s2, label])
+            example_line = "\t".join([s1, s2, label]) + "\n"
             if label in filtered_examples:
                 filtered_examples[label].append(example_line)
             else:
