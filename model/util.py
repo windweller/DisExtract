@@ -17,7 +17,7 @@ def get_labels(corpus):
         labels = EN_OLD_FIVE_DISCOURSE_MARKERS
     elif corpus == "books_8":
         labels = EN_EIGHT_DISCOURSE_MARKERS
-    elif corpus == "books_all":
+    elif corpus == "books_all" or corpus == "books_perfectly_balanced" or corpus == "books_mostly_balanced":
         labels = EN_DISCOURSE_MARKERS
     else:
         raise Exception("corpus not found")
