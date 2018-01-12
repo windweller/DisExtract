@@ -254,7 +254,7 @@ def get_parse(sentence, lang="en", depparse=True):
           return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
         except:
           print "error loading json:"
-          print sentences
+          print sentence
           return None
 
 
