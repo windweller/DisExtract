@@ -46,6 +46,7 @@ parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 parser.add_argument("--marker_set_tag", default="ALL", type=str, help="ALL|FIVE|EIGHT")
+parser.add_argument("--starting_line", type=int, default=0, help="set this to the line you want to start with if you want to skip some")
 
 args, _ = parser.parse_known_args()
 
@@ -211,8 +212,17 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
 
     logger.info('writing files')
 
-    with open(pjoin(output_dir, "{}.json".format(marker_set_tag)), 'wb') as f:
-        json.dump(sentences, f)
+    with open(pjoin(output_dir, "{}.json".format(marker_set_tag)), 'a') as w:
+        for marker in sentences:
+            s = sentences[marker]["sentence"]
+            p = sentences[marker]["previous"]
+            for i in range(len(s)):
+                line = "{}\t{}\t{}\n".format(
+                    s[i].encode("utf-8").replace("\t", ""),
+                    p[i].encode("utf-8").replace("\t", ""),
+                    marker.encode("utf-8")
+                )
+            w.write(line)
 
     logger.info('file writing complete')
 
@@ -227,7 +237,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
         )
 
-def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set_tag):
+def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set_tag, starting_line):
     """
     This function can be the same for each corpus
 
@@ -236,16 +246,23 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
     :return:
     """
 
+    #marker_set = ["porque", "cuando", "si", "pero"]
     if output_marker_set_tag == "FIVE":
       marker_set = SP_FIVE_DISCOURSE_MARKERS
     elif output_marker_set_tag == "EIGHT":
       marker_set = SP_EIGHT_DISCOURSE_MARKERS
     elif output_marker_set_tag == "ALL14":
       marker_set = SP_DISCOURSE_MARKERS
+    elif output_marker_set_tag == "AND":
+      marker_set = ["y"]
+    elif output_marker_set_tag == "FOUR":
+      marker_set = ["porque", "cuando", "si", "pero"]
+    elif output_marker_set_tag == "THREE":
+      marker_set = ["entonces", "antes", "aunque"]
 
     markers_dir = pjoin(source_dir, "markers_" + input_marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
-    input_file_path = pjoin(input_dir, "{}.json".format(input_marker_set_tag))
+    input_file_path = pjoin(input_dir, "{}.tsv".format(input_marker_set_tag))
     output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
 
     if not os.path.exists(markers_dir):
@@ -267,28 +284,24 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
         # w.write(header)
 
         with open(input_file_path, 'rb') as f:
-            logger.info("reading {}".format(input_file_path))
-            sentences = json.load(f)
-            logger.info("total sentences: {}".format(
-                sum([len(sentences[marker]["sentence"]) for marker in sentences])
-            ))
             i = 0
-            for marker, slists in sentences.iteritems():
+            for line in f:
+                i+=1
+                sentence, previous, marker = line[:-1].split("\t")
                 if marker in marker_set:
-			for sentence, previous in zip(slists["sentence"], slists["previous"]):
-			    i += 1
-			    if i > 0:
-				parsed_output = dependency_parsing(sentence, previous, marker)
-				if parsed_output:
-				    s1, s2 = parsed_output
+                    i += 1
+                    if i > starting_line:
+                        parsed_output = dependency_parsing(sentence, previous, marker)
+                        if parsed_output:
+                            s1, s2 = parsed_output
 
-				    # parsed_sentence_pairs[marker]["s1"].append(s1)
-				    # parsed_sentence_pairs[marker]["s2"].append(s2)
-				    line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-				    w.write(line_to_print)
+                            # parsed_sentence_pairs[marker]["s1"].append(s1)
+                            # parsed_sentence_pairs[marker]["s2"].append(s2)
+                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                            w.write(line_to_print)
 
-				if i % args.filter_print_every == 0:
-				    logger.info("processed {}".format(i))
+                if i % args.filter_print_every == 0:
+                    logger.info("processed {}".format(i))
 
     # logger.info('writing files')
 
@@ -307,11 +320,6 @@ if __name__ == '__main__':
         collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", SP_DISCOURSE_MARKERS)
     elif args.parse:
         setup_corenlp("sp")
-        if args.marker_set_tag=="ALL":
-            parse_filtered_sentences(gigaword_es_dir, "ALL14", "ALL14")
-        elif args.marker_set_tag=="FIVE":
-            parse_filtered_sentences(gigaword_es_dir, "ALL14", "FIVE")
-        elif args.marker_set_tag=="EIGHT":
-            parse_filtered_sentences(gigaword_es_dir, "ALL14", "EIGHT")
+        parse_filtered_sentences(gigaword_es_dir, "ALL14", args.marker_set_tag, args.starting_line)
 
 
