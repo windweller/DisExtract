@@ -72,7 +72,7 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
         dis_map = list_to_map(EN_FIVE_DISCOURSE_MARKERS)
     elif discourse_tag == "books_8":
         dis_map = list_to_map(EN_EIGHT_DISCOURSE_MARKERS)
-    elif discourse_tag == "books_all":
+    elif discourse_tag == "books_all" or discourse_tag == "books_perfectly_balanced" or discourse_tag == "books_mostly_balanced":
         dis_map = list_to_map(EN_DISCOURSE_MARKERS)
     elif discourse_tag == "books_old_5":
         dis_map = list_to_map(EN_OLD_FIVE_DISCOURSE_MARKERS)
