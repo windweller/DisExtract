@@ -226,7 +226,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     # a single marker match, so continue is fine
                     for marker in discourse_markers:
 
-                        if marker == "当时" and "当时的" not in sent:
+                        if marker == "当时" and "当时" in sent and "当时的" not in sent:
                             s1, s2 = sent.split(marker)
                             if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
                                 continue
