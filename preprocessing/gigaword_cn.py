@@ -60,6 +60,8 @@ with open(args.json, 'rb') as f:
 gigaword_cn_dir = json_config['gigaword_cn_dir']
 gigaword_cn_file = 'gigaword_cn.txt'
 
+import re
+
 
 def process_sent(sent, lang="ch"):
     sent = re.sub(r"\(.+\)", "", sent)  # get rid of parentheses (many content inside are English/other languages)
@@ -82,8 +84,8 @@ def process_sent(sent, lang="ch"):
     sent = re.sub(r"\)", "", sent)
 
     # resolve weird 「 symbol
-    sent = sent.replace("「", '“')
-    sent = sent.replace("」", "”")
+    sent = sent.replace("「", '"')
+    sent = sent.replace("」", '"')
 
     return sent
 
@@ -117,6 +119,48 @@ def extract_stories(lines):
     return sentences
 
 
+def sent_tokenize(p):
+    sents = []
+    sent = []
+
+    prev_stop_tok = False  # manual lookahead for ?", !", 。"
+    inside_quot = False
+    for w in p.decode('utf-8'):
+
+        if w == '"'.decode('utf-8') and inside_quot:
+            inside_quot = False
+        elif w == '"'.decode('utf-8'):
+            inside_quot = True
+
+        if prev_stop_tok and w == '"'.decode('utf-8') and not inside_quot:
+            sent.append(w)
+            sents.append("".join(sent))
+            sent = []
+            prev_stop_tok = False
+            continue
+        if prev_stop_tok and not inside_quot:
+            # meaning it's not `“。` scenario
+            sents.append("".join(sent))
+            sent = [w]
+            prev_stop_tok = False
+            continue
+
+        if w == "。".decode('utf-8') or w == "?".decode('utf-8') or w == "!".decode('utf-8'):
+            sent.append(w)
+            prev_stop_tok = True
+        elif w == ";".decode('utf-8') and not inside_quot:
+            sent.append("。")
+            sents.append("".join(sent))
+            sent = []
+        else:
+            sent.append(w)
+
+    if prev_stop_tok:
+        sents.append("".join(sent))
+
+    return sents
+
+
 def extrat_raw_gigaword():
     news_sources = os.listdir(pjoin(gigaword_cn_dir, 'data'))
     articles_processed = 0
@@ -139,8 +183,10 @@ def extrat_raw_gigaword():
         for sent in sentences:
             f.write(sent + '\n')
 
+
 def sent_segment(sentence):
     pass
+
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
     """
@@ -172,8 +218,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         with io.open(file_path, 'rU', encoding="utf-8") as f:
             for i, sentence in enumerate(f):
 
-                # TODO: sentence tokenization here!!! <P> is not sentence.
-                sents = sentence.split(";")  # ";" indicates a sentence
+                # sentence tokenization here!!! <P> is not sentence.
+                sents = sent_tokenize(sentence) # these are already preprocessed
 
                 for sent in sents:
 
