@@ -274,7 +274,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                             continue
 
                         # later one is "because of"
-                        if marker == "因为" and "是因为" not in sent:
+                        if marker == "因为" and "因为" in sent and "是因为" not in sent:
                             s1, s2 = sent.split("因为")
                             if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
                                 continue
