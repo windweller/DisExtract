@@ -183,10 +183,16 @@ def extrat_raw_gigaword():
         for sent in sentences:
             f.write(sent + '\n')
 
-
-def sent_segment(sentence):
-    pass
-
+# def generate_pairs(sent_splits, marker_sent_list, marker_prev_list):
+#     # successive pairs
+#     for s1, s2 in zip(sent_splits, sent_splits[1:]):
+#         if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+#             return
+#         elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+#                 s2.decode("utf-8")) < args.min_seq_len:
+#             return
+#         marker_sent_list.append(sent)
+#         marker_prev_list.append(previous_sentence)
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
     """
@@ -224,63 +230,70 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                 for sent in sents:
 
                     # a single marker match, so continue is fine
+                    # we match the sentence length condition, but when there are multiple
+                    # markers, we sync with spanish, and defer the decision to parser!
                     for marker in discourse_markers:
 
                         if marker == "当时" and "当时" in sent and "当时的" not in sent:
-                            s1, s2 = sent.split(marker)
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(marker)) == 2:
+                                s1, s2 = sent.split(marker)
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
                         if marker == "而且" and ",而且" in sent:
-                            s1, s2 = sent.split(",而")
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(marker)) == 2:
+                                s1, s2 = sent.split(",而")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
                         if marker == "而" and ",而" in sent:
-                            s1, s2 = sent.split(",而")
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(marker)) == 2:
+                                s1, s2 = sent.split(",而")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
                         if marker == "但" and ",但" in sent:
-                            if ",但是" in sent:
-                                s1, s2 = sent.split(",但是")
-                            else:
-                                s1, s2 = sent.split(",但")
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(",但是")) == 2 or len(sent.split("但")) == 2:
+                                if ",但是" in sent:
+                                    s1, s2 = sent.split(",但是")
+                                else:
+                                    s1, s2 = sent.split(",但")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
                         # later one is "because of"
                         if marker == "因为" and "因为" in sent and "是因为" not in sent:
-                            s1, s2 = sent.split("因为")
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split("因为")) == 2:
+                                s1, s2 = sent.split("因为")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
@@ -293,8 +306,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                                 elif len(s2.decode("utf-8")) > args.max_seq_len or len(
                                         s2.decode("utf-8")) < args.min_seq_len:
                                     continue
-                                sentences[marker]["sentence"].append(sent)
-                                sentences[marker]["previous"].append(previous_sentence)
+                            sentences[marker]["sentence"].append(sent)
+                            sentences[marker]["previous"].append(previous_sentence)
 
                     previous_sentence = sent
 
