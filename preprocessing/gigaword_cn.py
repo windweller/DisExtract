@@ -246,9 +246,11 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
+                        # we will lose sentences that have both "而且" and "而" to "而且"...
+                        # but we will judge by final distribution
                         if marker == "而且" and ",而且" in sent:
                             if len(sent.split(marker)) == 2:
-                                s1, s2 = sent.split(",而")
+                                s1, s2 = sent.split(",而且")
                                 if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
                                     continue
                                 elif len(s2.decode("utf-8")) > args.max_seq_len or len(
@@ -259,7 +261,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                             continue
 
                         if marker == "而" and ",而" in sent:
-                            if len(sent.split(marker)) == 2:
+                            if len(sent.split(",而")) == 2:
                                 s1, s2 = sent.split(",而")
                                 if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
                                     continue
