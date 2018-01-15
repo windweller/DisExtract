@@ -273,8 +273,9 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
-                        if marker in sent:
-                            s1, s2 = sent.split(marker)
+                        # later one is "because of"
+                        if marker == "因为" and "是因为" not in sent:
+                            s1, s2 = sent.split("因为")
                             if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
                                 continue
                             elif len(s2.decode("utf-8")) > args.max_seq_len or len(
@@ -282,6 +283,18 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                                 continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
+                            continue
+
+                        if marker in sent:
+                            if len(sent.split(marker)) == 2:
+                                s1, s2 = sent.split(marker)
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                sentences[marker]["sentence"].append(sent)
+                                sentences[marker]["previous"].append(previous_sentence)
 
                     previous_sentence = sent
 
