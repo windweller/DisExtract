@@ -42,6 +42,7 @@ parser.add_argument("--min_seq_len", default=5, type=int)
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
+parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 
 args, _ = parser.parse_known_args()
@@ -366,12 +367,21 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
     # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
     with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'a') as w:
-        # header = "{}\t{}\t{}\n".format("s1", "s2", "marker")
-        # w.write(header)
 
         with open(input_file_path, 'rb') as f:
             logger.info("reading {}".format(input_file_path))
             sentences = json.load(f)
+
+            # resume training only on "而"
+            if args.exclude_list:
+                exclusion_list = ['虽然', '可是', '不过', '所以', '但', '因此']
+                logger.info("excluded: {}".format(exclusion_list))
+
+                # we take them out from the sentences dictionary
+                # those markers have finished parsing
+                for ex_marker in exclusion_list:
+                    del sentences[ex_marker]
+
             logger.info("total sentences: {}".format(
                 sum([len(sentences[marker]["sentence"]) for marker in sentences])
             ))
@@ -379,23 +389,18 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             for marker, slists in sentences.iteritems():
                 for sentence, previous in zip(slists["sentence"], slists["previous"]):
                     i += 1
-                    if i > 0:
-                        parsed_output = dependency_parsing(sentence, previous, marker)
-                        if parsed_output:
-                            s1, s2 = parsed_output
-
-                            # parsed_sentence_pairs[marker]["s1"].append(s1)
-                            # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-                            w.write(line_to_print)
+                    if i > 0:  # add an argument
+                        try:
+                            parsed_output = dependency_parsing(sentence, previous, marker)
+                            if parsed_output:
+                                s1, s2 = parsed_output
+                                line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                                w.write(line_to_print)
+                        except:
+                            print i, marker, sentence
 
                         if i % args.filter_print_every == 0:
                             logger.info("processed {}".format(i))
-
-    # logger.info('writing files')
-
-    # with open(pjoin(output_dir, "{}_parsed_sentence_pairs.json".format(marker_set_tag)), 'wb') as f:
-    #     json.dump(parsed_sentence_pairs, f)
 
     logger.info('file writing complete')
 
