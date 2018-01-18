@@ -374,7 +374,7 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
             # resume training only on "而"
             if args.exclude_list:
-                exclusion_list = ['虽然', '可是', '不过', '所以', '但', '因此']
+                exclusion_list = [u'虽然', u'可是', u'不过', u'所以', u'但', u'因此']
                 logger.info("excluded: {}".format(exclusion_list))
 
                 # we take them out from the sentences dictionary

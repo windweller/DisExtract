@@ -97,10 +97,10 @@ if __name__ == '__main__':
     number_of_filtered_examples = 0
     for ex in examples:
         s1, s2, label = ex[:-1].split('\t')
-        ratio = float(len(s1)) / max(len(s2), 0.0001)
-        if len(s1) < args.min_seq_len or args.max_seq_len < len(s1):
+        ratio = float(len(s1.split())) / max(len(s2.split()), 0.0001)
+        if len(s1.split()) < args.min_seq_len or args.max_seq_len < len(s1.split()):
             continue
-        elif len(s2) < args.min_seq_len or args.max_seq_len < len(s2):
+        elif len(s2.split()) < args.min_seq_len or args.max_seq_len < len(s2.split()):
             continue
         elif ratio < args.min_ratio or args.max_ratio < ratio:
             continue
