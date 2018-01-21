@@ -8,27 +8,23 @@ We are only process text type of "story", and ignore the rest.
 """
 
 import os
+import re
 import io
 import sys
 import json
 import gzip
 import argparse
-import re
-import nltk.data
 
 import logging
 from util import rephrase
 from os.path import join as pjoin
 
-import xml.etree.ElementTree as ET
-
 from parser import depparse_ssplit, setup_corenlp
-from cfg import SP_DISCOURSE_MARKERS, SP_EIGHT_DISCOURSE_MARKERS, SP_FIVE_DISCOURSE_MARKERS
-
+from cfg import SP_DISCOURSE_MARKERS
 
 """
 Stats:
-Raw gigaword es file has: ???? (??M) sentences
+Raw gigaword es file has: X (XM) sentences
 
 Unlike bookcorpus.py, we are not filtering anything (due to difficulty in tokenization for raw string)
 """
@@ -41,12 +37,13 @@ parser.add_argument("--extract", action='store_true')
 parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
 parser.add_argument("--filter_print_every", default=10000, type=int)
+parser.add_argument("--max_seq_len", default=50, type=int)
+parser.add_argument("--min_seq_len", default=5, type=int)
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
+parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
-parser.add_argument("--marker_set_tag", default="ALL", type=str, help="ALL|FIVE|EIGHT")
-parser.add_argument("--starting_line", type=int, default=0, help="set this to the line you want to start with if you want to skip some")
 
 args, _ = parser.parse_known_args()
 
@@ -61,11 +58,16 @@ logger = logging.getLogger(__name__)
 with open(args.json, 'rb') as f:
     json_config = json.load(f)
 
-gigaword_es_dir = json_config['gigaword_es_dir']
-gigaword_es_file = 'gigaword_es.txt'
+gigaword_sp_dir = json_config['gigaword_sp_dir']
+gigaword_sp_file = 'gigaword_sp.txt'
 
-def process_sent(sent, lang="es"):
-    sent = re.sub(r"\(.+\)", "", sent)  # get rid of parentheses (many content inside are English/other languages)
+import re
+
+import nltk
+spanish_tokenizer = nltk.data.load('tokenizers/punkt/spanish.pickle')
+
+def process_sent(sent, lang="sp"):
+    #sent = re.sub(r"\(.+\)", "", sent)  # get rid of parentheses (many content inside are English/other languages)
 
     sent = sent.replace("&amp;gt;", "")
 
@@ -76,17 +78,17 @@ def process_sent(sent, lang="es"):
     sent = sent.replace("&apos;", '\'')
     sent = sent.replace("&quot;", '"')
 
-    if lang == "ch":
-        sent = re.sub(r'[A-Z a-z.]+', "", sent)  # get rid of English characters
-        # and all spaces in the sentence. This will only work in Chinese
-        sent = re.sub(r'[0-9]+', "", sent)
+    #if lang == "ch":
+    #    sent = re.sub(r'[A-Z a-z.]+', "", sent)  # get rid of English characters
+    #    # and all spaces in the sentence. This will only work in Chinese
+    #    sent = re.sub(r'[0-9]+', "", sent)
 
-    sent = re.sub(r"\(", "", sent)
-    sent = re.sub(r"\)", "", sent)
+    #sent = re.sub(r"\(", "", sent)
+    #sent = re.sub(r"\)", "", sent)
 
-    # # resolve weird 「 symbol
-    # sent = sent.replace("「", '“')
-    # sent = sent.replace("」", "”")
+    # resolve weird 「 symbol
+    #sent = sent.replace("「", '"')
+    #sent = sent.replace("」", '"')
 
     return sent
 
@@ -120,15 +122,20 @@ def extract_stories(lines):
     return sentences
 
 
+def sent_tokenize(p):
+    sents = spanish_tokenizer.tokenize(p)
+    return sents
+
+
 def extrat_raw_gigaword():
-    news_sources = os.listdir(pjoin(gigaword_es_dir, 'data'))
+    news_sources = os.listdir(pjoin(gigaword_sp_dir, 'data'))
     articles_processed = 0
     sentences = []
     for news_source in news_sources:
-        files = os.listdir(pjoin(gigaword_es_dir, 'data', news_source))
+        files = os.listdir(pjoin(gigaword_sp_dir, 'data', news_source))
         files = filter(lambda s: '.gz' in s, files)
         for file in files:
-            with gzip.open(pjoin(gigaword_es_dir, 'data', news_source, file), 'rb') as f:
+            with gzip.open(pjoin(gigaword_sp_dir, 'data', news_source, file), 'rb') as f:
                 file_content = f.read()
                 lines = file_content.split('\n')
                 sents = extract_stories(lines)
@@ -136,11 +143,22 @@ def extrat_raw_gigaword():
             articles_processed += 1
             if articles_processed % 20 == 0:
                 print("processed {} articles".format(articles_processed))
-                print("{} sentences are collected".format(len(sentences)))
+                print("{} paragraphs are collected".format(len(sentences)))
 
-    with open(pjoin(gigaword_es_dir, gigaword_es_file), 'wb') as f:
+    with open(pjoin(gigaword_sp_dir, gigaword_sp_file), 'wb') as f:
         for sent in sentences:
             f.write(sent + '\n')
+
+# def generate_pairs(sent_splits, marker_sent_list, marker_prev_list):
+#     # successive pairs
+#     for s1, s2 in zip(sent_splits, sent_splits[1:]):
+#         if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+#             return
+#         elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+#                 s2.decode("utf-8")) < args.min_seq_len:
+#             return
+#         marker_sent_list.append(sent)
+#         marker_prev_list.append(previous_sentence)
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
     """
@@ -162,48 +180,36 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    sentences = {marker: {"sentence": [], "previous": []} for marker in discourse_markers}
-
-    spanish_tokenizer = nltk.data.load('tokenizers/punkt/spanish.pickle')
+    sentences = {marker: [] for marker in discourse_markers}
 
     for filename in filenames:
         logger.info("reading {}".format(filename))
         file_path = pjoin(source_dir, filename)
-        i = 0
 
         previous_sentence = ""
         with io.open(file_path, 'rU', encoding="utf-8") as f:
-            for raw_section in f:
+            for i, sentence in enumerate(f):
 
-                # # TODO: use
-                section = raw_section.replace("\n", "")
-                sentences_in_section = spanish_tokenizer.tokenize(section)
-                for sentence in sentences_in_section:
-                    i+=1
+                # sentence tokenization here!!! <P> is not sentence.
+                sents = sent_tokenize(sentence) # these are already preprocessed
 
+                for sent in sents:
+                    sent = sent.replace("\t", "")
+                    # a single marker match, so continue is fine
+                    # we match the sentence length condition, but when there are multiple
+                    # markers, we sync with spanish, and defer the decision to parser!
+                    words = sent.lower().split(" ")
                     for marker in discourse_markers:
+                      if len(marker.split(" ")) > 1:
+                        if marker in sent:
+                          line_to_write = "{}\t{}\t{}".format(sent, previous_sentence, marker)
+                          sentences[marker].append(line_to_write)
+                      else:
+                        if marker in words:
+                          line_to_write = "{}\t{}\t{}".format(sent, previous_sentence, marker)
+                          sentences[marker].append(line_to_write)
 
-                        # all bookcorpus text are lower case
-                        marker_at_start = marker.capitalize()
-                        marker_in_middle = marker
-
-                        if marker == "y":
-                            marker_at_start = "Y "
-                            marker_in_middle = " y "
-
-                        if marker == "si":
-                            marker_at_start = "Si "
-                            marker_in_middle = " si "
-
-                        if marker == "pero":
-                            marker_at_start = "Pero "
-                            marker_in_middle = " pero "
-
-                        if marker_at_start in sentence or marker_in_middle in sentence:
-                            sentences[marker]["sentence"].append(sentence)
-                            sentences[marker]["previous"].append(previous_sentence)
-
-                    previous_sentence = sentence
+                    previous_sentence = sent
 
                     if i % args.filter_print_every == 0:
                         logger.info("processed {}".format(i))
@@ -212,23 +218,16 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
 
     logger.info('writing files')
 
-    with open(pjoin(output_dir, "{}.json".format(marker_set_tag)), 'a') as w:
-        for marker in sentences:
-            s = sentences[marker]["sentence"]
-            p = sentences[marker]["previous"]
-            for i in range(len(s)):
-                line = "{}\t{}\t{}\n".format(
-                    s[i].encode("utf-8").replace("\t", ""),
-                    p[i].encode("utf-8").replace("\t", ""),
-                    marker.encode("utf-8")
-                )
-            w.write(line)
+    with open(pjoin(output_dir, "{}.tsv".format(marker_set_tag)), 'a') as f:
+      for marker in discourse_markers:
+        for line in sentences[marker]:
+          f.write(line + "\n")
 
     logger.info('file writing complete')
 
     statistics_lines = []
     for marker in sentences:
-        n_sentences = len(sentences[marker]["sentence"])
+        n_sentences = len(sentences[marker])
         statistics_lines.append("{}\t{}".format(marker, n_sentences))
 
     statistics_report = "\n".join(statistics_lines)
@@ -237,7 +236,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
         )
 
-def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set_tag, starting_line):
+
+def parse_filtered_sentences(source_dir, marker_set_tag):
     """
     This function can be the same for each corpus
 
@@ -246,24 +246,9 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
     :return:
     """
 
-    marker_set = ["si"#, "pero"
-    ]
-    #if output_marker_set_tag == "FIVE":
-    #  marker_set = SP_FIVE_DISCOURSE_MARKERS
-    #elif output_marker_set_tag == "EIGHT":
-    #  marker_set = SP_EIGHT_DISCOURSE_MARKERS
-    #elif output_marker_set_tag == "ALL14":
-    #  marker_set = SP_DISCOURSE_MARKERS
-    #elif output_marker_set_tag == "AND":
-    #  marker_set = ["y"]
-    #elif output_marker_set_tag == "FOUR":
-    #  marker_set = ["porque", "cuando", "si", "pero"]
-    #elif output_marker_set_tag == "THREE":
-    #  marker_set = ["entonces", "antes", "aunque"]
-
-    markers_dir = pjoin(source_dir, "markers_" + input_marker_set_tag)
+    markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
-    input_file_path = pjoin(input_dir, "{}.tsv".format(input_marker_set_tag))
+    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
     output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
 
     if not os.path.exists(markers_dir):
@@ -277,50 +262,57 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
         os.makedirs(output_dir)
 
     logger.info("setting up parser (actually just testing atm)")
-    setup_corenlp("sp")
+    setup_corenlp()
 
     # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
-    with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(output_marker_set_tag)), 'a') as w:
-        # header = "{}\t{}\t{}\n".format("s1", "s2", "marker")
-        # w.write(header)
+    with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'a') as w:
 
         with open(input_file_path, 'rb') as f:
+            logger.info("reading {}".format(input_file_path))
+            sentences = json.load(f)
+
+            # resume training only on "而"
+            if args.exclude_list:
+                exclusion_list = [u'虽然', u'可是', u'不过', u'所以', u'但', u'因此']
+                logger.info("excluded: {}".format(exclusion_list))
+
+                # we take them out from the sentences dictionary
+                # those markers have finished parsing
+                for ex_marker in exclusion_list:
+                    del sentences[ex_marker]
+
+            logger.info("total sentences: {}".format(
+                sum([len(sentences[marker]["sentence"]) for marker in sentences])
+            ))
             i = 0
-            for line in f:
-                i+=1
-                sentence, previous, marker = line[:-1].split("\t")
-                if marker in marker_set:
+            for marker, slists in sentences.iteritems():
+                for sentence, previous in zip(slists["sentence"], slists["previous"]):
                     i += 1
-                    if i > starting_line:
-                        parsed_output = dependency_parsing(sentence, previous, marker)
-                        if parsed_output:
-                            s1, s2 = parsed_output
+                    if i > 0:  # add an argument
+                        try:
+                            parsed_output = dependency_parsing(sentence, previous, marker)
+                            if parsed_output:
+                                s1, s2 = parsed_output
+                                line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                                w.write(line_to_print)
+                        except:
+                            print i, marker, sentence
 
-                            # parsed_sentence_pairs[marker]["s1"].append(s1)
-                            # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-                            w.write(line_to_print)
-
-                if i % args.filter_print_every == 0:
-                    logger.info("processed {}".format(i))
-
-    # logger.info('writing files')
-
-    # with open(pjoin(output_dir, "{}_parsed_sentence_pairs.json".format(marker_set_tag)), 'wb') as f:
-    #     json.dump(parsed_sentence_pairs, f)
+                        if i % args.filter_print_every == 0:
+                            logger.info("processed {}".format(i))
 
     logger.info('file writing complete')
 
+
 def dependency_parsing(sentence, previous_sentence, marker):
-    return depparse_ssplit(sentence, previous_sentence, marker, lang='sp')
+    return depparse_ssplit(sentence, previous_sentence, marker, lang='ch')
+
 
 if __name__ == '__main__':
     if args.extract:
         extrat_raw_gigaword()
     elif args.filter:
-        collect_raw_sentences(gigaword_es_dir, [gigaword_es_file], "ALL14", SP_DISCOURSE_MARKERS)
+        collect_raw_sentences(gigaword_sp_dir, [gigaword_sp_file], "ALL", SP_DISCOURSE_MARKERS)
     elif args.parse:
         setup_corenlp("sp")
-        parse_filtered_sentences(gigaword_es_dir, "ALL14", args.marker_set_tag, args.starting_line)
-
-
+        parse_filtered_sentences(gigaword_sp_dir, "ALL")
