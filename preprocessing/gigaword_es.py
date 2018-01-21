@@ -246,19 +246,20 @@ def parse_filtered_sentences(source_dir, input_marker_set_tag, output_marker_set
     :return:
     """
 
-    #marker_set = ["porque", "cuando", "si", "pero"]
-    if output_marker_set_tag == "FIVE":
-      marker_set = SP_FIVE_DISCOURSE_MARKERS
-    elif output_marker_set_tag == "EIGHT":
-      marker_set = SP_EIGHT_DISCOURSE_MARKERS
-    elif output_marker_set_tag == "ALL14":
-      marker_set = SP_DISCOURSE_MARKERS
-    elif output_marker_set_tag == "AND":
-      marker_set = ["y"]
-    elif output_marker_set_tag == "FOUR":
-      marker_set = ["porque", "cuando", "si", "pero"]
-    elif output_marker_set_tag == "THREE":
-      marker_set = ["entonces", "antes", "aunque"]
+    marker_set = ["si"#, "pero"
+    ]
+    #if output_marker_set_tag == "FIVE":
+    #  marker_set = SP_FIVE_DISCOURSE_MARKERS
+    #elif output_marker_set_tag == "EIGHT":
+    #  marker_set = SP_EIGHT_DISCOURSE_MARKERS
+    #elif output_marker_set_tag == "ALL14":
+    #  marker_set = SP_DISCOURSE_MARKERS
+    #elif output_marker_set_tag == "AND":
+    #  marker_set = ["y"]
+    #elif output_marker_set_tag == "FOUR":
+    #  marker_set = ["porque", "cuando", "si", "pero"]
+    #elif output_marker_set_tag == "THREE":
+    #  marker_set = ["entonces", "antes", "aunque"]
 
     markers_dir = pjoin(source_dir, "markers_" + input_marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
