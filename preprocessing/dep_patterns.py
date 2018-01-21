@@ -9,6 +9,7 @@ ch_dependency_patterns = {
   # and
   u"并且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
   u"而且": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
+  u"而": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
   u"因为": [{"S2": "case", "S1": "nmod:prep", "POS": "P"}],
   u"之前": [{"S2": "advmod", "S1": "conj", "POS": "AD"}],
   u"但是": [{"POS": "AD", "S1": "conj","S2": "advmod"}],
@@ -21,17 +22,18 @@ ch_dependency_patterns = {
   # "然后": [{"POS": "AD", "S1": "conj", "S2": "advmod"}, {"POS": "AD", "S1": "dep", "S2": "advmod"}],
   u"虽然": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
   u"尽管": [{"POS": "CS", "S1": "conj","S2": "advmod"}],
-  u"当": [{
-    "POS": "P",
-    "S1": "nmod:prep",
-    "S2": "case",
-    "enclosing_marker": {
-      "POS": "LC",
-      "marker": "时",
-      "dep_to_S": "case",
-      "note": "this appears at the end of S2 and would make the classifier's job too easy (even tho it would be a well-formed sentence with the marker)"
-    }
-  }],
+  # u"当": [{
+  #   "POS": "P",
+  #   "S1": "nmod:prep",
+  #   "S2": "case",
+  #   "enclosing_marker": {
+  #     "POS": "LC",
+  #     "marker": "时",
+  #     "dep_to_S": "case",
+  #     "note": "this appears at the end of S2 and would make the classifier's job too easy (even tho it would be a well-formed sentence with the marker)"
+  #   }
+  # }],
+  u"当时": [{"POS": "NT", "S1": "nmod:tmod", "S2": "conj"}],
 }
 
 sp_dependency_patterns = {

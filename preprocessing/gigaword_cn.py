@@ -42,6 +42,7 @@ parser.add_argument("--min_seq_len", default=5, type=int)
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
+parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 
 args, _ = parser.parse_known_args()
@@ -59,6 +60,8 @@ with open(args.json, 'rb') as f:
 
 gigaword_cn_dir = json_config['gigaword_cn_dir']
 gigaword_cn_file = 'gigaword_cn.txt'
+
+import re
 
 
 def process_sent(sent, lang="ch"):
@@ -82,8 +85,8 @@ def process_sent(sent, lang="ch"):
     sent = re.sub(r"\)", "", sent)
 
     # resolve weird 「 symbol
-    sent = sent.replace("「", '“')
-    sent = sent.replace("」", "”")
+    sent = sent.replace("「", '"')
+    sent = sent.replace("」", '"')
 
     return sent
 
@@ -117,6 +120,48 @@ def extract_stories(lines):
     return sentences
 
 
+def sent_tokenize(p):
+    sents = []
+    sent = []
+
+    prev_stop_tok = False  # manual lookahead for ?", !", 。"
+    inside_quot = False
+    for w in p.decode('utf-8'):
+
+        if w == '"'.decode('utf-8') and inside_quot:
+            inside_quot = False
+        elif w == '"'.decode('utf-8'):
+            inside_quot = True
+
+        if prev_stop_tok and w == '"'.decode('utf-8') and not inside_quot:
+            sent.append(w)
+            sents.append("".join(sent))
+            sent = []
+            prev_stop_tok = False
+            continue
+        if prev_stop_tok and not inside_quot:
+            # meaning it's not `“。` scenario
+            sents.append("".join(sent))
+            sent = [w]
+            prev_stop_tok = False
+            continue
+
+        if w == "。".decode('utf-8') or w == "?".decode('utf-8') or w == "!".decode('utf-8'):
+            sent.append(w)
+            prev_stop_tok = True
+        elif w == ";".decode('utf-8') and not inside_quot:
+            sent.append("。")
+            sents.append("".join(sent))
+            sent = []
+        else:
+            sent.append(w)
+
+    if prev_stop_tok:
+        sents.append("".join(sent))
+
+    return sents
+
+
 def extrat_raw_gigaword():
     news_sources = os.listdir(pjoin(gigaword_cn_dir, 'data'))
     articles_processed = 0
@@ -133,14 +178,22 @@ def extrat_raw_gigaword():
             articles_processed += 1
             if articles_processed % 20 == 0:
                 print("processed {} articles".format(articles_processed))
-                print("{} sentences are collected".format(len(sentences)))
+                print("{} paragraphs are collected".format(len(sentences)))
 
     with open(pjoin(gigaword_cn_dir, gigaword_cn_file), 'wb') as f:
         for sent in sentences:
             f.write(sent + '\n')
 
-def sent_segment(sentence):
-    pass
+# def generate_pairs(sent_splits, marker_sent_list, marker_prev_list):
+#     # successive pairs
+#     for s1, s2 in zip(sent_splits, sent_splits[1:]):
+#         if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+#             return
+#         elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+#                 s2.decode("utf-8")) < args.min_seq_len:
+#             return
+#         marker_sent_list.append(sent)
+#         marker_prev_list.append(previous_sentence)
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
     """
@@ -172,68 +225,90 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         with io.open(file_path, 'rU', encoding="utf-8") as f:
             for i, sentence in enumerate(f):
 
-                # TODO: sentence tokenization here!!! <P> is not sentence.
-                sents = sentence.split(";")  # ";" indicates a sentence
+                # sentence tokenization here!!! <P> is not sentence.
+                sents = sent_tokenize(sentence) # these are already preprocessed
 
                 for sent in sents:
 
                     # a single marker match, so continue is fine
+                    # we match the sentence length condition, but when there are multiple
+                    # markers, we sync with spanish, and defer the decision to parser!
                     for marker in discourse_markers:
 
-                        if marker == "当时" and "当时的" not in sent:
-                            s1, s2 = sent.split(marker)
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                        if marker == "当时" and "当时" in sent and "当时的" not in sent:
+                            if len(sent.split(marker)) == 2:
+                                s1, s2 = sent.split(marker)
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
+                        # we will lose sentences that have both "而且" and "而" to "而且"...
+                        # but we will judge by final distribution
                         if marker == "而且" and ",而且" in sent:
-                            s1, s2 = sent.split(",而")
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(marker)) == 2:
+                                s1, s2 = sent.split(",而且")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
                         if marker == "而" and ",而" in sent:
-                            s1, s2 = sent.split(",而")
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(",而")) == 2:
+                                s1, s2 = sent.split(",而")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
                         if marker == "但" and ",但" in sent:
-                            if ",但是" in sent:
-                                s1, s2 = sent.split(",但是")
-                            else:
-                                s1, s2 = sent.split(",但")
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(",但是")) == 2 or len(sent.split("但")) == 2:
+                                if ",但是" in sent:
+                                    s1, s2 = sent.split(",但是")
+                                else:
+                                    s1, s2 = sent.split(",但")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                            sentences[marker]["sentence"].append(sent)
+                            sentences[marker]["previous"].append(previous_sentence)
+                            continue
+
+                        # later one is "because of"
+                        if marker == "因为" and "因为" in sent and "是因为" not in sent:
+                            if len(sent.split("因为")) == 2:
+                                s1, s2 = sent.split("因为")
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
                             continue
 
                         if marker in sent:
-                            s1, s2 = sent.split(marker)
-                            if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
-                                continue
-                            elif len(s2.decode("utf-8")) > args.max_seq_len or len(
-                                    s2.decode("utf-8")) < args.min_seq_len:
-                                continue
+                            if len(sent.split(marker)) == 2:
+                                s1, s2 = sent.split(marker)
+                                if len(s1.decode("utf-8")) > args.max_seq_len or len(s1.decode("utf-8")) < args.min_seq_len:
+                                    continue
+                                elif len(s2.decode("utf-8")) > args.max_seq_len or len(
+                                        s2.decode("utf-8")) < args.min_seq_len:
+                                    continue
                             sentences[marker]["sentence"].append(sent)
                             sentences[marker]["previous"].append(previous_sentence)
 
@@ -292,12 +367,21 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
     # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
     with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'a') as w:
-        # header = "{}\t{}\t{}\n".format("s1", "s2", "marker")
-        # w.write(header)
 
         with open(input_file_path, 'rb') as f:
             logger.info("reading {}".format(input_file_path))
             sentences = json.load(f)
+
+            # resume training only on "而"
+            if args.exclude_list:
+                exclusion_list = [u'虽然', u'可是', u'不过', u'所以', u'但', u'因此']
+                logger.info("excluded: {}".format(exclusion_list))
+
+                # we take them out from the sentences dictionary
+                # those markers have finished parsing
+                for ex_marker in exclusion_list:
+                    del sentences[ex_marker]
+
             logger.info("total sentences: {}".format(
                 sum([len(sentences[marker]["sentence"]) for marker in sentences])
             ))
@@ -305,23 +389,18 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             for marker, slists in sentences.iteritems():
                 for sentence, previous in zip(slists["sentence"], slists["previous"]):
                     i += 1
-                    if i > 0:
-                        parsed_output = dependency_parsing(sentence, previous, marker)
-                        if parsed_output:
-                            s1, s2 = parsed_output
-
-                            # parsed_sentence_pairs[marker]["s1"].append(s1)
-                            # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-                            w.write(line_to_print)
+                    if i > 0:  # add an argument
+                        try:
+                            parsed_output = dependency_parsing(sentence, previous, marker)
+                            if parsed_output:
+                                s1, s2 = parsed_output
+                                line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                                w.write(line_to_print)
+                        except:
+                            print i, marker, sentence
 
                         if i % args.filter_print_every == 0:
                             logger.info("processed {}".format(i))
-
-    # logger.info('writing files')
-
-    # with open(pjoin(output_dir, "{}_parsed_sentence_pairs.json".format(marker_set_tag)), 'wb') as f:
-    #     json.dump(parsed_sentence_pairs, f)
 
     logger.info('file writing complete')
 
