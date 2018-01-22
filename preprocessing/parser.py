@@ -226,14 +226,8 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices, lang="en"):
 use corenlp server (see https://github.com/erindb/corenlp-ec2-startup)
 to parse sentences: tokens, dependency parse
 """
-def get_parse(sentence, lang="en", depparse=True):
-    if lang == 'en':
-        sentence = sentence.replace("'t ", " 't ")
-        port = EN_PORT
-    elif lang == "ch":
-        port = CH_PORT
-    elif lang == "sp" or lang=="es":
-        port = SP_PORT
+def get_parse(sentence, lang="en", depparse=True, parser_index=0):
+    port = 12341 + parser_index
 
     if depparse:
         url = "http://localhost:" + str(port) + "?properties={annotators:'tokenize,ssplit,pos,depparse'}"
@@ -636,14 +630,14 @@ def setup_corenlp(lang="en"):
 #    	sentence = Sentence(parse, sentence)
 #    	return(sentence.find_pair(marker, "any", previous_sentence))
 
-def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
+def depparse_ssplit(sentence, previous_sentence, marker, lang="en", parser_index=0):
     # print sentence
     orig_sentence = sentence.encode("utf-8")
     sentence = sentence.strip()
     previous_sentence = previous_sentence.strip()
     sentence = cleanup(sentence, lang)
 
-    parse = get_parse(sentence.encode("utf-8"), lang=lang)
+    parse = get_parse(sentence.encode("utf-8"), lang=lang, parser_index=parser_index)
     if parse:
         # if "ONU" in str(sentence):
         #     pp.pprint(parse["tokens"])

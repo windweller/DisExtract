@@ -33,7 +33,8 @@ parser = argparse.ArgumentParser(description='DisExtract Gigaword Spanish')
 
 parser.add_argument("--json", type=str, default="example_config.json", help="corpus parameter setting to load")
 parser.add_argument("--extract", action='store_true')
-
+parser.add_argument("--chunk", type=int, default=0)
+parser.add_argument("--starting_line_index", type=int, default=-1)
 parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
 parser.add_argument("--filter_print_every", default=10000, type=int)
@@ -237,7 +238,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         )
 
 
-def parse_filtered_sentences(source_dir, marker_set_tag):
+def parse_filtered_sentences(source_dir, marker_set_tag, chunk, starting_line_index):
     """
     This function can be the same for each corpus
 
@@ -245,6 +246,13 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
     :param marker_set_tag:
     :return:
     """
+
+    if starting_line_index >= 0:
+      chunk = "restart_{}".format(starting_line_index)
+      parser_index = (starting_line_index / 400000) % 6
+    else:
+      starting_line_index = chunk * 400000
+      parser_index = chunk % 6
 
     markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
@@ -262,10 +270,10 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
         os.makedirs(output_dir)
 
     logger.info("setting up parser (actually just testing atm)")
-    setup_corenlp()
+    setup_corenlp("sp")
 
     # parsed_sentence_pairs = {marker: {"s1": [], "s2": []} for marker in discourse_markers}
-    with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'a') as w:
+    with open(pjoin(output_dir, "{}_parsed_sentence_pairs_{}.txt".format(marker_set_tag, chunk)), 'a') as w:
 
         with open(input_file_path, 'rb') as f:
             logger.info("reading {}".format(input_file_path))
@@ -273,17 +281,18 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             for line in f:
               sentence, previous, marker = line[:-1].split("\t")
               i+=1
-              if i > 0:
-                #try:
-                  parsed_output = dependency_parsing(sentence, previous, marker)
+              if i > starting_line_index:
+                try:
+                  parsed_output = dependency_parsing(sentence, previous, marker, parser_index)
                   if parsed_output:
                     s1, s2 = parsed_output
                     line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
                     w.write(line_to_print)
-                #except:
+                except KeyError:
+                  pass
                 #  print i, marker, sentence
               if i % args.filter_print_every == 0:
-                logger.info("processed {}".format(i))
+                logger.info("chunk {} - processed {}".format(chunk, i))
               #stop
             #logger.info("total sentences: {}".format(
             #    sum([len(sentences[marker]["sentence"]) for marker in sentences])
@@ -292,8 +301,8 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
     logger.info('file writing complete')
 
 
-def dependency_parsing(sentence, previous_sentence, marker):
-    return depparse_ssplit(sentence, previous_sentence, marker, lang='sp')
+def dependency_parsing(sentence, previous_sentence, marker, parser_index =0):
+    return depparse_ssplit(sentence, previous_sentence, marker, lang='sp', parser_index = parser_index)
 
 
 if __name__ == '__main__':
@@ -303,4 +312,4 @@ if __name__ == '__main__':
         collect_raw_sentences(gigaword_sp_dir, [gigaword_sp_file], "ALL", SP_DISCOURSE_MARKERS)
     elif args.parse:
         setup_corenlp("sp")
-        parse_filtered_sentences(gigaword_sp_dir, "ALL")
+        parse_filtered_sentences(gigaword_sp_dir, "ALL", args.chunk, args.starting_line_index)
