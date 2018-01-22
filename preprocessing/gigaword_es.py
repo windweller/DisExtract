@@ -248,7 +248,7 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
     markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
-    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
+    input_file_path = pjoin(input_dir, "{}.tsv".format(marker_set_tag))
     output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
 
     if not os.path.exists(markers_dir):
@@ -269,43 +269,31 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
         with open(input_file_path, 'rb') as f:
             logger.info("reading {}".format(input_file_path))
-            sentences = json.load(f)
-
-            # resume training only on "而"
-            if args.exclude_list:
-                exclusion_list = [u'虽然', u'可是', u'不过', u'所以', u'但', u'因此']
-                logger.info("excluded: {}".format(exclusion_list))
-
-                # we take them out from the sentences dictionary
-                # those markers have finished parsing
-                for ex_marker in exclusion_list:
-                    del sentences[ex_marker]
-
-            logger.info("total sentences: {}".format(
-                sum([len(sentences[marker]["sentence"]) for marker in sentences])
-            ))
             i = 0
-            for marker, slists in sentences.iteritems():
-                for sentence, previous in zip(slists["sentence"], slists["previous"]):
-                    i += 1
-                    if i > 0:  # add an argument
-                        try:
-                            parsed_output = dependency_parsing(sentence, previous, marker)
-                            if parsed_output:
-                                s1, s2 = parsed_output
-                                line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-                                w.write(line_to_print)
-                        except:
-                            print i, marker, sentence
-
-                        if i % args.filter_print_every == 0:
-                            logger.info("processed {}".format(i))
+            for line in f:
+              sentence, previous, marker = line[:-1].split("\t")
+              i+=1
+              if i > 0:
+                #try:
+                  parsed_output = dependency_parsing(sentence, previous, marker)
+                  if parsed_output:
+                    s1, s2 = parsed_output
+                    line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                    w.write(line_to_print)
+                #except:
+                #  print i, marker, sentence
+              if i % args.filter_print_every == 0:
+                logger.info("processed {}".format(i))
+              #stop
+            #logger.info("total sentences: {}".format(
+            #    sum([len(sentences[marker]["sentence"]) for marker in sentences])
+            #))
 
     logger.info('file writing complete')
 
 
 def dependency_parsing(sentence, previous_sentence, marker):
-    return depparse_ssplit(sentence, previous_sentence, marker, lang='ch')
+    return depparse_ssplit(sentence, previous_sentence, marker, lang='sp')
 
 
 if __name__ == '__main__':
