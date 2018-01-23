@@ -85,19 +85,30 @@ CH_DISCOURSE_MARKERS = [
 ]
 
 CH_FIVE_DISCOURSE_MARKERS = [
-    "而",
-    "因为",
-    "but",
-    "if",
-    "when"
+    "因为",  # 224,407, because
+    "而",  # 522,398, however
+    "如果", # 302,728, if
+    "但",  # 1,158,888, but
+    "而且"  # 156,113, and
 ]
 
-CH_EIGHT_DISCOURSE_MARKERS = [
-    "and",
-    "because",
-    "but",
-    "if",
-    "when"
+CH_ALL_DISCOURSE_MARKERS = [
+    "并且",  # while
+    "而且",
+    "而",  # and
+    "因为",  # because
+    "之前",  # before
+    "但",  # but
+    # "但是", # but
+    "可是",  # but...
+    "不过",  # however
+    "如果",  # if
+    "因此",  # because of
+    "所以",  # so
+    # "然后",
+    "虽然",  # however
+    "尽管",  # although
+    # "当时"  # only "3" examples, dep_patterns don't work well yet
 ]
 
 SP_FIVE_DISCOURSE_MARKERS = [
