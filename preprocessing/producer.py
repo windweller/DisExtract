@@ -85,7 +85,7 @@ def add_one_to_dict(dic, entry):
 
 def print_dict(dict):
     # prepare for UTF-8 Chinese
-    for key, value in dict:
+    for key, value in dict.iteritems():
         print "{}: {}".format(key, value)
 
 if __name__ == '__main__':
