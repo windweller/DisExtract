@@ -58,7 +58,7 @@ argparser.add_argument("--lang", type=str, default='en', help="en|ch|es")
 
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 
-PUNCTUATION = '.,:;— ,。,'
+PUNCTUATION = u'.,:;—'
 
 # dependency_patterns = None
 
@@ -71,43 +71,51 @@ def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
 
-def cleanup(s, lang="en"):
-    s = s.replace(" @-@ ", "-")
-    s = s.replace(" i ", " I ")
-    s = s.replace(" im ", " I'm ")
-    if len(s) > 3:
-        if s[0:3] == "im ":
-            s = "I'm " + s[3:]
-    if len(s) > 0:
-        s = s[0].capitalize() + s[1:]
-    if lang == "en":
-        s = re.sub(' " (.*) " ', ' "\\1" ', s)
-    elif lang == "sp":
-        s = s.replace(" del ", " de el ")
-    return s
-
 def capitalize(s):
     return s[0].capitalize() + s[1:]
 
-def standardize_sentence_output(s):
+def cleanup(s, lang="en"):
+    s = s.replace(" @-@ ", "-")
+    if len(s) > 0:
+        s = capitalize(s)
+    if lang == "en":
+      s = s.replace(" i ", " I ")
+      s = s.replace(" im ", " I'm ")
+      if len(s) > 3:
+          if s[0:3] == "im ":
+              s = "I'm " + s[3:]
+      s = re.sub(' " (.*) " ', ' "\\1" ', s)
+    #elif lang == "sp":
+    #    s = s.replace(" del ", " de el ")
+    return s
+
+def standardize_sentence_output(s, lang="en"):
     if len(s) == 0:
         return None
     else:
         s = s.strip()
-        s = capitalize(s[0]) + s[1:]
-        # strip original final punctuation
-        while s[-1] in (PUNCTUATION + '"\''):
+        s = capitalize(s)
 
-          # keep final quotations and don't add an additional .
-          if len(s)>3 and s[-3:] in ", ', \". \". '":
-            return s
-          else:
-            # otherwise, strip ending punct
-            s = s[:-1].strip()
-            if len(s)==0:
-              return None
-        # add new standard . at end of sentence
-        return s + " ."
+        if lang=="sp":
+          #remove all punctuation
+          for p in PUNCTUATION:
+            #print s
+            s = s.replace(p, "")
+          return s
+        else:
+          # strip original final punctuation
+          while s[-1] in (PUNCTUATION + '"\''):
+
+            # keep final quotations and don't add an additional .
+            if len(s)>3 and s[-3:] in ", ', \". \". '":
+              return s
+            else:
+              # otherwise, strip ending punct
+              s = s[:-1].strip()
+              if len(s)==0:
+                return None
+          # add new standard . at end of sentence
+          return s + " ."
 
 # this was chosen for english, but it's probably fine for other languages, too
 # basically, if there are multiple discourse markers,
@@ -251,7 +259,10 @@ def get_parse(sentence, lang="en", depparse=True):
 
     except ValueError:
         try:
-          return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
+          if lang=="en":
+            return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
+          elif lang=="sp":
+            return json.loads(re.sub("[^áéíóúñÑü¿?¡!ÁÉÍÓÚÜªºA-z0-9.,:\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
         except:
           print "error loading json:"
           print sentence
@@ -456,7 +467,7 @@ class Sentence():
 
         # make a string from this to return
         if subordinate_phrase:
-            return standardize_sentence_output(subordinate_phrase)
+            return standardize_sentence_output(subordinate_phrase, lang=self.lang)
         else:
             return None
 
@@ -503,7 +514,7 @@ class Sentence():
 
         extracted_pairs = []
 
-        if lang == "en":
+        if lang == "en" or lang == "sp":
             needs_verb = True
         else:
             needs_verb = False
