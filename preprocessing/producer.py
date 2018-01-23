@@ -83,6 +83,11 @@ def add_one_to_dict(dic, entry):
     else:
         dic[entry] = 1
 
+def print_dict(dict):
+    # prepare for UTF-8 Chinese
+    for key, value in dict:
+        print "{}: {}".format(key, value)
+
 if __name__ == '__main__':
 
     examples = []
@@ -124,7 +129,8 @@ if __name__ == '__main__':
 
     assert number_of_filtered_examples != 0
 
-    print("label distribution: {}".format(data_dist))
+    print("label distribution:")
+    print(print_dict(data_dist))
 
     minimum_count_per_marker = min(data_dist.values())
 
