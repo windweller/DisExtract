@@ -37,7 +37,7 @@ parser = argparse.ArgumentParser(description='DisExtract Producer')
 
 # parser.add_argument("--json", type=str, default="example_config.json", help="load in config params")
 parser.add_argument("--corpus", type=str, default='books',
-                    help="books|gigaword, marked by Spanish and Chinese")
+                    help="books|gigaword_ch|gigaword_es, marked by Spanish and Chinese")
 parser.add_argument("--train_size", default=0.9, type=float)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
@@ -97,10 +97,15 @@ if __name__ == '__main__':
     number_of_filtered_examples = 0
     for ex in examples:
         s1, s2, label = ex[:-1].split('\t')
-        ratio = float(len(s1.split())) / max(len(s2.split()), 0.0001)
-        if len(s1.split()) < args.min_seq_len or args.max_seq_len < len(s1.split()):
+
+        s1_len = len(s1.split()) if args.corpus != "gigaword_ch" else len(s1.decode('utf-8'))
+        s2_len = len(s2.split()) if args.corpus != "gigaword_ch" else len(s2.decode('utf-8'))
+
+        ratio = float(s1_len) / max(s2_len, 0.0001)
+
+        if s1_len < args.min_seq_len or args.max_seq_len < s1_len:
             continue
-        elif len(s2.split()) < args.min_seq_len or args.max_seq_len < len(s2.split()):
+        elif s2_len < args.min_seq_len or args.max_seq_len < s2_len:
             continue
         elif ratio < args.min_ratio or args.max_ratio < ratio:
             continue
@@ -116,6 +121,8 @@ if __name__ == '__main__':
             number_of_filtered_examples+=1
 
     print("original number: {}, filtered out number: {}".format(len(examples), number_of_filtered_examples))
+
+    assert number_of_filtered_examples != 0
 
     print("label distribution: {}".format(data_dist))
 
