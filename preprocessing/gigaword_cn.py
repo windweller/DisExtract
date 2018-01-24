@@ -76,6 +76,8 @@ def process_sent(sent, lang="ch"):
     sent = sent.replace("&apos;", '\'')
     sent = sent.replace("&quot;", '"')
 
+    # TODO: due to the nature of Wikipedia, English words are in there as well...
+    # TODO: no need to remove them
     if lang == "ch":
         sent = re.sub(r'[A-Z a-z.]+', "", sent)  # get rid of English characters
         # and all spaces in the sentence. This will only work in Chinese
@@ -85,6 +87,7 @@ def process_sent(sent, lang="ch"):
     sent = re.sub(r"\)", "", sent)
 
     # resolve weird 「 symbol
+    # TODO: this is unnecessary, as the vocab does contain both
     sent = sent.replace("「", '"')
     sent = sent.replace("」", '"')
 
