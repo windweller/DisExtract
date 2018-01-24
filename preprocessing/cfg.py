@@ -92,6 +92,7 @@ CH_FIVE_DISCOURSE_MARKERS = [
     "而且"  # 156,113, and
 ]
 
+# 13 markers, NOT 14
 CH_ALL_DISCOURSE_MARKERS = [
     "并且",  # while
     "而且",
