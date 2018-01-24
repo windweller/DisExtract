@@ -21,6 +21,9 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+
 np.random.seed(123)
 random.seed(123)
 
@@ -128,9 +131,6 @@ if __name__ == '__main__':
         elif ratio < args.min_ratio or args.max_ratio < ratio:
             continue
         else:
-            if args.corpus == "gigaword_ch":
-                # we will try this and if it's not fast enough, we'll use another strategy
-                s1, s2 = seg.segment_sents([s1, s2]).split('\n')[:2] # last line is "None" / empty
             example_line = "\t".join([s1, s2, label]) + "\n"
             if label in filtered_examples:
                 filtered_examples[label].append(example_line)
@@ -140,10 +140,6 @@ if __name__ == '__main__':
             # collect stats
             add_one_to_dict(data_dist, label)
             number_of_filtered_examples+=1
-
-        if args.corpus == "gigaword_ch":
-            if i % 10000 == 0:
-                print("processed {}".format(i))
 
     print("original number: {}, filtered out number: {}".format(len(examples), number_of_filtered_examples))
 
@@ -172,6 +168,35 @@ if __name__ == '__main__':
                 examples += filtered_examples[label]
 
     print "total number in produced dataset: {}".format(len(examples))
+
+    # now we word segment for Chinese
+    if args.corpus == "gigaword_ch":
+        s1_list, s2_list, labels = [], [], []
+        for ex in examples:
+            s1, s2, label = ex.split('\t')
+            s1 = s1.replace(' .', '。')
+            s2 = s2.replace(' .', '。')  # parser appended normal period
+
+            s1_list.append(s1)
+            s2_list.append(s2)
+            labels.append(label)
+
+        logging.info("s1, s2 collected, segmentation begins")
+        s1_list = seg.segment_sents(s1_list)
+        s1_list = s1_list.split('\n')[:-1]
+        logging.info("s1 segmented")
+
+        s2_list = seg.segment_sents(s2_list)
+        s2_list = s2_list.split('\n')[:-1]
+        logging.info("s2 segmented")
+
+        examples = []
+        assert len(s1_list) == len(s2_list) == len(labels)
+        for i in range(len(s1_list)):
+            example_line = "\t".join([s1_list[i], s2_list[i], labels[i]]) + "\n"
+            examples.append(example_line)
+
+        logging.info("data list generated")
 
     serial_numbers = range(len(examples))
     random.shuffle(serial_numbers)
