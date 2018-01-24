@@ -9,7 +9,8 @@ import torch
 import logging
 from os.path import join as pjoin
 from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
-    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS
+    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS, \
+    CH_FIVE_DISCOURSE_MARKERS, SP_FIVE_DISCOURSE_MARKERS
 
 
 def get_batch(batch, word_vec):
@@ -76,6 +77,10 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
         dis_map = list_to_map(EN_DISCOURSE_MARKERS)
     elif discourse_tag == "books_old_5":
         dis_map = list_to_map(EN_OLD_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "gw_cn_5":
+        dis_map = list_to_map(CH_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "gw_es_5":
+        dis_map = list_to_map(SP_FIVE_DISCOURSE_MARKERS)
     else:
         raise Exception("Corpus/Discourse Tag Set {} not found".format(discourse_tag))
 

@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+
 """
 DisSent model
 
-Code from https://github.com/facebookresearch/InferSent/blob/master/models.py
+Code based on https://github.com/facebookresearch/InferSent/blob/master/models.py
 """
 
 import numpy as np
