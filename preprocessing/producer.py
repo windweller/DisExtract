@@ -194,7 +194,7 @@ if __name__ == '__main__':
         assert len(s1_list) == len(s2_list) == len(labels)
         for i in range(len(s1_list)):
             example_line = "\t".join([s1_list[i], s2_list[i], labels[i]]) + "\n"
-            examples.append(example_line.encode('utf-8'))
+            examples.append(example_line)  # no need to encode in utf-8 anymore, seg produces utf-8
 
         logging.info("data list generated")
 
