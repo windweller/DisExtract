@@ -50,9 +50,16 @@ parser.add_argument("--out_prefix", type=str, required=True,
 parser.add_argument("--balanced", action='store_true', help="use this flag to cut all markers off at the minimum count")
 parser.add_argument("--count_per_marker", type=int, default=-1, help="use this for modifying the cutoff for a 'balanced' dataset, by default perfectly balanced")
 parser.add_argument("--exclude", type=str, default="")
+parser.add_argument("--stf_seg_path", type=str, default="")
+parser.add_argument("--stf_slf4j_path", type=str, default="")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
+
+if args.stf_slf4j_path != "":
+    path_to_slf4j = pjoin(args.stf_slf4j_path, 'slf4j-api.jar')
+if args.stf_seg_path != "":
+    path_to_jar = pjoin(args.stf_seg_path, 'stanford-segmenter-3.8.0.jar')
 
 # ======== Split =========
 
@@ -96,11 +103,17 @@ if __name__ == '__main__':
         for line in f:
             examples.append(line)
 
+    if args.corpus == "gigaword_ch":
+        print "segmenting each example for Chinese, could take a while"
+        from nltk.tokenize.stanford_segmenter import StanfordSegmenter
+        seg = StanfordSegmenter(path_to_slf4j=path_to_slf4j, path_to_jar=path_to_jar)
+        seg.default_config('zh')
+
     # ==== Filtering =====
     data_dist = {}
     filtered_examples = {}
     number_of_filtered_examples = 0
-    for ex in examples:
+    for i, ex in enumerate(examples):
         s1, s2, label = ex[:-1].split('\t')
 
         s1_len = len(s1.split()) if args.corpus != "gigaword_ch" else len(s1.decode('utf-8'))
@@ -115,6 +128,9 @@ if __name__ == '__main__':
         elif ratio < args.min_ratio or args.max_ratio < ratio:
             continue
         else:
+            if args.corpus == "gigaword_ch":
+                # we will try this and if it's not fast enough, we'll use another strategy
+                s1, s2 = seg.segment_sents([s1, s2]).split('\n')[:2] # last line is "None" / empty
             example_line = "\t".join([s1, s2, label]) + "\n"
             if label in filtered_examples:
                 filtered_examples[label].append(example_line)
@@ -124,6 +140,10 @@ if __name__ == '__main__':
             # collect stats
             add_one_to_dict(data_dist, label)
             number_of_filtered_examples+=1
+
+        if args.corpus == "gigaword_ch":
+            if i % 10000 == 0:
+                print("processed {}".format(i))
 
     print("original number: {}, filtered out number: {}".format(len(examples), number_of_filtered_examples))
 
