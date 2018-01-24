@@ -177,8 +177,8 @@ if __name__ == '__main__':
             s1 = s1.replace(' .', '。')
             s2 = s2.replace(' .', '。')  # parser appended normal period
 
-            s1_list.append(s1)
-            s2_list.append(s2)
+            s1_list.append(s1.decode('utf-8'))
+            s2_list.append(s2.decode('utf-8'))
             labels.append(label)
 
         logging.info("s1, s2 collected, segmentation begins")
@@ -194,7 +194,7 @@ if __name__ == '__main__':
         assert len(s1_list) == len(s2_list) == len(labels)
         for i in range(len(s1_list)):
             example_line = "\t".join([s1_list[i], s2_list[i], labels[i]]) + "\n"
-            examples.append(example_line)
+            examples.append(example_line.encode('utf-8'))
 
         logging.info("data list generated")
 
