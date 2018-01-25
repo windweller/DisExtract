@@ -120,7 +120,7 @@ if __name__ == '__main__':
         for line in f:
             examples.append(line)
 
-    if args.corpus == "gigaword_ch":
+    if args.corpus == "gigaword_ch" and not args.char:
         print "segmenting each example for Chinese, could take a while"
         from nltk.tokenize.stanford_segmenter import StanfordSegmenter
 
