@@ -15,6 +15,14 @@ from os.path import join as pjoin
 from os.path import dirname, abspath
 
 from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
+from re import compile as _Re
+
+_unicode_chr_splitter = _Re('(?s)((?:[\ud800-\udbff][\udc00-\udfff])|.)').split
+
+
+def split_unicode_chrs(text):
+    return [chr for chr in _unicode_chr_splitter(text) if chr]
+
 
 import sys
 
@@ -51,10 +59,13 @@ parser.add_argument("--data_file", type=str, required=True,
 parser.add_argument("--out_prefix", type=str, required=True,
                     help="Prefix the produced files")
 parser.add_argument("--balanced", action='store_true', help="use this flag to cut all markers off at the minimum count")
-parser.add_argument("--count_per_marker", type=int, default=-1, help="use this for modifying the cutoff for a 'balanced' dataset, by default perfectly balanced")
+parser.add_argument("--count_per_marker", type=int, default=-1,
+                    help="use this for modifying the cutoff for a 'balanced' dataset, by default perfectly balanced")
 parser.add_argument("--exclude", type=str, default="")
 parser.add_argument("--stf_seg_path", type=str, default="")
 parser.add_argument("--stf_slf4j_path", type=str, default="")
+parser.add_argument("--char", action='store_true',
+                    default="only used to generate Chinese in char level, no word segmentation")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
@@ -87,16 +98,19 @@ def write_to_tsv(data, file_name):
         for line in data:
             f.write(line)
 
+
 def add_one_to_dict(dic, entry):
     if entry in dic:
         dic[entry] += 1
     else:
         dic[entry] = 1
 
+
 def print_dict(dict):
     # prepare for UTF-8 Chinese
     for key, value in dict.iteritems():
         print "{}: {}".format(key, value)
+
 
 if __name__ == '__main__':
 
@@ -109,6 +123,7 @@ if __name__ == '__main__':
     if args.corpus == "gigaword_ch":
         print "segmenting each example for Chinese, could take a while"
         from nltk.tokenize.stanford_segmenter import StanfordSegmenter
+
         seg = StanfordSegmenter(path_to_slf4j=path_to_slf4j, path_to_jar=path_to_jar)
         seg.default_config('zh')
 
@@ -118,6 +133,15 @@ if __name__ == '__main__':
     number_of_filtered_examples = 0
     for i, ex in enumerate(examples):
         s1, s2, label = ex[:-1].split('\t')
+
+        if args.corpus == 'gigaword_ch':
+            s1 = s1.replace(' .', '。')  # parser appended normal period
+            s2 = s2.replace(' .', '。')
+
+        if args.char and args.corpus == "gigaword_ch":
+            # we presplit into chars
+            s1 = " ".join(split_unicode_chrs(s1.decode('utf-8'))).encode('utf-8')
+            s2 = " ".join(split_unicode_chrs(s2.decode('utf-8'))).encode('utf-8')
 
         s1_len = len(s1.split()) if args.corpus != "gigaword_ch" else len(s1.decode('utf-8'))
         s2_len = len(s2.split()) if args.corpus != "gigaword_ch" else len(s2.decode('utf-8'))
@@ -131,7 +155,7 @@ if __name__ == '__main__':
         elif ratio < args.min_ratio or args.max_ratio < ratio:
             continue
         else:
-            example_line = "\t".join([s1, s2, label]) + "\n"
+            example_line = "\t".join([s1.decode('utf-8').split(), s2, label]) + "\n"
             if label in filtered_examples:
                 filtered_examples[label].append(example_line)
             else:
@@ -139,7 +163,7 @@ if __name__ == '__main__':
             # filtered_examples.append("\t".join([s1, s2, label]))
             # collect stats
             add_one_to_dict(data_dist, label)
-            number_of_filtered_examples+=1
+            number_of_filtered_examples += 1
 
     print("original number: {}, filtered out number: {}".format(len(examples), number_of_filtered_examples))
 
@@ -170,12 +194,10 @@ if __name__ == '__main__':
     print "total number in produced dataset: {}".format(len(examples))
 
     # now we word segment for Chinese
-    if args.corpus == "gigaword_ch":
+    if args.corpus == "gigaword_ch" and not args.char:
         s1_list, s2_list, labels = [], [], []
         for ex in examples:
             s1, s2, label = ex.split('\t')
-            s1 = s1.replace(' .', '。')
-            s2 = s2.replace(' .', '。')  # parser appended normal period
 
             s1_list.append(s1.decode('utf-8'))
             s2_list.append(s2.decode('utf-8'))
@@ -193,7 +215,7 @@ if __name__ == '__main__':
         examples = []
         assert len(s1_list) == len(s2_list) == len(labels)
         for i in range(len(s1_list)):
-            example_line = "\t".join([s1_list[i], s2_list[i], labels[i]]) + "\n"
+            example_line = "\t".join([s1_list[i], s2_list[i], labels[i]])  # label has '\n'
             examples.append(example_line)  # no need to encode in utf-8 anymore, seg produces utf-8
 
         logging.info("data list generated")
@@ -209,7 +231,8 @@ if __name__ == '__main__':
                    int(np.rint(len(examples) * (split_proportions['train'] + split_proportions['valid']))):]
 
     print(
-    "train/valid/test number of examples: {}/{}/{}".format(len(train_numbers), len(valid_numbers), len(test_numbers)))
+        "train/valid/test number of examples: {}/{}/{}".format(len(train_numbers), len(valid_numbers),
+                                                               len(test_numbers)))
 
     train, valid, test = [], [], []
 
@@ -223,4 +246,4 @@ if __name__ == '__main__':
     # Note that under default setting, corpus is already appended
     write_to_tsv(train, pjoin(args.data_dir, args.out_prefix + "_train.tsv"))
     write_to_tsv(valid, pjoin(args.data_dir, args.out_prefix + "_valid.tsv"))
-    write_to_tsv(test, pjoin(args.data_dir, args.out_prefix +  "_test.tsv"))
+    write_to_tsv(test, pjoin(args.data_dir, args.out_prefix + "_test.tsv"))
