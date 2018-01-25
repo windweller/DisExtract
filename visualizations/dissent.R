@@ -1,4 +1,4 @@
-source("~/Settings/startup.R")
+source("startup.R")
 df_raw = read.csv("dissent_data.csv")
 df_selected = df_raw %>%
   mutate(tag = paste(X, Epoch)) %>%

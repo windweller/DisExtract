@@ -157,3 +157,7 @@ fabric.properties
 .idea/
 
 *.DS_Store
+
+data
+*.png
+
