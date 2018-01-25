@@ -1,6 +1,5 @@
 {
   "glove_path": "/home/anie/fasttext/wiki.es.vec",
-  "data_dir": "/home/anie/DisExtract/data/gigaword_ch",
-  "gw_cn_5": "discourse_CH_FIVE_2018jan22",
-  "gw_cn_all": "discourse_CH_ALL_2018jan22"
+  "data_dir": "/home/anie/DisExtract/data/gigaword_es",
+  "gw_es_5": "discourse_ES_FIVE_2018jan23"
 }
