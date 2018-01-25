@@ -60,6 +60,7 @@ parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
 parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
+parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -103,6 +104,9 @@ with open(params.hypes, 'rb') as f:
 data_dir = json_config['data_dir']
 prefix = json_config[params.corpus]
 glove_path = json_config['glove_path']
+
+if params.char and params.corpus == "gw_cn_5":
+    prefix = prefix.replace('discourse', 'discourse_char')
 
 """
 DATA
