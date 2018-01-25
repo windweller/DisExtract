@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Data loading code adapted from
 https://github.com/facebookresearch/InferSent/blob/master/data.py
@@ -21,7 +23,9 @@ def get_batch(batch, word_vec):
 
     for i in range(len(batch)):
         for j in range(len(batch[i])):
-            embed[j, i, :] = word_vec[batch[i][j]]
+            if batch[i][j] in word_vec:
+                embed[j, i, :] = word_vec[batch[i][j]]
+                # otherwise by default it's 0
 
     return torch.from_numpy(embed).float(), lengths
 
