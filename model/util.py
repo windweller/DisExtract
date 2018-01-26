@@ -24,6 +24,8 @@ def get_labels(corpus):
         labels = CH_FIVE_DISCOURSE_MARKERS
     elif corpus == "gw_es_5":
         labels = SP_FIVE_DISCOURSE_MARKERS
+    elif corpus == "gw_es_1M_5":
+        labels = SP_FIVE_DISCOURSE_MARKERS
     else:
         raise Exception("corpus not found")
 

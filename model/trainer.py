@@ -351,9 +351,9 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     logger.info(multiclass_recall_msg)
     logger.info(multiclass_prec_msg)
 
-    if params.corpus == "gw_cn_5" or params.corpus == "gw_es_5":
-        print(multiclass_recall_msg)
-        print(multiclass_prec_msg)
+    # if params.corpus == "gw_cn_5" or params.corpus == "gw_es_5":
+    #     print(multiclass_recall_msg)
+    #     print(multiclass_prec_msg)
 
     # save model
     eval_acc = round(100 * correct / len(s1), 2)

@@ -85,6 +85,8 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
         dis_map = list_to_map(CH_FIVE_DISCOURSE_MARKERS)
     elif discourse_tag == "gw_es_5":
         dis_map = list_to_map(SP_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "gw_es_1M_5":
+        dis_map = list_to_map(SP_FIVE_DISCOURSE_MARKERS)
     else:
         raise Exception("Corpus/Discourse Tag Set {} not found".format(discourse_tag))
 
