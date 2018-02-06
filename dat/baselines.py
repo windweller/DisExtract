@@ -62,7 +62,6 @@ class AverageEmbedder(object):
         return embed
 
     def encode(self, sentences, bsize=64, tokenize=True, verbose=False):
-        tic = time.time()
         if tokenize:
             from nltk.tokenize import word_tokenize
         sentences = [['<s>']+s.split()+['</s>'] if not tokenize else

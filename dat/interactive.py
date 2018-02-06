@@ -10,6 +10,7 @@ import os
 import torch
 import tensorflow as tf
 import scipy.spatial.distance as distance
+from baselines import AverageEmbedder
 
 # ======= SkipThought Config ========
 PATH_TO_SKIPTHOUGHT = '/home/anie/models/research/skip_thoughts'
@@ -30,7 +31,6 @@ MODEL_PATH = 'infersent.allnli.pickle'
 
 assert os.path.isfile(MODEL_PATH) and os.path.isfile(GLOVE_PATH), \
     'Set MODEL and GloVe PATHs'
-
 
 # ======== Can add more models ========
 # ...
@@ -69,12 +69,16 @@ def compute_for_sent(sent1, sent2):
     st_sims, _ = _compute_sim(st_emb)
 
     # Average word embedding similarity
-    
+    avg_emb.build_vocab([sent1, sent2], tokenize=True)
+    ae_emb = avg_emb.encode([sent1, sent2], bsize=2, tokenize=True)
+    ae_sims, _ = _compute_sim(ae_emb)
 
     # traditional measurement like levenstein distance, dynamic time wrapping, jaro, etc.
 
+    print(_generate_log("Average Embedding", ae_sims, sim_names))
     print(_generate_log("InferSent", inf_sims, sim_names))
     print(_generate_log("SkipThought", st_sims, sim_names))
+
 
 
 if __name__ == '__main__':
@@ -93,5 +97,9 @@ if __name__ == '__main__':
                                vocabulary_file=VOCAB_FILE,
                                embedding_matrix_file=EMBEDDING_MATRIX_FILE,
                                checkpoint_path=CHECKPOINT_PATH)
+
+    # Load in average embedding
+    avg_emb = AverageEmbedder()
+    avg_emb.set_glove_path(GLOVE_PATH)
 
     IPython.embed()
