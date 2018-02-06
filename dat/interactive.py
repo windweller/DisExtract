@@ -53,7 +53,7 @@ def _compute_sim(batched_emb):
 def _generate_log(model_name, metrics, names):
     log_str = model_name + " similarity - "
     for m, n in zip(metrics, names):
-        log_str += "{}: {} ".format(m, n)
+        log_str += "{}: {} ".format(n, m)
 
     return log_str
 
@@ -69,6 +69,7 @@ def compute_for_sent(sent1, sent2):
     st_sims, _ = _compute_sim(st_emb)
 
     # Average word embedding similarity
+    
 
     # traditional measurement like levenstein distance, dynamic time wrapping, jaro, etc.
 
