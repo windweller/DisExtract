@@ -43,11 +43,10 @@ def _compute_sim(batched_emb):
     sent2 = batched_emb[1]
 
     # can add more
-    cos_dis = distance.cosine(sent1, sent2)
-    corr_dis = distance.correlation(sent1, sent2)
+    cos_dis = distance.cosine(sent1, sent2)  # pearson correlation and cosine similarities are similar
     euc_dis = distance.euclidean(sent1, sent2)
 
-    return [cos_dis, corr_dis, euc_dis], ['cosine', 'correlation', 'euclidean']
+    return [cos_dis, euc_dis], ['cosine', 'euclidean']
 
 
 def _generate_log(model_name, metrics, names):
