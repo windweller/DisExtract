@@ -8,8 +8,9 @@ class AverageEmbedder(object):
     Build this similar to InferSent
     """
 
-    def __init__(self):
+    def __init__(self, word_emb_dim):
         super(AverageEmbedder, self).__init__()
+        self.word_emb_dim = word_emb_dim
 
     def set_glove_path(self, glove_path):
         self.glove_path = glove_path

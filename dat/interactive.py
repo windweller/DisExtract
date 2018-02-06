@@ -99,7 +99,7 @@ if __name__ == '__main__':
                                checkpoint_path=CHECKPOINT_PATH)
 
     # Load in average embedding
-    avg_emb = AverageEmbedder()
+    avg_emb = AverageEmbedder(word_emb_dim=300)
     avg_emb.set_glove_path(GLOVE_PATH)
 
     IPython.embed()
