@@ -50,7 +50,7 @@ def _compute_sim(batched_emb):
 
 
 def _generate_log(model_name, metrics, names):
-    log_str = model_name + " similarity - "
+    log_str = model_name + " distance - "
     for m, n in zip(metrics, names):
         log_str += "{}: {} ".format(n, m)
 
