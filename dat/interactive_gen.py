@@ -62,7 +62,7 @@ def get_sent(marker, idx=-1, rand=True, display=True):
     if not display:
         return selection
     else:
-        print selection[0] + marker + selection[1]
+        print selection[0][:-1] + marker + " " + selection[1]
 
 
 def get_sents(marker, st=0, en=10, rand=False, display=True):
@@ -78,7 +78,7 @@ def get_sents(marker, st=0, en=10, rand=False, display=True):
         return selected
     else:
         for s in selected:
-            print s[0] + marker + s[1]
+            print s[0][:-1] + marker + " " + s[1]
 
 
 if __name__ == '__main__':
