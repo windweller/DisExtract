@@ -43,7 +43,7 @@ Search
 """
 
 def display_marker():
-    print EN_DISCOURSE_MARKERS
+    print marker_dict.keys()
 
 def get_sent(marker, idx=-1, rand=True):
     if idx != -1:
