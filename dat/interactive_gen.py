@@ -45,21 +45,27 @@ Search
 def display_marker():
     print marker_dict.keys()
 
-def get_sent(marker, idx=-1, rand=True):
+def get_sent(marker, idx=-1, rand=True, display=True):
     if idx != -1:
         rand = False
+
 
     if rand:
         nums = range(len(marker_dict[marker]))
         np.random.shuffle(nums)
         ex_num = nums[0]
 
-        return marker_dict[marker][ex_num]
+        selection = marker_dict[marker][ex_num]
     else:
-        return marker_dict[marker][idx]
+        selection = marker_dict[marker][idx]
+
+    if not display:
+        return selection
+    else:
+        print selection[0] + marker + selection[1]
 
 
-def get_sents(marker, st=0, en=10, rand=False):
+def get_sents(marker, st=0, en=10, rand=False, display=True):
     if rand:
         nums = range(len(marker_dict[marker]))
         np.random.shuffle(nums)
@@ -68,7 +74,11 @@ def get_sents(marker, st=0, en=10, rand=False):
     else:
         selected = marker_dict[marker][st:en]
 
-    return selected
+    if not display:
+        return selected
+    else:
+        for s in selected:
+            print s[0] + marker + s[1]
 
 
 if __name__ == '__main__':
