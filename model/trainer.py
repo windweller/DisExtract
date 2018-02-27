@@ -346,6 +346,8 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 
     multiclass_prec_msg = 'Multiclass Precision - '
     for k, v in mean_multi_prec.iteritems():
+        if len(v) == 0:
+            v = [0.]
         multiclass_prec_msg += dis_labels[k] + ": " + str(v[0]) + " "
 
     logger.info(multiclass_recall_msg)
