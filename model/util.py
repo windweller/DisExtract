@@ -26,6 +26,8 @@ def get_labels(corpus):
         labels = SP_FIVE_DISCOURSE_MARKERS
     elif corpus == "gw_es_1M_5":
         labels = SP_FIVE_DISCOURSE_MARKERS
+    elif corpus == 'dat':
+        labels = ['entail', 'contradict']
     else:
         raise Exception("corpus not found")
 
