@@ -13,7 +13,7 @@ def list_to_map(dis_label):
         dis_map[l] = i
     return dis_map
 
-def get_dis(data_dir, prefix, discourse_tag="books_5"):
+def get_dis(data_dir, prefix, discourse_tag="books_5", no_train=False):
     marker_dict = {}
 
     if discourse_tag == "books_5":
@@ -38,7 +38,9 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
     for dis_marker in dis_map.keys():
         marker_dict[dis_marker] = []
 
-    for data_type in ['train', 'valid', 'test']:
+    splits = ['valid', 'test'] if no_train else ['train', 'valid', 'test']
+
+    for data_type in splits:
 
         text_path = pjoin(data_dir, prefix + "_" + data_type + ".tsv")
 
