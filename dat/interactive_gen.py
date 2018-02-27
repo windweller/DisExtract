@@ -34,7 +34,7 @@ order_dep_list = ['because', 'so', 'if', 'although',
 params, _ = parser.parse_known_args()
 
 # DAT, and when we add 2nd order operation like substitution, we can call it DATS
-DAT_dir = pjoin(params.senteval, "DAT")
+DAT_dir = pjoin(params.senteval, "DAT") if params.gen_senteval else params.data_dir
 random.seed(params.seed)
 np.random.seed(params.seed)
 
@@ -50,8 +50,9 @@ prefix = json_config[params.corpus]
 """
 Data
 """
-no_train = True if params.gen_senteval else False
-marker_dict = get_dis(data_dir, prefix, params.corpus, no_train=no_train)
+# no_train = True if params.gen_senteval else False
+# since it's doing so well...let's try not having everything
+marker_dict = get_dis(data_dir, prefix, params.corpus, no_train=True)
 
 split_proportions = {
     "train": params.train_size,
@@ -163,6 +164,8 @@ def generate_senteval():
 
     dataset = []
     # we store pairs like [s1, s2, label]
+
+    # I could also swap sent1 and sent2 in final output, but probably not necessary
     for marker in order_invar_list:  # 6 of those
         sents = get_sents(marker, en=fewest_ex, rand=True, display=False)  # [[s1, s2]]
         for s1, s2 in sents:
@@ -210,9 +213,79 @@ def generate_senteval():
     write_to_file("labels.test", dataset, test_numbers, 2)
 
 
+"""
+Generate DisSent training files
+"""
+
+
+def write_to_dis_file(file_name, dataset, assignments):
+    with open(pjoin(DAT_dir, file_name), 'w') as f:
+        for a in assignments:
+            f.write("\t".join(dataset[a]) + '\n')
+
+
+def generate_dis():
+    fewest_ex = 1e10
+    fewest_key = ""
+    for k in order_invar_list + order_dep_list:
+        ex = len(marker_dict[k])
+        if ex < fewest_ex:
+            fewest_ex = ex
+            fewest_key = k
+
+    print "we threshold at {}, limited by marker {}".format(fewest_ex, fewest_key)
+
+    print "sampling invariant at {}, dep at {}".format(fewest_ex, fewest_ex * 6 / 8)
+
+    dataset = []
+    # we store pairs like [s1, s2, label]
+
+    # I could also swap sent1 and sent2 in final output, but probably not necessary
+    for marker in order_invar_list:  # 6 of those
+        sents = get_sents(marker, en=fewest_ex, rand=True, display=False)  # [[s1, s2]]
+        for s1, s2 in sents:
+            # this is the "flip" action
+            sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
+            sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
+            dataset.append([sent1, sent2, 'entail'])
+
+    contra_ex = fewest_ex * 6 / 8
+    for marker in order_dep_list:
+        sents = get_sents(marker, en=contra_ex, rand=True, display=False)
+        for s1, s2 in sents:
+            # this is the "flip" action
+            sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
+            sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
+            dataset.append([sent1, sent2, 'contradict'])
+
+    # shuffle 2 times
+    random.shuffle(dataset)
+    random.shuffle(dataset)
+
+    num_examples = len(dataset)
+    assignments = range(num_examples)
+    np.random.shuffle(assignments)
+
+    train_numbers = assignments[:int(np.rint(num_examples * split_proportions['train']))]
+    valid_numbers = assignments[int(np.rint(num_examples * split_proportions['train'])): int(
+        np.rint(num_examples * (split_proportions['train'] + split_proportions['valid'])))]
+    test_numbers = assignments[int(np.rint(num_examples * (split_proportions['train'] + split_proportions['valid']))):]
+
+    print "train {}, dev {}, test {}".format(len(train_numbers), len(valid_numbers), len(test_numbers))
+
+    # everything above here is actually the same for SentEval or DIS training...
+    file_name = "discourse_EN_DAT_ALL_2018feb26"
+
+    write_to_dis_file(file_name + "_train.tsv", dataset, train_numbers)
+    write_to_dis_file(file_name + "_valid.tsv", dataset, valid_numbers)
+    write_to_dis_file(file_name + "_test.tsv", dataset, test_numbers)
+
+
 if __name__ == '__main__':
     if not params.gen_senteval and not params.gen_dis:
         # call in console
         IPython.embed()
     elif params.gen_senteval:
         generate_senteval()
+    elif params.gen_dis:
+        generate_dis()
