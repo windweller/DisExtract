@@ -34,7 +34,7 @@ order_dep_list = ['because', 'so', 'if', 'although',
 params, _ = parser.parse_known_args()
 
 # DAT, and when we add 2nd order operation like substitution, we can call it DATS
-DAT_dir = pjoin(params.senteval, "DAT") if params.gen_senteval else params.data_dir
+DAT_dir = pjoin(params.senteval, "DAT")
 random.seed(params.seed)
 np.random.seed(params.seed)
 
@@ -219,7 +219,7 @@ Generate DisSent training files
 
 
 def write_to_dis_file(file_name, dataset, assignments):
-    with open(pjoin(DAT_dir, file_name), 'w') as f:
+    with open(pjoin(data_dir, file_name), 'w') as f:
         for a in assignments:
             f.write("\t".join(dataset[a]) + '\n')
 
