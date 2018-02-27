@@ -159,12 +159,6 @@ def generate_senteval():
 
     print "we threshold at {}, limited by marker {}".format(fewest_ex, fewest_key)
 
-    # make sure it's even, because we generate by pairs
-    if fewest_ex % 2 != 0:
-        fewest_ex -= 1
-
-    assert fewest_ex * 6 / 8 == 0
-
     print "sampling invariant at {}, dep at {}".format(fewest_ex, fewest_ex * 6 / 8)
 
     dataset = []
