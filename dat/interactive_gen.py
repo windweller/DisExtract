@@ -183,7 +183,7 @@ def generate_senteval():
             s1, s2 = s1_neutral, s2_neutral
             sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
             sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
-            dataset.append([sent1, sent2, 'entail'])
+            dataset.append([sent1, sent2, 'neutral'])
 
     contra_ex = fewest_ex * 6 / 8
     for marker in order_dep_list:
@@ -203,7 +203,7 @@ def generate_senteval():
             s1, s2 = s1_neutral, s2_neutral
             sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
             sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
-            dataset.append([sent1, sent2, 'entail'])
+            dataset.append([sent1, sent2, 'neutral'])
 
     # shuffle 2 times
     random.shuffle(dataset)
