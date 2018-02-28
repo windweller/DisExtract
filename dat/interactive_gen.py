@@ -181,9 +181,14 @@ def generate_senteval():
             while s1_neutral == s1 and s2_neutral == s2:
                 s1_neutral, s2_neutral = get_sent(marker, rand=True, display=False)
             s1, s2 = s1_neutral, s2_neutral
-            sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
-            sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
-            dataset.append([sent1, sent2, 'neutral'])
+            new_sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]  # a random sent1 with original sent2
+            new_sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
+
+            coin = random.randint(1, 2)
+            if coin == 1:
+                dataset.append([new_sent1, sent2, 'neutral'])
+            else:
+                dataset.append([sent1, new_sent2, 'neutral'])
 
     contra_ex = fewest_ex * 6 / 8
     for marker in order_dep_list:
@@ -201,9 +206,14 @@ def generate_senteval():
             while s1_neutral == s1 and s2_neutral == s2:
                 s1_neutral, s2_neutral = get_sent(marker, rand=True, display=False)
             s1, s2 = s1_neutral, s2_neutral
-            sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
-            sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
-            dataset.append([sent1, sent2, 'neutral'])
+            new_sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]  # a random sent1 with original sent2
+            new_sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
+
+            coin = random.randint(1, 2)
+            if coin == 1:
+                dataset.append([new_sent1, sent2, 'neutral'])
+            else:
+                dataset.append([sent1, new_sent2, 'neutral'])
 
     # shuffle 2 times
     random.shuffle(dataset)
