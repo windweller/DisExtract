@@ -177,9 +177,10 @@ def generate_senteval():
             dataset.append([sent1, sent2, 'entail'])
 
             # we randomly sample one to be "neutral" (condition to be different)
-            s1, s2 = get_sent(marker, rand=True, display=False)
-            while s1 == s1 and s2 == s2:
-                s1, s2 = get_sent(marker, rand=True, display=False)
+            s1_neutral, s2_neutral = get_sent(marker, rand=True, display=False)
+            while s1_neutral == s1 and s2_neutral == s2:
+                s1_neutral, s2_neutral = get_sent(marker, rand=True, display=False)
+            s1, s2 = s1_neutral, s2_neutral
             sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
             sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
             dataset.append([sent1, sent2, 'entail'])
@@ -196,9 +197,10 @@ def generate_senteval():
             dataset.append([sent1, sent2, 'contradict'])
 
             # we randomly sample one to be "neutral" (condition to be different)
-            s1, s2 = get_sent(marker, rand=True, display=False)
-            while s1 == s1 and s2 == s2:
-                s1, s2 = get_sent(marker, rand=True, display=False)
+            s1_neutral, s2_neutral = get_sent(marker, rand=True, display=False)
+            while s1_neutral == s1 and s2_neutral == s2:
+                s1_neutral, s2_neutral = get_sent(marker, rand=True, display=False)
+            s1, s2 = s1_neutral, s2_neutral
             sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
             sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
             dataset.append([sent1, sent2, 'entail'])
