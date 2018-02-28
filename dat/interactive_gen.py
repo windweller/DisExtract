@@ -167,21 +167,41 @@ def generate_senteval():
 
     # I could also swap sent1 and sent2 in final output, but probably not necessary
     for marker in order_invar_list:  # 6 of those
-        sents = get_sents(marker, en=fewest_ex, rand=True, display=False)  # [[s1, s2]]
+
+        # fewest_ex / 2 to have half as "neutral"
+        sents = get_sents(marker, en=fewest_ex / 2, rand=True, display=False)  # [[s1, s2]]
         for s1, s2 in sents:
             # this is the "flip" action
             sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
             sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
             dataset.append([sent1, sent2, 'entail'])
 
+            # we randomly sample one to be "neutral" (condition to be different)
+            s1, s2 = get_sent(marker, rand=True)
+            while s1 == s1 and s2 == s2:
+                s1, s2 = get_sent(marker, rand=True)
+            sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
+            sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
+            dataset.append([sent1, sent2, 'entail'])
+
     contra_ex = fewest_ex * 6 / 8
     for marker in order_dep_list:
-        sents = get_sents(marker, en=contra_ex, rand=True, display=False)
+
+        # contra_ex / 2 to have half as "neutral"
+        sents = get_sents(marker, en=contra_ex / 2, rand=True, display=False)
         for s1, s2 in sents:
             # this is the "flip" action
             sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
             sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
             dataset.append([sent1, sent2, 'contradict'])
+
+            # we randomly sample one to be "neutral" (condition to be different)
+            s1, s2 = get_sent(marker, rand=True)
+            while s1 == s1 and s2 == s2:
+                s1, s2 = get_sent(marker, rand=True)
+            sent1 = s1[:-1] + marker + " " + s2[0].lower() + s2[1:]
+            sent2 = s2[:-1] + marker + " " + s1[0].lower() + s1[1:]
+            dataset.append([sent1, sent2, 'entail'])
 
     # shuffle 2 times
     random.shuffle(dataset)
