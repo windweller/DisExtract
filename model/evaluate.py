@@ -147,11 +147,6 @@ config_dis_model = {
 loss_fn = nn.CrossEntropyLoss()
 loss_fn.size_average = False
 
-# cuda by default
-dis_net.cuda()
-loss_fn.cuda()
-
-
 def get_multiclass_recall(preds, y_label):
     # preds: (label_size), y_label; (label_size)
     label_cat = range(label_size)
@@ -270,6 +265,10 @@ if __name__ == '__main__':
     else:
         # this loads in the final model, last epoch
         dis_net = torch.load(os.path.join(params.modeldir, params.outputmodelname + ".pickle"))
+
+    # cuda by default
+    dis_net.cuda()
+    loss_fn.cuda()
 
     logger.info('\nEvaluating on PTDB : Last Epoch')  # .format(epoch)
     # evaluate(1e6, 'valid', True)
