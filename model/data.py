@@ -9,6 +9,7 @@ import os
 import numpy as np
 import torch
 import logging
+from collections import defaultdict
 from os.path import join as pjoin
 from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
     EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS, \
@@ -131,9 +132,9 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
     return train, dev, test
 
 def get_pdtb(data_dir, prefix, discourse_tag="books_5"):
-    s1 = {}
-    s2 = {}
-    target = {}
+    s1 = defaultdict(list)
+    s2 = defaultdict(list)
+    target = defaultdict(list)
 
     if discourse_tag == "books_5":
         dis_map = list_to_map(EN_FIVE_DISCOURSE_MARKERS)
@@ -158,13 +159,13 @@ def get_pdtb(data_dir, prefix, discourse_tag="books_5"):
     # dis_map: {'and': 0, ...}
 
     for data_type in ['train', 'valid', 'test']:
-        s1[data_type], s2[data_type], target[data_type] = {}, {}, {}
+        # s1[data_type], s2[data_type], target[data_type] = {}, {}, {}
 
         text_path = pjoin(data_dir, prefix + "_" + data_type + ".tsv")
 
-        s1[data_type]['sent'] = []
-        s2[data_type]['sent'] = []
-        target[data_type]['data'] = []
+        # s1['sent'] = []
+        # s2[data_type]['sent'] = []
+        # target[data_type]['data'] = []
 
         with open(text_path, 'r') as f:
             for line in f:
@@ -172,24 +173,21 @@ def get_pdtb(data_dir, prefix, discourse_tag="books_5"):
                 # we use this to avoid/skip lines that are empty
                 if len(columns) != 3:
                     continue
-                s1[data_type]['sent'].append(columns[0])
-                s2[data_type]['sent'].append(columns[1])
-                target[data_type]['data'].append(dis_map[columns[2].rstrip('\n')])
+                s1['sent'].append(columns[0])
+                s2['sent'].append(columns[1])
+                target['data'].append(dis_map[columns[2].rstrip('\n')])
 
-        assert len(s1[data_type]['sent']) == len(s2[data_type]['sent']) == \
-               len(target[data_type]['data'])
+    assert len(s1['sent']) == len(s2['sent']) == len(target['data'])
 
-        target[data_type]['data'] = np.array(target[data_type]['data'])
+    target['data'] = np.array(target['data'])
 
-        print('** {0} DATA : Found {1} pairs of {2} sentences.'.format(
-            data_type.upper(), len(s1[data_type]['sent']), data_type))
+    print('** DATA : Found {0} pairs of sentences.'.format(
+        len(s1['sent'])))
 
     # train = {'s1': s1['train']['sent'], 's2': s2['train']['sent'],
     #          'label': target['train']['data']}
     # dev = {'s1': s1['valid']['sent'], 's2': s2['valid']['sent'],
     #        'label': target['valid']['data']}
 
-    test = {'s1': s1['train']['sent'] + s1['valid']['sent'] + s1['test']['sent'],
-            's2': s2['train']['sent'] + s2['valid']['sent'] + s2['test']['sent'],
-            'label': target['train']['data'] + target['valid']['data'] + target['test']['data']}
+    test = {'s1': s1['sent'], 's2': s2['sent'], 'label': target['data']}
     return test
