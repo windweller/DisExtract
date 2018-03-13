@@ -129,3 +129,67 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
     test = {'s1': s1['test']['sent'], 's2': s2['test']['sent'],
             'label': target['test']['data']}
     return train, dev, test
+
+def get_pdtb(data_dir, prefix, discourse_tag="books_5"):
+    s1 = {}
+    s2 = {}
+    target = {}
+
+    if discourse_tag == "books_5":
+        dis_map = list_to_map(EN_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "books_8":
+        dis_map = list_to_map(EN_EIGHT_DISCOURSE_MARKERS)
+    elif discourse_tag == "books_all" or discourse_tag == "books_perfectly_balanced" or discourse_tag == "books_mostly_balanced":
+        dis_map = list_to_map(EN_DISCOURSE_MARKERS)
+    elif discourse_tag == "books_old_5":
+        dis_map = list_to_map(EN_OLD_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "gw_cn_5":
+        dis_map = list_to_map(CH_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "gw_es_5":
+        dis_map = list_to_map(SP_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == "gw_es_1M_5":
+        dis_map = list_to_map(SP_FIVE_DISCOURSE_MARKERS)
+    elif discourse_tag == 'dat':
+        dis_map = list_to_map(['entail', 'contradict'])
+    else:
+        raise Exception("Corpus/Discourse Tag Set {} not found".format(discourse_tag))
+
+    logging.info(dis_map)
+    # dis_map: {'and': 0, ...}
+
+    for data_type in ['train', 'valid', 'test']:
+        s1[data_type], s2[data_type], target[data_type] = {}, {}, {}
+
+        text_path = pjoin(data_dir, prefix + "_" + data_type + ".tsv")
+
+        s1[data_type]['sent'] = []
+        s2[data_type]['sent'] = []
+        target[data_type]['data'] = []
+
+        with open(text_path, 'r') as f:
+            for line in f:
+                columns = line.split('\t')
+                # we use this to avoid/skip lines that are empty
+                if len(columns) != 3:
+                    continue
+                s1[data_type]['sent'].append(columns[0])
+                s2[data_type]['sent'].append(columns[1])
+                target[data_type]['data'].append(dis_map[columns[2].rstrip('\n')])
+
+        assert len(s1[data_type]['sent']) == len(s2[data_type]['sent']) == \
+               len(target[data_type]['data'])
+
+        target[data_type]['data'] = np.array(target[data_type]['data'])
+
+        print('** {0} DATA : Found {1} pairs of {2} sentences.'.format(
+            data_type.upper(), len(s1[data_type]['sent']), data_type))
+
+    # train = {'s1': s1['train']['sent'], 's2': s2['train']['sent'],
+    #          'label': target['train']['data']}
+    # dev = {'s1': s1['valid']['sent'], 's2': s2['valid']['sent'],
+    #        'label': target['valid']['data']}
+
+    test = {'s1': s1['train']['sent'] + s1['valid']['sent'] + s1['test']['sent'],
+            's2': s2['train']['sent'] + s2['valid']['sent'] + s2['test']['sent'],
+            'label': target['train']['data'] + target['valid']['data'] + target['test']['data']}
+    return test

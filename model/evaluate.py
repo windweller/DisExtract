@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """
-Code adapted from
-https://github.com/facebookresearch/InferSent/blob/master/train_nli.py
-
-with minor modifications
+Evaluate on PDTB
 """
 
 import os
@@ -22,7 +17,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-from data import get_dis, get_batch, build_vocab
+from data import get_pdtb, get_batch, build_vocab
 from dissent import DisSent
 from util import get_optimizer, get_labels
 
@@ -31,8 +26,9 @@ import logging
 parser = argparse.ArgumentParser(description='NLI training')
 # paths
 parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat")
-parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
+parser.add_argument("--hypes", type=str, default='hypes/pdtb.json', help="load in a hyperparameter file")
 parser.add_argument("--outputdir", type=str, default='sandbox/', help="Output directory")
+parser.add_argument("--modeldir", type=str, default='sandbox/', help="Output directory")
 parser.add_argument("--outputmodelname", type=str, default='dis-model')
 
 # training
@@ -61,8 +57,6 @@ parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
 parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
-parser.add_argument("--s1", action='store_true', help="training only on S1")
-parser.add_argument("--s2", action='store_true', help="training only on S2")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -113,10 +107,8 @@ if params.char and params.corpus == "gw_cn_5":
 """
 DATA
 """
-train, valid, test = get_dis(data_dir, prefix, params.corpus)
-word_vec = build_vocab(train['s1'] + train['s2'] +
-                       valid['s1'] + valid['s2'] +
-                       test['s1'] + test['s2'], glove_path)
+test = get_pdtb(data_dir, prefix, params.corpus)
+word_vec = build_vocab(test['s1'] + test['s2'], glove_path)
 
 # unknown words instead of map to <unk>, this directly takes them out
 for split in ['s1', 's2']:
@@ -151,121 +143,13 @@ config_dis_model = {
     'use_cuda': True,
 }
 
-if params.cur_epochs == 1:
-    dis_net = DisSent(config_dis_model)
-    logger.info(dis_net)
-else:
-    # if starting epoch is not 1, we resume training
-    # 1. load in model
-    # 2. resume with the previous learning rate
-    model_path = pjoin(params.outputdir, params.outputmodelname + ".pickle")  # this is the best model
-    # this might have conflicts with gpu_idx...
-    dis_net = torch.load(model_path)
-
 # loss
 loss_fn = nn.CrossEntropyLoss()
 loss_fn.size_average = False
 
-# optimizer
-optim_fn, optim_params = get_optimizer(params.optimizer)
-optimizer = optim_fn(dis_net.parameters(), **optim_params)
-
-if params.cur_epochs != 1:
-    optimizer.param_groups[0]['lr'] = params.cur_lr
-
 # cuda by default
 dis_net.cuda()
 loss_fn.cuda()
-
-"""
-TRAIN
-"""
-val_acc_best = -1e10 if params.cur_epochs == 1 else params.cur_valid
-adam_stop = False
-stop_training = False
-lr = optim_params['lr'] if 'sgd' in params.optimizer else None
-
-
-def trainepoch(epoch):
-    logger.info('\nTRAINING : Epoch ' + str(epoch))
-    dis_net.train()
-    all_costs = []
-    logs = []
-    words_count = 0
-
-    last_time = time.time()
-    correct = 0.
-    # shuffle the data
-    permutation = np.random.permutation(len(train['s1']))
-
-    s1 = train['s1'][permutation]
-    s2 = train['s2'][permutation]
-    target = train['label'][permutation]
-
-    optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * params.decay if epoch > 1 \
-                                                                                        and 'sgd' in params.optimizer else \
-        optimizer.param_groups[0]['lr']
-    logger.info('Learning rate : {0}'.format(optimizer.param_groups[0]['lr']))
-
-    for stidx in range(0, len(s1), params.batch_size):
-        # prepare batch
-        s1_batch, s1_len = get_batch(s1[stidx:stidx + params.batch_size],
-                                     word_vec)
-        s2_batch, s2_len = get_batch(s2[stidx:stidx + params.batch_size],
-                                     word_vec)
-        s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-        tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
-        k = s1_batch.size(1)  # actual batch size
-
-        # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
-
-        pred = output.data.max(1)[1]
-        correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
-        assert len(pred) == len(s1[stidx:stidx + params.batch_size])
-
-        # loss
-        loss = loss_fn(output, tgt_batch)
-        all_costs.append(loss.data[0])
-        words_count += (s1_batch.nelement() + s2_batch.nelement()) / params.word_emb_dim
-
-        # backward
-        optimizer.zero_grad()
-        loss.backward()
-
-        # gradient clipping (off by default)
-        shrink_factor = 1
-        total_norm = 0
-
-        for p in dis_net.parameters():
-            if p.requires_grad:
-                p.grad.data.div_(k)  # divide by the actual batch size
-                total_norm += p.grad.data.norm() ** 2
-        total_norm = np.sqrt(total_norm)
-
-        if total_norm > params.max_norm:
-            shrink_factor = params.max_norm / total_norm
-        current_lr = optimizer.param_groups[0]['lr']  # current lr (no external "lr", for adam)
-        optimizer.param_groups[0]['lr'] = current_lr * shrink_factor  # just for update
-
-        # optimizer step
-        optimizer.step()
-        optimizer.param_groups[0]['lr'] = current_lr
-
-        if len(all_costs) == params.log_interval:
-            logs.append('{0} ; loss {1} ; sentence/s {2} ; words/s {3} ; accuracy train : {4}'.format(
-                stidx, round(np.mean(all_costs), 2),
-                int(len(all_costs) * params.batch_size / (time.time() - last_time)),
-                int(words_count * 1.0 / (time.time() - last_time)),
-                round(100. * correct / (stidx + k), 2)))
-            logger.info(logs[-1])
-            last_time = time.time()
-            words_count = 0
-            all_costs = []
-    train_acc = round(100 * correct / len(s1), 2)
-    logger.info('results : epoch {0} ; mean accuracy train : {1}'
-                .format(epoch, train_acc))
-    return train_acc
 
 
 def get_multiclass_recall(preds, y_label):
@@ -303,7 +187,7 @@ def get_multiclass_prec(preds, y_label):
     return labels_accu
 
 
-def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
+def evaluate(epoch, eval_type='test', final_eval=False, save_confusion=False):
     global dis_net
 
     dis_net.eval()
@@ -313,9 +197,9 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     if eval_type == 'valid':
         logger.info('\nVALIDATION : Epoch {0}'.format(epoch))
 
-    s1 = valid['s1'] if eval_type == 'valid' else test['s1']
-    s2 = valid['s2'] if eval_type == 'valid' else test['s2']
-    target = valid['label'] if eval_type == 'valid' else test['label']
+    s1 = test['s1']
+    s2 = test['s2']
+    target = test['label']
 
     valid_preds, valid_labels = [], []
 
@@ -355,11 +239,6 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     logger.info(multiclass_recall_msg)
     logger.info(multiclass_prec_msg)
 
-    # if params.corpus == "gw_cn_5" or params.corpus == "gw_es_5":
-    #     print(multiclass_recall_msg)
-    #     print(multiclass_prec_msg)
-
-    # save model
     eval_acc = round(100 * correct / len(s1), 2)
     if final_eval:
         logger.info('finalgrep : accuracy {0} : {1}'.format(eval_type, eval_acc))
@@ -377,63 +256,25 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
             for pair in izip(valid_preds, valid_labels):
                 writer.writerow({'preds': pair[0], 'labels': pair[1]})
 
-    # there is no re-loading of previous best model btw
-    if eval_type == 'valid' and epoch <= params.n_epochs:
-        if eval_acc > val_acc_best:
-            logger.info('saving model at epoch {0}'.format(epoch))
-            if not os.path.exists(params.outputdir):
-                os.makedirs(params.outputdir)
-            torch.save(dis_net, os.path.join(params.outputdir,
-                                             params.outputmodelname + ".pickle"))
-            # monitor memory usage
-            try:
-                torch.save(dis_net, os.path.join(params.outputdir,
-                                                 params.outputmodelname + "-" + str(epoch) + ".pickle"))
-            except:
-                print("saving by epoch error, maybe due to disk space limit")
-
-            val_acc_best = eval_acc
-        else:
-            # can reload previous best model
-            if 'sgd' in params.optimizer:
-                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] / params.lrshrink
-                logger.info('Shrinking lr by : {0}. New lr = {1}'
-                      .format(params.lrshrink,
-                              optimizer.param_groups[0]['lr']))
-                if optimizer.param_groups[0]['lr'] < params.minlr:
-                    stop_training = True
-            if 'adam' in params.optimizer:
-                # early stopping (at 2nd decrease in accuracy)
-                stop_training = adam_stop
-                adam_stop = True
-
-            # now we finished annealing, we can reload
-            if params.reload_val:
-                del dis_net
-                dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
-                logger.info("Load in previous best epoch")
     return eval_acc
 
 
 """
-Train model on Discourse Classification task
+Evaluate model on PDTB task
 """
 if __name__ == '__main__':
-    epoch = params.cur_epochs  # start at 1
 
-    while not stop_training and epoch <= params.n_epochs:
-        train_acc = trainepoch(epoch)
-        eval_acc = evaluate(epoch, 'valid')
-        epoch += 1
+    if params.cur_epochs != 1:
+        model_path = pjoin(params.modeldir, params.outputmodelname + "-{}".format(params.cur_epochs) + ".pickle")  # this is the best model
+        dis_net = torch.load(model_path)
+    else:
+        # this loads in the final model, last epoch
+        dis_net = torch.load(os.path.join(params.modeldir, params.outputmodelname + ".pickle"))
 
-    # Run best model on test set.
-    del dis_net
-    dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
-
-    logger.info('\nTEST : Epoch {0}'.format(epoch))
-    evaluate(1e6, 'valid', True)
+    logger.info('\nEvaluating on PTDB : Last Epoch')  # .format(epoch)
+    # evaluate(1e6, 'valid', True)
     evaluate(0, 'test', True, True)  # save confusion results on test data
 
     # Save encoder instead of full model
-    torch.save(dis_net.encoder,
-               os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
+    # torch.save(dis_net.encoder,
+    #            os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
