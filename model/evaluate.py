@@ -112,7 +112,7 @@ word_vec = build_vocab(test['s1'] + test['s2'], glove_path)
 
 # unknown words instead of map to <unk>, this directly takes them out
 for split in ['s1', 's2']:
-    for data_type in ['train', 'valid', 'test']:
+    for data_type in ['test']:
         eval(data_type)[split] = np.array([['<s>'] +
                                            [word for word in sent.split() if word in word_vec] +
                                            ['</s>'] for sent in eval(data_type)[split]])
