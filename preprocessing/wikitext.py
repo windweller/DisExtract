@@ -104,10 +104,10 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
 
                 # this is wikitext-103, so we need to split the paragraph
                 # we also need to ignore the header of each paragraph
-                if line.split()[0] == "=" and line.split()[-1] == "=":
+                if len(line.strip()) == 0:
                     continue
-
-                if line.strip() == "\n":
+                    
+                if line.split()[0] == "=" and line.split()[-1] == "=":
                     continue
 
                 sentences = nltk.sent_tokenize(line)
