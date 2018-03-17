@@ -66,7 +66,7 @@ with open(args.json, 'rb') as f:
     json_config = json.load(f)
 
 wikitext_dir = json_config['wikitext_dir']
-wikitext_files = ['train.txt', 'valid.txt', 'test.txt']
+wikitext_files = ['wiki.train.tokens', 'wiki.valid.tokens', 'wiki.test.tokens']
 
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):

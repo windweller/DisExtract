@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
-wget https://raw.githubusercontent.com/pytorch/examples/master/word_language_model/data/wikitext-2/test.txt
-wget https://raw.githubusercontent.com/pytorch/examples/master/word_language_model/data/wikitext-2/valid.txt
-wget https://raw.githubusercontent.com/pytorch/examples/master/word_language_model/data/wikitext-2/train.txt
+wget https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-v1.zip
+unzip -j wikitext-103-v1.zip
+rm wikitext-103-v1.zip
