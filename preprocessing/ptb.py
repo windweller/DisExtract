@@ -212,4 +212,5 @@ if __name__ == '__main__':
     if args.filter:
         collect_raw_sentences(ptb_dir, ptb_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:
-        pass
+        parse_filtered_sentences(ptb_dir, ptb_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
+
