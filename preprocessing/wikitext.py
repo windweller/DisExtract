@@ -106,13 +106,13 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                 # we also need to ignore the header of each paragraph
                 if len(line.strip()) == 0:
                     continue
-                    
+
                 if line.split()[0] == "=" and line.split()[-1] == "=":
                     continue
 
-                sentences = nltk.sent_tokenize(line)
+                sentence_list = nltk.sent_tokenize(line)
 
-                for sentence in sentences:
+                for sentence in sentence_list:
 
                     words = rephrase(sentence).split()  # replace "for example"
                     for marker in discourse_markers:
