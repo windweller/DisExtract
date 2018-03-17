@@ -15,6 +15,7 @@ import json
 import argparse
 
 import logging
+import nltk
 from util import rephrase
 from os.path import join as pjoin
 
@@ -99,35 +100,48 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         previous_sentence_split = None
         FIRST = True
         with io.open(file_path, 'rU', encoding="utf-8") as f:
-            for i, sentence in enumerate(f):
-                words = rephrase(sentence).split()  # replace "for example"
-                for marker in discourse_markers:
-                    if marker == "for example":
-                        proxy_marker = "for_example"
-                    else:
-                        proxy_marker = marker
+            for i, line in enumerate(f):
 
-                    # [min_len, max_len) like [5, 10)
-                    if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
-                        continue
+                # this is wikitext-103, so we need to split the paragraph
+                # we also need to ignore the header of each paragraph
+                if line.split()[0] == "=" and line.split()[-1] == "=":
+                    continue
 
-                    # length-based filtering
-                    if not FIRST:
-                        # because parser might request previous sentence
-                        # we are here to control the balance. This is not s1 / s2 ratio.
-                        len2 = len(previous_sentence_split)
-                        ratio = float(len2) / len(words)
+                if line.strip() == "\n":
+                    continue
 
-                        if ratio <= args.min_ratio or ratio >= args.max_ratio:
+                sentences = nltk.sent_tokenize(line)
+
+                for sentence in sentences:
+
+                    words = rephrase(sentence).split()  # replace "for example"
+                    for marker in discourse_markers:
+                        if marker == "for example":
+                            proxy_marker = "for_example"
+                        else:
+                            proxy_marker = marker
+
+                        # [min_len, max_len) like [5, 10)
+                        if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
                             continue
 
-                    # all bookcorpus text are lower case
-                    if proxy_marker in words:
-                        sentences[marker]["sentence"].append(sentence)
-                        sentences[marker]["previous"].append(previous_sentence)
+                        # length-based filtering
+                        if not FIRST:
+                            # because parser might request previous sentence
+                            # we are here to control the balance. This is not s1 / s2 ratio.
+                            len2 = len(previous_sentence_split)
+                            ratio = float(len2) / len(words)
 
-                previous_sentence = sentence
-                previous_sentence_split = words
+                            if ratio <= args.min_ratio or ratio >= args.max_ratio:
+                                continue
+
+                        # all bookcorpus text are lower case
+                        if proxy_marker in words:
+                            sentences[marker]["sentence"].append(sentence)
+                            sentences[marker]["previous"].append(previous_sentence)
+
+                    previous_sentence = sentence
+                    previous_sentence_split = words
 
                 if i % args.filter_print_every == 0:
                     logger.info("processed {}".format(i))
