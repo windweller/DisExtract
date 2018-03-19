@@ -251,11 +251,11 @@ def split_parsed_sentences(source_dir, marker_set_tag):
             f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
 
     with open(pjoin(output_dir, args.tag + "_EIGHT_{}".format("_".join(EN_EIGHT_DISCOURSE_MARKERS))), 'w') as f:
-        for row in five_sents:
+        for row in eight_sents:
             f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
 
     with open(pjoin(output_dir, args.tag + "_ALL_{}".format("_".join(EN_DISCOURSE_MARKERS))), 'w') as f:
-        for row in five_sents:
+        for row in all_sents:
             f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
 
 if __name__ == '__main__':
