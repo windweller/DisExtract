@@ -246,15 +246,15 @@ def split_parsed_sentences(source_dir, marker_set_tag):
         for k, v in marker_stats.iteritems():
             f.write("{}: {}\n".format(k, v))
 
-    with open(pjoin(output_dir, args.tag + "_FIVE_{}".format("_".join(EN_FIVE_DISCOURSE_MARKERS)), 'w')) as f:
+    with open(pjoin(output_dir, args.tag + "_FIVE_{}".format("_".join(EN_FIVE_DISCOURSE_MARKERS))), 'w') as f:
         for row in five_sents:
             f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
 
-    with open(pjoin(output_dir, args.tag + "_EIGHT_{}".format("_".join(EN_EIGHT_DISCOURSE_MARKERS)), 'w')) as f:
+    with open(pjoin(output_dir, args.tag + "_EIGHT_{}".format("_".join(EN_EIGHT_DISCOURSE_MARKERS))), 'w') as f:
         for row in five_sents:
             f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
 
-    with open(pjoin(output_dir, args.tag + "_ALL_{}".format("_".join(EN_DISCOURSE_MARKERS)), 'w')) as f:
+    with open(pjoin(output_dir, args.tag + "_ALL_{}".format("_".join(EN_DISCOURSE_MARKERS))), 'w') as f:
         for row in five_sents:
             f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
 
