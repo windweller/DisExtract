@@ -18,8 +18,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 
 from data import get_pdtb, get_batch, build_vocab
-from dissent import DisSent
-from util import get_optimizer, get_labels
+from util import get_labels
 
 import logging
 
@@ -183,7 +182,6 @@ def get_multiclass_prec(preds, y_label):
 
 
 def evaluate(epoch, eval_type='test', final_eval=False, save_confusion=False):
-    global dis_net
 
     dis_net.eval()
     correct = 0.
@@ -255,7 +253,7 @@ def evaluate(epoch, eval_type='test', final_eval=False, save_confusion=False):
 
 
 """
-Evaluate model on PDTB task
+Evaluate model on different tasks
 """
 if __name__ == '__main__':
 
@@ -270,10 +268,6 @@ if __name__ == '__main__':
     dis_net.cuda()
     loss_fn.cuda()
 
-    logger.info('\nEvaluating on PTDB : Last Epoch')  # .format(epoch)
+    logger.info('\nEvaluating on {} : Last Epoch'.format(params.hypes[6:-5])) # corpus name
     # evaluate(1e6, 'valid', True)
     evaluate(0, 'test', True, True)  # save confusion results on test data
-
-    # Save encoder instead of full model
-    # torch.save(dis_net.encoder,
-    #            os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
