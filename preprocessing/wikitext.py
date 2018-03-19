@@ -20,7 +20,7 @@ from util import rephrase
 from os.path import join as pjoin
 
 from parser import depparse_ssplit, setup_corenlp
-from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS, EN_FIVE_DISCOURSE_MARKERS, EN_EIGHT_DISCOURSE_MARKERS
 
 import sys
 
@@ -48,6 +48,10 @@ parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--parse", action='store_true',
                     help="Stage 2: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
 # parser.add_argument("--no_dep_cache", action='store_true', help="not caching dependency parsed result")
+
+parser.add_argument("--split", action='store_true',
+                    help="Stage 3: load in parsed sentences pairs and split into discourse marker set based groups")
+parser.add_argument("--tag", type=str, default="discourse_EN", help="the tag of the generated file such as discourse_EN_FIVE_and_but_because_if_when_2017dec12.tsv")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
@@ -233,10 +237,57 @@ def dependency_parsing(sentence, previous_sentence, marker):
     except:
         return None
 
+from collections import defaultdict
+
+def split_parsed_sentences(source_dir, marker_set_tag):
+    markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
+    input_dir = pjoin(markers_dir, "sentences")
+    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
+    output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
+
+    five_sents = []
+    eight_sents = []
+    all_sents = []
+
+    sent_hash_set = set()  # we expect repeating entries
+    marker_stats = defaultdict(int)
+
+    with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'r') as f:
+        # this is a tsv file
+        for line in f:
+            if line not in sent_hash_set:
+                sent_hash_set.add(line)
+                row = line.strip().split('\t')
+                marker_stats[row[2]] += 1
+                all_sents.append(row)
+                if row[2] in EN_FIVE_DISCOURSE_MARKERS:
+                    five_sents.append(row)
+                if row[2] in EN_EIGHT_DISCOURSE_MARKERS:
+                    eight_sents.append(row)
+
+    for k, v in marker_stats.iteritems():
+        print "{}: {}".format(k, v)
+
+    with open(pjoin(output_dir, "stats.txt"), 'w') as f:
+        for k, v in marker_stats.iteritems():
+            f.write("{}: {}\n".format(k, v))
+
+    with open(pjoin(output_dir, args.tag + "_FIVE_{}".format("_".join(EN_FIVE_DISCOURSE_MARKERS))), 'w') as f:
+        for row in five_sents:
+            f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
+
+    with open(pjoin(output_dir, args.tag + "_EIGHT_{}".format("_".join(EN_EIGHT_DISCOURSE_MARKERS))), 'w') as f:
+        for row in eight_sents:
+            f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
+
+    with open(pjoin(output_dir, args.tag + "_ALL_{}".format("_".join(EN_DISCOURSE_MARKERS))), 'w') as f:
+        for row in all_sents:
+            f.write("{}\t{}\t{}\n".format(row[0], row[1], row[2]))
 
 if __name__ == '__main__':
     if args.filter:
         collect_raw_sentences(wikitext_dir, wikitext_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:
         parse_filtered_sentences(wikitext_dir, wikitext_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
-
+    elif args.split:
+        split_parsed_sentences(wikitext_dir, DISCOURSE_MARKER_SET_TAG)
