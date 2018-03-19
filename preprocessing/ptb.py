@@ -211,6 +211,8 @@ def dependency_parsing(sentence, previous_sentence, marker):
     except:
         return None
 
+from collections import defaultdict
+
 def split_parsed_sentences(source_dir, marker_set_tag):
     markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
@@ -221,15 +223,28 @@ def split_parsed_sentences(source_dir, marker_set_tag):
     eight_sents = []
     all_sents = []
 
+    sent_hash_set = set()  # we expect repeating entries
+    marker_stats = defaultdict(int)
+
     with open(pjoin(output_dir, "{}_parsed_sentence_pairs.txt".format(marker_set_tag)), 'r') as f:
         # this is a tsv file
         for line in f:
-            row = line.split('\t')
-            all_sents.append(row)
-            if row[2] in EN_FIVE_DISCOURSE_MARKERS:
-                five_sents.append(row)
-            if row[2] in EN_EIGHT_DISCOURSE_MARKERS:
-                eight_sents.append(row)
+            if line not in sent_hash_set:
+                sent_hash_set.add(line)
+                row = line.split('\t')
+                marker_stats[row[2]] += 1
+                all_sents.append(row)
+                if row[2] in EN_FIVE_DISCOURSE_MARKERS:
+                    five_sents.append(row)
+                if row[2] in EN_EIGHT_DISCOURSE_MARKERS:
+                    eight_sents.append(row)
+
+    for k, v in marker_stats.iteritems():
+        print "{}: {}".format(k, v)
+
+    with open(pjoin(output_dir, "stats.txt"), 'w') as f:
+        for k, v in marker_stats.iteritems():
+            f.write("{}: {}\n".format(k, v))
 
     with open(pjoin(output_dir, args.tag + "_FIVE_{}".format("_".join(EN_FIVE_DISCOURSE_MARKERS)), 'w')) as f:
         for row in five_sents:
