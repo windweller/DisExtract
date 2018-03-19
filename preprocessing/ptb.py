@@ -231,7 +231,7 @@ def split_parsed_sentences(source_dir, marker_set_tag):
         for line in f:
             if line not in sent_hash_set:
                 sent_hash_set.add(line)
-                row = line.split('\t')
+                row = line.strip().split('\t')
                 marker_stats[row[2]] += 1
                 all_sents.append(row)
                 if row[2] in EN_FIVE_DISCOURSE_MARKERS:
