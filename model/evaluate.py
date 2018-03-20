@@ -257,9 +257,14 @@ Evaluate model on different tasks
 """
 if __name__ == '__main__':
 
+    map_locations = {}
+    for d in range(4):
+        if d != params.gpu_id:
+            map_locations['cuda:{}'.format(d)] = "cuda:{}".format(params.gpu_id)
+
     if params.cur_epochs != 1:
         model_path = pjoin(params.modeldir, params.outputmodelname + "-{}".format(params.cur_epochs) + ".pickle")  # this is the best model
-        dis_net = torch.load(model_path)
+        dis_net = torch.load(model_path, map_location=map_locations)
     else:
         # this loads in the final model, last epoch
         dis_net = torch.load(os.path.join(params.modeldir, params.outputmodelname + ".pickle"))
