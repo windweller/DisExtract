@@ -174,10 +174,9 @@ class Classifier(nn.Module):
         # classifier
         self.fc_dim = config['fc_dim']
         self.n_classes = config['n_classes']
-        self.tied_weights = config['tied_weights']
         self.enc_lstm_dim = config['enc_lstm_dim']
 
-        self.inputdim = 5 * 2 * self.enc_lstm_dim if not self.tied_weights else 5 * self.enc_lstm_dim
+        self.inputdim = 5 * 2 * self.enc_lstm_dim
 
         self.classifier = nn.Sequential(
             nn.Linear(self.inputdim, self.fc_dim),
@@ -234,7 +233,7 @@ def trainepoch(epoch):
         u = dis_net.encoder((s1_batch, s1_len))
         v = dis_net.encoder((s2_batch, s2_len))
 
-        features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1)
+        features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1).detach()
 
         output = classifier(features)
 
