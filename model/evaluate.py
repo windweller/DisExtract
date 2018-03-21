@@ -230,14 +230,14 @@ def trainepoch(epoch):
         k = s1_batch.size(1)  # actual batch size
 
         # model forward
-        u = dis_net.encoder((s1_batch, s1_len))
-        v = dis_net.encoder((s2_batch, s2_len))
+        # u = dis_net.encoder((s1_batch, s1_len))
+        # v = dis_net.encoder((s2_batch, s2_len))
+        #
+        # features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1).detach()
+        #
+        # output = classifier(features)
 
-        features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1).detach()
-
-        output = classifier(features)
-
-        # output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
@@ -442,14 +442,11 @@ if __name__ == '__main__':
         dis_net = torch.load(os.path.join(params.modeldir, params.outputmodelname + ".pickle"))
 
     if params.retrain:
-        classifier = Classifier(config_dis_model)
-        classifier.cuda()
-
-        optimizer = optim_fn(classifier.parameters(), **optim_params)
-
-        # freeze dis_net params
-        for p in dis_net.parameters():
+        # freeze dis_net encoder params..hopefully this works
+        for p in dis_net.encoder.parameters():
             p.requires_grad = False
+
+        optimizer = optim_fn(dis_net.classifier.parameters(), **optim_params)
 
     # cuda by default
     dis_net.cuda()
