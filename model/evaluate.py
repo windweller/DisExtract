@@ -468,6 +468,7 @@ if __name__ == '__main__':
         del dis_net
         dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
 
+        evaluate(1e6, 'valid', True)
         logger.info('\nTEST : Epoch {0}'.format(epoch))
         evaluate(0, 'test', True, True)
         # the last model is already saved, saving encoder means nothing
