@@ -131,7 +131,8 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
             'label': target['test']['data']}
     return train, dev, test
 
-def get_pdtb(data_dir, prefix, discourse_tag="books_5"):
+def get_merged_data(data_dir, prefix, discourse_tag="books_5"):
+    # for evaluation
     s1 = defaultdict(list)
     s2 = defaultdict(list)
     target = defaultdict(list)
