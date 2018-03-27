@@ -30,8 +30,7 @@ import logging
 
 parser = argparse.ArgumentParser(description='NLI training')
 # paths
-parser.add_argument("--corpus", type=str, default='books_5',
-                    help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat")
+parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat")
 parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
 parser.add_argument("--outputdir", type=str, default='sandbox/', help="Output directory")
 parser.add_argument("--outputmodelname", type=str, default='dis-model')
@@ -40,8 +39,7 @@ parser.add_argument("--outputmodelname", type=str, default='dis-model')
 parser.add_argument("--n_epochs", type=int, default=10)
 parser.add_argument("--cur_epochs", type=int, default=1)
 parser.add_argument("--cur_lr", type=float, default=0.1)
-parser.add_argument("--cur_valid", type=float, default=-1e10,
-                    help="must set this otherwise resumed model will be saved by default")
+parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set this otherwise resumed model will be saved by default")
 
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
@@ -61,13 +59,10 @@ parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num lay
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
-parser.add_argument("--reload_val", action='store_true',
-                    help="Reload the previous best epoch on validation, should be used with tied weights")
+parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
-parser.add_argument("--distance", type=str, default='l2', help="{l2|dot|cos}"
-                                                               "l2: distance is unnormalized euclidean distance; negative distance|"
-                                                               "dot: use unnormalized dot product similarity|"
-                                                               "cos: distance is negative of 1 - normalized dot product similarity")
+parser.add_argument("--s1", action='store_true', help="training only on S1")
+parser.add_argument("--s2", action='store_true', help="training only on S2")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -154,7 +149,6 @@ config_dis_model = {
     'encoder_type': params.encoder_type,
     'tied_weights': params.tied_weights,
     'use_cuda': True,
-    'distance': params.distance
 }
 
 if params.cur_epochs == 1:
@@ -192,24 +186,6 @@ stop_training = False
 lr = optim_params['lr'] if 'sgd' in params.optimizer else None
 
 
-def get_target_within_batch(target):
-    labels_in_batch = np.unique(target).tolist()
-    target_to_label_map = dict(izip(range(len(labels_in_batch)), labels_in_batch))
-    label_to_target_map = dict(izip(labels_in_batch, range(len(labels_in_batch))))
-    # fastest approach: https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
-    vf = np.vectorize(label_to_target_map.get)
-    mapped_target = vf(target)  # faster for the entire dataset
-    return mapped_target, len(labels_in_batch), target_to_label_map
-
-
-def get_target_to_batch_idx(mapped_target, num_uniq_tgt):
-    # return: {0: [1, 5, 6], 1: [2, 3], ...}
-    # map label index to data point indices inside a batch
-    label_to_batch_idx = {}
-    for i in xrange(num_uniq_tgt):
-        label_to_batch_idx[i] = np.where(mapped_target == i)[0]  # numpy. PyTorch advanced indexing is fine
-    return label_to_batch_idx
-
 def trainepoch(epoch):
     logger.info('\nTRAINING : Epoch ' + str(epoch))
     dis_net.train()
@@ -224,8 +200,7 @@ def trainepoch(epoch):
 
     s1 = train['s1'][permutation]
     s2 = train['s2'][permutation]
-    label = train['label'][permutation]
-    # target = train['label'][permutation]
+    target = train['label'][permutation]
 
     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * params.decay if epoch > 1 \
                                                                                         and 'sgd' in params.optimizer else \
@@ -233,25 +208,17 @@ def trainepoch(epoch):
     logger.info('Learning rate : {0}'.format(optimizer.param_groups[0]['lr']))
 
     for stidx in range(0, len(s1), params.batch_size):
-        batch_size = len(s1[stidx:stidx + params.batch_size])
-
         # prepare batch
         s1_batch, s1_len = get_batch(s1[stidx:stidx + params.batch_size],
                                      word_vec)
         s2_batch, s2_len = get_batch(s2[stidx:stidx + params.batch_size],
                                      word_vec)
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-
-        target, num_uniq_tgts, _ = get_target_within_batch(label[stidx:stidx + params.batch_size])
-        tgt_batch = Variable(torch.LongTensor(target)).cuda()
-
-        target_to_batch_idx = get_target_to_batch_idx(target, num_uniq_tgts)
-
-        # tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
-        k = batch_size  # actual batch size
+        tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
+        k = s1_batch.size(1)  # actual batch size
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), target_to_batch_idx, num_uniq_tgts, batch_size)
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
@@ -348,36 +315,28 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 
     s1 = valid['s1'] if eval_type == 'valid' else test['s1']
     s2 = valid['s2'] if eval_type == 'valid' else test['s2']
-    tgt_label = valid['label'] if eval_type == 'valid' else test['label']
-    # target = valid['label'] if eval_type == 'valid' else test['label']
+    target = valid['label'] if eval_type == 'valid' else test['label']
 
     valid_preds, valid_labels = [], []
 
     for i in range(0, len(s1), params.batch_size):
-        batch_size = len(s1[i:i + params.batch_size])
-
         # prepare batch
         s1_batch, s1_len = get_batch(s1[i:i + params.batch_size], word_vec)
         s2_batch, s2_len = get_batch(s2[i:i + params.batch_size], word_vec)
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-
-        target, num_uniq_tgts, target_to_label_map = get_target_within_batch(tgt_label[i:i + params.batch_size])
-        tgt_batch = Variable(torch.LongTensor(target)).cuda()
-
-        target_to_batch_idx = get_target_to_batch_idx(target, num_uniq_tgts)
+        tgt_batch = Variable(torch.LongTensor(target[i:i + params.batch_size])).cuda()
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), target_to_batch_idx, num_uniq_tgts, batch_size)
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
 
         # we collect samples
-        labels = tgt_label[i:i + params.batch_size]  # actual real bona-fide labels
-        tgt_preds = pred.cpu().numpy()
-        preds = map(target_to_label_map.get, tgt_preds) # map back
+        labels = target[i:i + params.batch_size]
+        preds = pred.cpu().numpy()
 
-        valid_preds.extend(preds)
+        valid_preds.extend(preds.tolist())
         valid_labels.extend(labels.tolist())
 
     mean_multi_recall = get_multiclass_recall(np.array(valid_preds), np.array(valid_labels))
@@ -439,8 +398,8 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
             if 'sgd' in params.optimizer:
                 optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] / params.lrshrink
                 logger.info('Shrinking lr by : {0}. New lr = {1}'
-                            .format(params.lrshrink,
-                                    optimizer.param_groups[0]['lr']))
+                      .format(params.lrshrink,
+                              optimizer.param_groups[0]['lr']))
                 if optimizer.param_groups[0]['lr'] < params.minlr:
                     stop_training = True
             if 'adam' in params.optimizer:

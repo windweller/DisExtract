@@ -277,71 +277,38 @@ class DisSent(nn.Module):
         self.encoder_type = config['encoder_type']
         self.dpout_fc = config['dpout_fc']
         self.tied_weights = config['tied_weights']
-        self.distance = config['distance']
 
         self.encoder = eval(self.encoder_type)(config)
         self.inputdim = 5 * 2 * self.enc_lstm_dim if not self.tied_weights else 5 * self.enc_lstm_dim
 
-        # It's meta-learning setting, no final classifier
-        # in github, they also didn't use dropout:
-        # https://github.com/renmengye/few-shot-ssl-public/search?utf8=%E2%9C%93&q=dropout
-        self.classifier = nn.Sequential(
-            nn.Linear(self.inputdim, self.fc_dim),
-            nn.Linear(self.fc_dim, self.fc_dim)  # not sure if we should have this layer...
-        )
-        # No non-linearity because we don't want "feature-selection"
-        # can understand ReLU or Sigmoid as feature select
-        # we want every dimension of vector calculus concatenation to get gradient
-
-        # hypothesis: information compression happens without activation function
-        # when rank is reduced (dimension reduction). But still what is middle layer doing?
-
-        # set up similarity function
-        # for L2 we use negative distance (like the paper)
-        self.sim_fn = None
-        self.b, self.c = 0., 0.
-        if self.distance == 'l2':
-            # nicely, self.b and self.c will dynamically change
-            # in forward() method
-            self.sim_fn = lambda x, p: -(torch.sum(x * x, dim=1).view(-1, 1).expand(-1, self.c) + \
-                                          torch.sum(p * p, dim=0).view(1, -1).expand(self.b, -1) \
-                                          + 2 * torch.matmul(x, p))
-        elif self.distance == 'cos':
-            self.sim_fn = lambda x, p: torch.matmul(x, p) / torch.ger(x.norm(2, dim=1), p.norm(2, dim=0))
-        elif self.distance == 'dot':
-            self.sim_fn = lambda x, p: torch.matmul(x, p)
+        # If fully connected layer dimension is set to 0, we are not using it
+        if self.fc_dim != 0:
+            if self.dpout_fc == 0.:
+                self.classifier = nn.Sequential(
+                    nn.Linear(self.inputdim, self.fc_dim),
+                    nn.Linear(self.fc_dim, self.fc_dim),
+                    nn.Linear(self.fc_dim, self.n_classes)
+                )
+            else:
+                # this is middle-layer-dropout
+                self.classifier = nn.Sequential(
+                    nn.Linear(self.inputdim, self.fc_dim),
+                    nn.Dropout(p=self.dpout_fc),
+                    nn.Linear(self.fc_dim, self.fc_dim),
+                    nn.Dropout(p=self.dpout_fc),
+                    nn.Linear(self.fc_dim, self.n_classes)
+                )
         else:
-            raise Exception("unrecognizable distance configuration. Choose from l2|cos|dot")
+            self.classifier = nn.Linear(self.inputdim, self.n_classes)
 
-    def build_proto_vecs(self, sent_reps, target_to_batch_idx, num_uniq_y):
-        # target_to_batch_idx: {0: np.array([1, 5, 6]), 1: np.array([2, 3]), ...}
-        # sent_reps: (batch_size, fc_dim)
-
-        # average of vectors
-        proto_vecs = [torch.sum(sent_reps[target_to_batch_idx[i], :], 0) / target_to_batch_idx[i].size for i in
-                      xrange(num_uniq_y)]
-        proto_vecs = torch.stack(proto_vecs, dim=1)
-        # (fc_dim, num_uniq_y)
-        return proto_vecs
-
-    def forward(self, s1, s2, target_to_batch_idx, num_uniq_y, batch_size):
+    def forward(self, s1, s2):
         # s1 : (s1, s1_len)
         u = self.encoder(s1)
         v = self.encoder(s2)
 
         features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1)
-        sent_reps = self.classifier(features)  # (batch_size, fc_dim)
-
-        proto_vecs = self.build_proto_vecs(sent_reps, target_to_batch_idx, num_uniq_y)
-
-        # we want outside to be completely the same
-        # these two are constantly updated
-        self.b = batch_size
-        self.c = num_uniq_y
-
-        y_hat = self.sim_fn(sent_reps, proto_vecs)  # should be (batch_size, num_uniq_y)
-
-        return y_hat
+        output = self.classifier(features)
+        return output
 
     def encode(self, s1):
         emb = self.encoder(s1)
