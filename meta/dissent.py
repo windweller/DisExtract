@@ -298,18 +298,29 @@ class DisSent(nn.Module):
 
         # set up similarity function
         # for L2 we use negative distance (like the paper)
+        # can't use lambda function cause it won't pickle!!
         self.sim_fn = None
         self.b, self.c = 0., 0.
+
+        def l2_vec(x, p):
+            return -(torch.sum(x * x, dim=1).view(-1, 1).expand(-1, self.c) + \
+                     torch.sum(p * p, dim=0).view(1, -1).expand(self.b, -1) \
+                     + 2 * torch.matmul(x, p))
+
+        def cos_vec(x, p):
+            return torch.matmul(x, p) / torch.ger(x.norm(2, dim=1), p.norm(2, dim=0))
+
+        def dot_vec(x, p):
+            return torch.matmul(x, p)
+
         if self.distance == 'l2':
             # nicely, self.b and self.c will dynamically change
             # in forward() method
-            self.sim_fn = lambda x, p: -(torch.sum(x * x, dim=1).view(-1, 1).expand(-1, self.c) + \
-                                          torch.sum(p * p, dim=0).view(1, -1).expand(self.b, -1) \
-                                          + 2 * torch.matmul(x, p))
+            self.sim_fn = l2_vec
         elif self.distance == 'cos':
-            self.sim_fn = lambda x, p: torch.matmul(x, p) / torch.ger(x.norm(2, dim=1), p.norm(2, dim=0))
+            self.sim_fn = cos_vec
         elif self.distance == 'dot':
-            self.sim_fn = lambda x, p: torch.matmul(x, p)
+            self.sim_fn = dot_vec
         else:
             raise Exception("unrecognizable distance configuration. Choose from l2|cos|dot")
 
