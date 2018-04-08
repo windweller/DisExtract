@@ -309,7 +309,7 @@ class DisSent(nn.Module):
         #          + 2 * torch.matmul(x, p)) # this part is wrong
 
         # can't do vector operation, so...for-loop for now
-        y_hat = torch.zeros(self.b, self.c)
+        y_hat = Variable(torch.zeros(self.b, self.c)).cuda()
         for b_i in xrange(self.b):
             for c_i in xrange(self.c):
                 y_hat[b_i, c_i] = torch.dot(x[b_i, :] - p[:, c_i], x[b_i, :] - p[:, c_i])
