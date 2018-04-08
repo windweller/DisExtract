@@ -299,12 +299,21 @@ class DisSent(nn.Module):
         # set up similarity function
         # for L2 we use negative distance (like the paper)
         # can't use lambda function cause it won't pickle!!
-        self.b, self.c = 0., 0.
+        self.b, self.c = 0, 0
 
     def l2_vec(self, x, p):
-        return -(torch.sum(x * x, dim=1).view(-1, 1).expand(-1, self.c) + \
-                 torch.sum(p * p, dim=0).view(1, -1).expand(self.b, -1) \
-                 + 2 * torch.matmul(x, p))
+        # x: (batch_size, hid_dim)
+        # p: (hid_dim, class_size)
+        # return -(torch.norm(x, 2, dim=1).view(-1, 1).expand(-1, self.c) ** 2 + \
+        #          torch.norm(p, 2, dim=0).view(1, -1).expand(self.b, -1) ** 2 \
+        #          + 2 * torch.matmul(x, p)) # this part is wrong
+
+        # can't do vector operation, so...for-loop for now
+        y_hat = torch.zeros(self.b, self.c)
+        for b_i in xrange(self.b):
+            for c_i in xrange(self.c):
+                y_hat[b_i, c_i] = torch.dot(x[b_i, :] - p[:, c_i], x[b_i, :] - p[:, c_i])
+        return y_hat
 
     def cos_vec(self, x, p):
         return torch.matmul(x, p) / torch.ger(x.norm(2, dim=1), p.norm(2, dim=0))
