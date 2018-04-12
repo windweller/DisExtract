@@ -113,6 +113,26 @@ glove_path = json_config['glove_path']
 if params.char and params.corpus == "gw_cn_5":
     prefix = prefix.replace('discourse', 'discourse_char')
 
+
+def get_target_within_batch(target):
+    labels_in_batch = np.unique(target).tolist()
+    target_to_label_map = dict(izip(range(len(labels_in_batch)), labels_in_batch))
+    label_to_target_map = dict(izip(labels_in_batch, range(len(labels_in_batch))))
+    # fastest approach: https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
+    vf = np.vectorize(label_to_target_map.get)
+    mapped_target = vf(target)  # faster for the entire dataset
+    return mapped_target, len(labels_in_batch), target_to_label_map
+
+
+def get_target_to_batch_idx(mapped_target, num_uniq_tgt):
+    # return: {0: [1, 5, 6], 1: [2, 3], ...}
+    # map label index to data point indices inside a batch
+    label_to_batch_idx = {}
+    for i in xrange(num_uniq_tgt):
+        label_to_batch_idx[i] = np.where(mapped_target == i)[0]  # numpy. PyTorch advanced indexing is fine
+    return label_to_batch_idx
+
+
 """
 DATA
 """
@@ -219,7 +239,8 @@ def trainepoch(epoch):
 
     s1 = train['s1'][permutation]
     s2 = train['s2'][permutation]
-    target = train['label'][permutation]
+    label = train['label'][permutation]
+    # target = train['label'][permutation]
 
     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * params.decay if epoch > 1 \
                                                                                         and 'sgd' in params.optimizer else \
@@ -227,14 +248,20 @@ def trainepoch(epoch):
     logger.info('Learning rate : {0}'.format(optimizer.param_groups[0]['lr']))
 
     for stidx in range(0, len(s1), params.batch_size):
+        batch_size = len(s1[stidx:stidx + params.batch_size])
+
         # prepare batch
         s1_batch, s1_len = get_batch(s1[stidx:stidx + params.batch_size],
                                      word_vec)
         s2_batch, s2_len = get_batch(s2[stidx:stidx + params.batch_size],
                                      word_vec)
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-        tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
         k = s1_batch.size(1)  # actual batch size
+
+        target, num_uniq_tgts, _ = get_target_within_batch(label[stidx:stidx + params.batch_size])
+        tgt_batch = Variable(torch.LongTensor(target)).cuda()
+
+        target_to_batch_idx = get_target_to_batch_idx(target, num_uniq_tgts)
 
         # model forward
         # u = dis_net.encoder((s1_batch, s1_len))
@@ -244,7 +271,7 @@ def trainepoch(epoch):
         #
         # output = classifier(features)
 
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), target_to_batch_idx, num_uniq_tgts, batch_size)
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
@@ -340,19 +367,31 @@ def evaluate(epoch, eval_type='test', final_eval=False, save_confusion=False):
     # it will only be "valid" during retraining (fine-tuning)
     s1 = valid['s1'] if eval_type == 'valid' else test['s1']
     s2 = valid['s2'] if eval_type == 'valid' else test['s2']
-    target = valid['label'] if eval_type == 'valid' else test['label']
+    tgt_label = valid['label'] if eval_type == 'valid' else test['label']
+
+    # target = valid['label'] if eval_type == 'valid' else test['label']
 
     valid_preds, valid_labels = [], []
 
     for i in range(0, len(s1), params.batch_size):
+
+        batch_size = len(s1[i:i + params.batch_size])
+
         # prepare batch
         s1_batch, s1_len = get_batch(s1[i:i + params.batch_size], word_vec)
         s2_batch, s2_len = get_batch(s2[i:i + params.batch_size], word_vec)
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-        tgt_batch = Variable(torch.LongTensor(target[i:i + params.batch_size])).cuda()
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
+        # output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
+
+        target, num_uniq_tgts, target_to_label_map = get_target_within_batch(tgt_label[i:i + params.batch_size])
+        tgt_batch = Variable(torch.LongTensor(target)).cuda()
+
+        target_to_batch_idx = get_target_to_batch_idx(target, num_uniq_tgts)
+
+        # model forward
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), target_to_batch_idx, num_uniq_tgts, batch_size)
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
