@@ -397,10 +397,11 @@ def evaluate(epoch, eval_type='test', final_eval=False, save_confusion=False):
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
 
         # we collect samples
-        labels = target[i:i + params.batch_size]
-        preds = pred.cpu().numpy()
+        labels = tgt_label[i:i + params.batch_size]  # actual real bona-fide labels
+        tgt_preds = pred.cpu().numpy()
+        preds = map(target_to_label_map.get, tgt_preds)  # map back
 
-        valid_preds.extend(preds.tolist())
+        valid_preds.extend(preds)
         valid_labels.extend(labels.tolist())
 
     mean_multi_recall = get_multiclass_recall(np.array(valid_preds), np.array(valid_labels))
