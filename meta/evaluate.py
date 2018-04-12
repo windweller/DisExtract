@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """
-Code adapted from
-https://github.com/facebookresearch/InferSent/blob/master/train_nli.py
-
-with minor modifications
+Evaluate on PDTB
 """
 
 import os
@@ -22,9 +17,8 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-from data import get_dis, get_batch, build_vocab
-from dissent import DisSent
-from util import get_optimizer, get_labels
+from data import get_merged_data, get_batch, build_vocab, get_dis
+from util import get_labels, get_optimizer
 
 import logging
 
@@ -32,8 +26,9 @@ parser = argparse.ArgumentParser(description='NLI training')
 # paths
 parser.add_argument("--corpus", type=str, default='books_5',
                     help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat")
-parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
+parser.add_argument("--hypes", type=str, default='hypes/pdtb.json', help="load in a hyperparameter file")
 parser.add_argument("--outputdir", type=str, default='sandbox/', help="Output directory")
+parser.add_argument("--modeldir", type=str, default='sandbox/', help="Output directory")
 parser.add_argument("--outputmodelname", type=str, default='dis-model')
 
 # training
@@ -53,6 +48,7 @@ parser.add_argument("--decay", type=float, default=0.99, help="lr decay")
 parser.add_argument("--minlr", type=float, default=1e-5, help="minimum lr")
 parser.add_argument("--max_norm", type=float, default=5., help="max norm (grad clipping)")
 parser.add_argument("--log_interval", type=int, default=100, help="how many batches to log once")
+parser.add_argument("--retrain", action='store_true', help="Retrain the last classifier/decoder on new corpora")
 
 # model
 parser.add_argument("--encoder_type", type=str, default='BLSTMEncoder', help="see list of encoders")
@@ -120,17 +116,28 @@ if params.char and params.corpus == "gw_cn_5":
 """
 DATA
 """
-train, valid, test = get_dis(data_dir, prefix, params.corpus)
-word_vec = build_vocab(train['s1'] + train['s2'] +
-                       valid['s1'] + valid['s2'] +
-                       test['s1'] + test['s2'], glove_path)
+if not params.retrain:
+    test = get_merged_data(data_dir, prefix, params.corpus)
+    word_vec = build_vocab(test['s1'] + test['s2'], glove_path)
 
-# unknown words instead of map to <unk>, this directly takes them out
-for split in ['s1', 's2']:
-    for data_type in ['train', 'valid', 'test']:
-        eval(data_type)[split] = np.array([['<s>'] +
-                                           [word for word in sent.split() if word in word_vec] +
-                                           ['</s>'] for sent in eval(data_type)[split]])
+    # unknown words instead of map to <unk>, this directly takes them out
+    for split in ['s1', 's2']:
+        for data_type in ['test']:
+            eval(data_type)[split] = np.array([['<s>'] +
+                                               [word for word in sent.split() if word in word_vec] +
+                                               ['</s>'] for sent in eval(data_type)[split]])
+else:
+    train, valid, test = get_dis(data_dir, prefix, params.corpus)
+    word_vec = build_vocab(train['s1'] + train['s2'] +
+                           valid['s1'] + valid['s2'] +
+                           test['s1'] + test['s2'], glove_path)
+
+    # unknown words instead of map to <unk>, this directly takes them out
+    for split in ['s1', 's2']:
+        for data_type in ['train', 'valid', 'test']:
+            eval(data_type)[split] = np.array([['<s>'] +
+                                               [word for word in sent.split() if word in word_vec] +
+                                               ['</s>'] for sent in eval(data_type)[split]])
 
 params.word_emb_dim = 300
 
@@ -159,31 +166,35 @@ config_dis_model = {
     'distance': params.distance
 }
 
-if params.cur_epochs == 1:
-    dis_net = DisSent(config_dis_model)
-    logger.info(dis_net)
-else:
-    # if starting epoch is not 1, we resume training
-    # 1. load in model
-    # 2. resume with the previous learning rate
-    model_path = pjoin(params.outputdir, params.outputmodelname + ".pickle")  # this is the best model
-    # this might have conflicts with gpu_idx...
-    dis_net = torch.load(model_path)
-
 # loss
 loss_fn = nn.CrossEntropyLoss()
 loss_fn.size_average = False
 
 # optimizer
 optim_fn, optim_params = get_optimizer(params.optimizer)
-optimizer = optim_fn(dis_net.parameters(), **optim_params)
 
-if params.cur_epochs != 1:
-    optimizer.param_groups[0]['lr'] = params.cur_lr
 
-# cuda by default
-dis_net.cuda()
-loss_fn.cuda()
+class Classifier(nn.Module):
+    def __init__(self, config):
+        super(Classifier, self).__init__()
+
+        # classifier
+        self.fc_dim = config['fc_dim']
+        self.n_classes = config['n_classes']
+        self.enc_lstm_dim = config['enc_lstm_dim']
+
+        self.inputdim = 5 * 2 * self.enc_lstm_dim
+
+        self.classifier = nn.Sequential(
+            nn.Linear(self.inputdim, self.fc_dim),
+            nn.Linear(self.fc_dim, self.fc_dim),
+            nn.Linear(self.fc_dim, self.n_classes)
+        )
+
+    def forward(self, features):
+        output = self.classifier(features)
+        return output
+
 
 """
 TRAIN
@@ -193,24 +204,6 @@ adam_stop = False
 stop_training = False
 lr = optim_params['lr'] if 'sgd' in params.optimizer else None
 
-
-def get_target_within_batch(target):
-    labels_in_batch = np.unique(target).tolist()
-    target_to_label_map = dict(izip(range(len(labels_in_batch)), labels_in_batch))
-    label_to_target_map = dict(izip(labels_in_batch, range(len(labels_in_batch))))
-    # fastest approach: https://stackoverflow.com/questions/35215161/most-efficient-way-to-map-function-over-numpy-array
-    vf = np.vectorize(label_to_target_map.get)
-    mapped_target = vf(target)  # faster for the entire dataset
-    return mapped_target, len(labels_in_batch), target_to_label_map
-
-
-def get_target_to_batch_idx(mapped_target, num_uniq_tgt):
-    # return: {0: [1, 5, 6], 1: [2, 3], ...}
-    # map label index to data point indices inside a batch
-    label_to_batch_idx = {}
-    for i in xrange(num_uniq_tgt):
-        label_to_batch_idx[i] = np.where(mapped_target == i)[0]  # numpy. PyTorch advanced indexing is fine
-    return label_to_batch_idx
 
 def trainepoch(epoch):
     logger.info('\nTRAINING : Epoch ' + str(epoch))
@@ -226,8 +219,7 @@ def trainepoch(epoch):
 
     s1 = train['s1'][permutation]
     s2 = train['s2'][permutation]
-    label = train['label'][permutation]
-    # target = train['label'][permutation]
+    target = train['label'][permutation]
 
     optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * params.decay if epoch > 1 \
                                                                                         and 'sgd' in params.optimizer else \
@@ -235,25 +227,24 @@ def trainepoch(epoch):
     logger.info('Learning rate : {0}'.format(optimizer.param_groups[0]['lr']))
 
     for stidx in range(0, len(s1), params.batch_size):
-        batch_size = len(s1[stidx:stidx + params.batch_size])
-
         # prepare batch
         s1_batch, s1_len = get_batch(s1[stidx:stidx + params.batch_size],
                                      word_vec)
         s2_batch, s2_len = get_batch(s2[stidx:stidx + params.batch_size],
                                      word_vec)
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-
-        target, num_uniq_tgts, _ = get_target_within_batch(label[stidx:stidx + params.batch_size])
-        tgt_batch = Variable(torch.LongTensor(target)).cuda()
-
-        target_to_batch_idx = get_target_to_batch_idx(target, num_uniq_tgts)
-
-        # tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
-        k = batch_size  # actual batch size
+        tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
+        k = s1_batch.size(1)  # actual batch size
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), target_to_batch_idx, num_uniq_tgts, batch_size)
+        # u = dis_net.encoder((s1_batch, s1_len))
+        # v = dis_net.encoder((s2_batch, s2_len))
+        #
+        # features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1).detach()
+        #
+        # output = classifier(features)
+
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
@@ -338,9 +329,7 @@ def get_multiclass_prec(preds, y_label):
     return labels_accu
 
 
-def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
-    global dis_net
-
+def evaluate(epoch, eval_type='test', final_eval=False, save_confusion=False):
     dis_net.eval()
     correct = 0.
     global val_acc_best, lr, stop_training, adam_stop
@@ -348,38 +337,31 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     if eval_type == 'valid':
         logger.info('\nVALIDATION : Epoch {0}'.format(epoch))
 
+    # it will only be "valid" during retraining (fine-tuning)
     s1 = valid['s1'] if eval_type == 'valid' else test['s1']
     s2 = valid['s2'] if eval_type == 'valid' else test['s2']
-    tgt_label = valid['label'] if eval_type == 'valid' else test['label']
-    # target = valid['label'] if eval_type == 'valid' else test['label']
+    target = valid['label'] if eval_type == 'valid' else test['label']
 
     valid_preds, valid_labels = [], []
 
     for i in range(0, len(s1), params.batch_size):
-        batch_size = len(s1[i:i + params.batch_size])
-
         # prepare batch
         s1_batch, s1_len = get_batch(s1[i:i + params.batch_size], word_vec)
         s2_batch, s2_len = get_batch(s2[i:i + params.batch_size], word_vec)
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-
-        target, num_uniq_tgts, target_to_label_map = get_target_within_batch(tgt_label[i:i + params.batch_size])
-        tgt_batch = Variable(torch.LongTensor(target)).cuda()
-
-        target_to_batch_idx = get_target_to_batch_idx(target, num_uniq_tgts)
+        tgt_batch = Variable(torch.LongTensor(target[i:i + params.batch_size])).cuda()
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), target_to_batch_idx, num_uniq_tgts, batch_size)
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
 
         # we collect samples
-        labels = tgt_label[i:i + params.batch_size]  # actual real bona-fide labels
-        tgt_preds = pred.cpu().numpy()
-        preds = map(target_to_label_map.get, tgt_preds) # map back
+        labels = target[i:i + params.batch_size]
+        preds = pred.cpu().numpy()
 
-        valid_preds.extend(preds)
+        valid_preds.extend(preds.tolist())
         valid_labels.extend(labels.tolist())
 
     mean_multi_recall = get_multiclass_recall(np.array(valid_preds), np.array(valid_labels))
@@ -398,11 +380,6 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     logger.info(multiclass_recall_msg)
     logger.info(multiclass_prec_msg)
 
-    # if params.corpus == "gw_cn_5" or params.corpus == "gw_es_5":
-    #     print(multiclass_recall_msg)
-    #     print(multiclass_prec_msg)
-
-    # save model
     eval_acc = round(100 * correct / len(s1), 2)
     if final_eval:
         logger.info('finalgrep : accuracy {0} : {1}'.format(eval_type, eval_acc))
@@ -420,7 +397,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
             for pair in izip(valid_preds, valid_labels):
                 writer.writerow({'preds': pair[0], 'labels': pair[1]})
 
-    # there is no re-loading of previous best model btw
+    # save model, anneal learning rate, etc.
     if eval_type == 'valid' and epoch <= params.n_epochs:
         if eval_acc > val_acc_best:
             logger.info('saving model at epoch {0}'.format(epoch))
@@ -450,33 +427,56 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
                 stop_training = adam_stop
                 adam_stop = True
 
-            # now we finished annealing, we can reload
-            if params.reload_val:
-                del dis_net
-                dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
-                logger.info("Load in previous best epoch")
     return eval_acc
 
 
 """
-Train model on Discourse Classification task
+Evaluate model on different tasks
 """
 if __name__ == '__main__':
-    epoch = params.cur_epochs  # start at 1
 
-    while not stop_training and epoch <= params.n_epochs:
-        train_acc = trainepoch(epoch)
-        eval_acc = evaluate(epoch, 'valid')
-        epoch += 1
+    map_locations = {}
+    for d in range(4):
+        if d != params.gpu_id:
+            map_locations['cuda:{}'.format(d)] = "cuda:{}".format(params.gpu_id)
 
-    # Run best model on test set.
-    del dis_net
-    dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
+    if params.cur_epochs != 1:
+        model_path = pjoin(params.modeldir, params.outputmodelname + "-{}".format(
+            params.cur_epochs) + ".pickle")  # this is the best model
+        dis_net = torch.load(model_path, map_location=map_locations)
+    else:
+        # this loads in the final model, last epoch
+        dis_net = torch.load(os.path.join(params.modeldir, params.outputmodelname + ".pickle"))
 
-    logger.info('\nTEST : Epoch {0}'.format(epoch))
-    evaluate(1e6, 'valid', True)
-    evaluate(0, 'test', True, True)  # save confusion results on test data
+    if params.retrain:
+        # freeze dis_net encoder params..hopefully this works
+        for p in dis_net.encoder.parameters():
+            p.requires_grad = False
 
-    # Save encoder instead of full model
-    torch.save(dis_net.encoder,
-               os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
+        optimizer = optim_fn(dis_net.classifier.parameters(), **optim_params)
+
+    # cuda by default
+    dis_net.cuda()
+    loss_fn.cuda()
+
+    if not params.retrain:
+        logger.info('\nEvaluating on {} : Last Epoch'.format(params.hypes[6:-5]))  # corpus name
+        # evaluate(1e6, 'valid', True)
+        evaluate(0, 'test', True, True)  # save confusion results on test data
+    else:
+        epoch = params.cur_epochs  # start at 1
+
+        while not stop_training and epoch <= params.n_epochs:
+            train_acc = trainepoch(epoch)
+            eval_acc = evaluate(epoch, 'valid')
+            epoch += 1
+
+        # Run best model on test set.
+        del dis_net
+        dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
+
+        evaluate(1e6, 'valid', True)
+        logger.info('\nTEST : Epoch {0}'.format(epoch))
+        evaluate(0, 'test', True, True)
+        # the last model is already saved, saving encoder means nothing
+        # once retrain is done, we can just call normal evaluate.py to evaluate full model

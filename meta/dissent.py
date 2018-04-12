@@ -301,18 +301,29 @@ class DisSent(nn.Module):
         # can't use lambda function cause it won't pickle!!
         self.b, self.c = 0, 0
 
+        # non-linear will be slower? I think...
+        # if self.distance == 'nonlinear':
+        # we attach a "relation" network
+
     def l2_vec(self, x, p):
         # x: (batch_size, hid_dim)
         # p: (hid_dim, class_size)
         return -(torch.norm(x, 2, dim=1).view(-1, 1).expand(-1, self.c) ** 2 + \
                  torch.norm(p, 2, dim=0).view(1, -1).expand(self.b, -1) ** 2 \
-                 - 2 * torch.matmul(x, p))  # this part is wrong
+                 - 2 * torch.matmul(x, p))
 
         # y_hat = Variable(torch.zeros(self.b, self.c)).cuda()
         # for b_i in xrange(self.b):
         #     for c_i in xrange(self.c):
         #         y_hat[b_i, c_i] = torch.dot(x[b_i, :] - p[:, c_i], x[b_i, :] - p[:, c_i])
         # return y_hat
+
+    # hmmm...unitize two vectors probably won't work...?
+    def l2_norm_vec(self, x, p):
+        # unitize two vectors first
+        x_norm = x / x.norm(2, dim=1)
+        p_norm = p / p.norm(2, dim=0)
+        return self.l2_vec(x_norm, p_norm)
 
     def cos_vec(self, x, p):
         return torch.matmul(x, p) / torch.ger(x.norm(2, dim=1), p.norm(2, dim=0))
@@ -350,6 +361,8 @@ class DisSent(nn.Module):
             # nicely, self.b and self.c will dynamically change
             # in forward() method
             y_hat = self.l2_vec(sent_reps, proto_vecs)
+        elif self.distance == 'l2_norm':
+            y_hat = self.l2_norm_vec(sent_reps, proto_vecs)
         elif self.distance == 'cos':
             y_hat = self.cos_vec(sent_reps, proto_vecs)
         elif self.distance == 'dot':
