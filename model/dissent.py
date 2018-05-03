@@ -277,9 +277,16 @@ class DisSent(nn.Module):
         self.encoder_type = config['encoder_type']
         self.dpout_fc = config['dpout_fc']
         self.tied_weights = config['tied_weights']
+        self.s1_only = config['s1_only']
+        self.s2_only = config['s2_only']
+
+        assert not(self.s1_only is True and self.s2_only is True)
 
         self.encoder = eval(self.encoder_type)(config)
-        self.inputdim = 5 * 2 * self.enc_lstm_dim if not self.tied_weights else 5 * self.enc_lstm_dim
+        if self.s1_only or self.s2_only:
+            self.inputdim = 2 * self.enc_lstm_dim if not self.tied_weights else self.enc_lstm_dim
+        else:
+            self.inputdim = 5 * 2 * self.enc_lstm_dim if not self.tied_weights else 5 * self.enc_lstm_dim
 
         # If fully connected layer dimension is set to 0, we are not using it
         if self.fc_dim != 0:
@@ -303,10 +310,16 @@ class DisSent(nn.Module):
 
     def forward(self, s1, s2):
         # s1 : (s1, s1_len)
-        u = self.encoder(s1)
-        v = self.encoder(s2)
+        if self.s1_only:
+            features = self.encoder(s1)
+        elif self.s2_only:
+            features = self.encoder(s2)
+        else:
+            u = self.encoder(s1)
+            v = self.encoder(s2)
 
-        features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1)
+            features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1)
+
         output = self.classifier(features)
         return output
 
