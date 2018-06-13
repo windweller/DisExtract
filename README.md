@@ -1,3 +1,8 @@
+## Note
+
+This is the official repo that we used to train for DisSent paper. It is not yet cleaned up and not ready for official release. But it has come to our notice that the community still lacks efficient sentence representation models (public ones), so we are willing to give access to people on an individual bases before the publishing of our paper. 
+
+Please contact anie@stanford.edu if you want access to the trained model and loading script! Thank you!
 
 ## Dependency Pattern Instructions
 
