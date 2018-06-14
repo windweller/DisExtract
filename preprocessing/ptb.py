@@ -1,12 +1,10 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-
 """
-This goes through the corpus,
-select sentences that have the discourse marker
-filtering based on length of sentence (so we can discard ill-formed sentences) 100 words
-and save them as intermediate files
-shuffle within each discourse marker
+This file loads in PTB files
+
+We do it in two stages:
+1. Extract sentences that have discourse marker that we want
+2. Parse the extracted sentences using dependency parsing.
+3. Use producer to produce training files for the model
 """
 
 import os
@@ -15,7 +13,6 @@ import json
 import argparse
 
 import logging
-import nltk
 from util import rephrase
 from os.path import join as pjoin
 
@@ -23,16 +20,6 @@ from parser import depparse_ssplit, setup_corenlp
 from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS, EN_FIVE_DISCOURSE_MARKERS, EN_EIGHT_DISCOURSE_MARKERS
 
 import sys
-
-"""
-This file contains WikiText-specific information
-
-1. Sentence tokenization (make it config)
-2. Grab pairs of sentences where the 2nd sentence has one of the discourse markers
-3. Save them, a file for each discourse markers (a json file with [,] is good enough)
-for_example.txt, in side it's [{prev: "", sent: ""}]
-"""
-
 
 parser = argparse.ArgumentParser(description='DisExtract BookCorpus')
 
@@ -70,8 +57,8 @@ Default json file loading
 with open(args.json, 'rb') as f:
     json_config = json.load(f)
 
-wikitext_dir = json_config['wikitext_dir']
-wikitext_files = ['wiki.train.tokens', 'wiki.valid.tokens', 'wiki.test.tokens']
+ptb_dir = json_config['ptb_dir']
+ptb_files = ['ptb.train.txt', 'ptb.valid.txt', 'ptb.test.txt']
 
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
@@ -104,48 +91,35 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         previous_sentence_split = None
         FIRST = True
         with io.open(file_path, 'rU', encoding="utf-8") as f:
-            for i, line in enumerate(f):
+            for i, sentence in enumerate(f):
+                words = rephrase(sentence).split()  # replace "for example"
+                for marker in discourse_markers:
+                    if marker == "for example":
+                        proxy_marker = "for_example"
+                    else:
+                        proxy_marker = marker
 
-                # this is wikitext-103, so we need to split the paragraph
-                # we also need to ignore the header of each paragraph
-                if len(line.strip()) == 0:
-                    continue
+                    # [min_len, max_len) like [5, 10)
+                    if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
+                        continue
 
-                if line.split()[0] == "=" and line.split()[-1] == "=":
-                    continue
+                    # length-based filtering
+                    if not FIRST:
+                        # because parser might request previous sentence
+                        # we are here to control the balance. This is not s1 / s2 ratio.
+                        len2 = len(previous_sentence_split)
+                        ratio = float(len2) / len(words)
 
-                sentence_list = nltk.sent_tokenize(line)
-
-                for sentence in sentence_list:
-
-                    words = rephrase(sentence).split()  # replace "for example"
-                    for marker in discourse_markers:
-                        if marker == "for example":
-                            proxy_marker = "for_example"
-                        else:
-                            proxy_marker = marker
-
-                        # [min_len, max_len) like [5, 10)
-                        if len(words) >= args.max_seq_len or len(words) < args.min_seq_len:
+                        if ratio <= args.min_ratio or ratio >= args.max_ratio:
                             continue
 
-                        # length-based filtering
-                        if not FIRST:
-                            # because parser might request previous sentence
-                            # we are here to control the balance. This is not s1 / s2 ratio.
-                            len2 = len(previous_sentence_split)
-                            ratio = float(len2) / len(words)
+                    # all bookcorpus text are lower case
+                    if proxy_marker in words:
+                        sentences[marker]["sentence"].append(sentence)
+                        sentences[marker]["previous"].append(previous_sentence)
 
-                            if ratio <= args.min_ratio or ratio >= args.max_ratio:
-                                continue
-
-                        # all bookcorpus text are lower case
-                        if proxy_marker in words:
-                            sentences[marker]["sentence"].append(sentence)
-                            sentences[marker]["previous"].append(previous_sentence)
-
-                    previous_sentence = sentence
-                    previous_sentence_split = words
+                previous_sentence = sentence
+                previous_sentence_split = words
 
                 if i % args.filter_print_every == 0:
                     logger.info("processed {}".format(i))
@@ -286,8 +260,9 @@ def split_parsed_sentences(source_dir, marker_set_tag):
 
 if __name__ == '__main__':
     if args.filter:
-        collect_raw_sentences(wikitext_dir, wikitext_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
+        collect_raw_sentences(ptb_dir, ptb_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:
-        parse_filtered_sentences(wikitext_dir, wikitext_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
+        parse_filtered_sentences(ptb_dir, ptb_files, DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.split:
-        split_parsed_sentences(wikitext_dir, DISCOURSE_MARKER_SET_TAG)
+        split_parsed_sentences(ptb_dir, DISCOURSE_MARKER_SET_TAG)
+

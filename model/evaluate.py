@@ -1,10 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """
-Code adapted from
-https://github.com/facebookresearch/InferSent/blob/master/train_nli.py
-
-with minor modifications
+Evaluate on PDTB
 """
 
 import os
@@ -22,24 +17,26 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-from data import get_dis, get_batch, build_vocab
-from dissent import DisSent
-from util import get_optimizer, get_labels
+from data import get_merged_data, get_batch, build_vocab, get_dis
+from util import get_labels, get_optimizer
 
 import logging
 
 parser = argparse.ArgumentParser(description='NLI training')
 # paths
-parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat")
-parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
+parser.add_argument("--corpus", type=str, default='books_5',
+                    help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat")
+parser.add_argument("--hypes", type=str, default='hypes/pdtb.json', help="load in a hyperparameter file")
 parser.add_argument("--outputdir", type=str, default='sandbox/', help="Output directory")
+parser.add_argument("--modeldir", type=str, default='sandbox/', help="Output directory")
 parser.add_argument("--outputmodelname", type=str, default='dis-model')
 
 # training
 parser.add_argument("--n_epochs", type=int, default=10)
 parser.add_argument("--cur_epochs", type=int, default=1)
 parser.add_argument("--cur_lr", type=float, default=0.1)
-parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set this otherwise resumed model will be saved by default")
+parser.add_argument("--cur_valid", type=float, default=-1e10,
+                    help="must set this otherwise resumed model will be saved by default")
 
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
@@ -51,6 +48,7 @@ parser.add_argument("--decay", type=float, default=0.99, help="lr decay")
 parser.add_argument("--minlr", type=float, default=1e-5, help="minimum lr")
 parser.add_argument("--max_norm", type=float, default=5., help="max norm (grad clipping)")
 parser.add_argument("--log_interval", type=int, default=100, help="how many batches to log once")
+parser.add_argument("--retrain", action='store_true', help="Retrain the last classifier/decoder on new corpora")
 
 # model
 parser.add_argument("--encoder_type", type=str, default='BLSTMEncoder', help="see list of encoders")
@@ -59,10 +57,9 @@ parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num lay
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
-parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
+parser.add_argument("--reload_val", action='store_true',
+                    help="Reload the previous best epoch on validation, should be used with tied weights")
 parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
-parser.add_argument("--s1", action='store_true', help="training only on S1")
-parser.add_argument("--s2", action='store_true', help="training only on S2")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -113,17 +110,28 @@ if params.char and params.corpus == "gw_cn_5":
 """
 DATA
 """
-train, valid, test = get_dis(data_dir, prefix, params.corpus)
-word_vec = build_vocab(train['s1'] + train['s2'] +
-                       valid['s1'] + valid['s2'] +
-                       test['s1'] + test['s2'], glove_path)
+if not params.retrain:
+    test = get_merged_data(data_dir, prefix, params.corpus)
+    word_vec = build_vocab(test['s1'] + test['s2'], glove_path)
 
-# unknown words instead of map to <unk>, this directly takes them out
-for split in ['s1', 's2']:
-    for data_type in ['train', 'valid', 'test']:
-        eval(data_type)[split] = np.array([['<s>'] +
-                                           [word for word in sent.split() if word in word_vec] +
-                                           ['</s>'] for sent in eval(data_type)[split]])
+    # unknown words instead of map to <unk>, this directly takes them out
+    for split in ['s1', 's2']:
+        for data_type in ['test']:
+            eval(data_type)[split] = np.array([['<s>'] +
+                                               [word for word in sent.split() if word in word_vec] +
+                                               ['</s>'] for sent in eval(data_type)[split]])
+else:
+    train, valid, test = get_dis(data_dir, prefix, params.corpus)
+    word_vec = build_vocab(train['s1'] + train['s2'] +
+                           valid['s1'] + valid['s2'] +
+                           test['s1'] + test['s2'], glove_path)
+
+    # unknown words instead of map to <unk>, this directly takes them out
+    for split in ['s1', 's2']:
+        for data_type in ['train', 'valid', 'test']:
+            eval(data_type)[split] = np.array([['<s>'] +
+                                               [word for word in sent.split() if word in word_vec] +
+                                               ['</s>'] for sent in eval(data_type)[split]])
 
 params.word_emb_dim = 300
 
@@ -151,31 +159,35 @@ config_dis_model = {
     'use_cuda': True,
 }
 
-if params.cur_epochs == 1:
-    dis_net = DisSent(config_dis_model)
-    logger.info(dis_net)
-else:
-    # if starting epoch is not 1, we resume training
-    # 1. load in model
-    # 2. resume with the previous learning rate
-    model_path = pjoin(params.outputdir, params.outputmodelname + ".pickle")  # this is the best model
-    # this might have conflicts with gpu_idx...
-    dis_net = torch.load(model_path)
-
 # loss
 loss_fn = nn.CrossEntropyLoss()
 loss_fn.size_average = False
 
 # optimizer
 optim_fn, optim_params = get_optimizer(params.optimizer)
-optimizer = optim_fn(dis_net.parameters(), **optim_params)
 
-if params.cur_epochs != 1:
-    optimizer.param_groups[0]['lr'] = params.cur_lr
 
-# cuda by default
-dis_net.cuda()
-loss_fn.cuda()
+class Classifier(nn.Module):
+    def __init__(self, config):
+        super(Classifier, self).__init__()
+
+        # classifier
+        self.fc_dim = config['fc_dim']
+        self.n_classes = config['n_classes']
+        self.enc_lstm_dim = config['enc_lstm_dim']
+
+        self.inputdim = 5 * 2 * self.enc_lstm_dim
+
+        self.classifier = nn.Sequential(
+            nn.Linear(self.inputdim, self.fc_dim),
+            nn.Linear(self.fc_dim, self.fc_dim),
+            nn.Linear(self.fc_dim, self.n_classes)
+        )
+
+    def forward(self, features):
+        output = self.classifier(features)
+        return output
+
 
 """
 TRAIN
@@ -218,6 +230,13 @@ def trainepoch(epoch):
         k = s1_batch.size(1)  # actual batch size
 
         # model forward
+        # u = dis_net.encoder((s1_batch, s1_len))
+        # v = dis_net.encoder((s2_batch, s2_len))
+        #
+        # features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1).detach()
+        #
+        # output = classifier(features)
+
         output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
 
         pred = output.data.max(1)[1]
@@ -303,9 +322,7 @@ def get_multiclass_prec(preds, y_label):
     return labels_accu
 
 
-def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
-    global dis_net
-
+def evaluate(epoch, eval_type='test', final_eval=False, save_confusion=False):
     dis_net.eval()
     correct = 0.
     global val_acc_best, lr, stop_training, adam_stop
@@ -313,6 +330,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     if eval_type == 'valid':
         logger.info('\nVALIDATION : Epoch {0}'.format(epoch))
 
+    # it will only be "valid" during retraining (fine-tuning)
     s1 = valid['s1'] if eval_type == 'valid' else test['s1']
     s2 = valid['s2'] if eval_type == 'valid' else test['s2']
     target = valid['label'] if eval_type == 'valid' else test['label']
@@ -355,11 +373,6 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     logger.info(multiclass_recall_msg)
     logger.info(multiclass_prec_msg)
 
-    # if params.corpus == "gw_cn_5" or params.corpus == "gw_es_5":
-    #     print(multiclass_recall_msg)
-    #     print(multiclass_prec_msg)
-
-    # save model
     eval_acc = round(100 * correct / len(s1), 2)
     if final_eval:
         logger.info('finalgrep : accuracy {0} : {1}'.format(eval_type, eval_acc))
@@ -377,7 +390,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
             for pair in izip(valid_preds, valid_labels):
                 writer.writerow({'preds': pair[0], 'labels': pair[1]})
 
-    # there is no re-loading of previous best model btw
+    # save model, anneal learning rate, etc.
     if eval_type == 'valid' and epoch <= params.n_epochs:
         if eval_acc > val_acc_best:
             logger.info('saving model at epoch {0}'.format(epoch))
@@ -398,8 +411,8 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
             if 'sgd' in params.optimizer:
                 optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] / params.lrshrink
                 logger.info('Shrinking lr by : {0}. New lr = {1}'
-                      .format(params.lrshrink,
-                              optimizer.param_groups[0]['lr']))
+                            .format(params.lrshrink,
+                                    optimizer.param_groups[0]['lr']))
                 if optimizer.param_groups[0]['lr'] < params.minlr:
                     stop_training = True
             if 'adam' in params.optimizer:
@@ -407,33 +420,56 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
                 stop_training = adam_stop
                 adam_stop = True
 
-            # now we finished annealing, we can reload
-            if params.reload_val:
-                del dis_net
-                dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
-                logger.info("Load in previous best epoch")
     return eval_acc
 
 
 """
-Train model on Discourse Classification task
+Evaluate model on different tasks
 """
 if __name__ == '__main__':
-    epoch = params.cur_epochs  # start at 1
 
-    while not stop_training and epoch <= params.n_epochs:
-        train_acc = trainepoch(epoch)
-        eval_acc = evaluate(epoch, 'valid')
-        epoch += 1
+    map_locations = {}
+    for d in range(4):
+        if d != params.gpu_id:
+            map_locations['cuda:{}'.format(d)] = "cuda:{}".format(params.gpu_id)
 
-    # Run best model on test set.
-    del dis_net
-    dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
+    if params.cur_epochs != 1:
+        model_path = pjoin(params.modeldir, params.outputmodelname + "-{}".format(
+            params.cur_epochs) + ".pickle")  # this is the best model
+        dis_net = torch.load(model_path, map_location=map_locations)
+    else:
+        # this loads in the final model, last epoch
+        dis_net = torch.load(os.path.join(params.modeldir, params.outputmodelname + ".pickle"))
 
-    logger.info('\nTEST : Epoch {0}'.format(epoch))
-    evaluate(1e6, 'valid', True)
-    evaluate(0, 'test', True, True)  # save confusion results on test data
+    if params.retrain:
+        # freeze dis_net encoder params..hopefully this works
+        for p in dis_net.encoder.parameters():
+            p.requires_grad = False
 
-    # Save encoder instead of full model
-    torch.save(dis_net.encoder,
-               os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
+        optimizer = optim_fn(dis_net.classifier.parameters(), **optim_params)
+
+    # cuda by default
+    dis_net.cuda()
+    loss_fn.cuda()
+
+    if not params.retrain:
+        logger.info('\nEvaluating on {} : Last Epoch'.format(params.hypes[6:-5]))  # corpus name
+        # evaluate(1e6, 'valid', True)
+        evaluate(0, 'test', True, True)  # save confusion results on test data
+    else:
+        epoch = params.cur_epochs  # start at 1
+
+        while not stop_training and epoch <= params.n_epochs:
+            train_acc = trainepoch(epoch)
+            eval_acc = evaluate(epoch, 'valid')
+            epoch += 1
+
+        # Run best model on test set.
+        del dis_net
+        dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
+
+        evaluate(1e6, 'valid', True)
+        logger.info('\nTEST : Epoch {0}'.format(epoch))
+        evaluate(0, 'test', True, True)
+        # the last model is already saved, saving encoder means nothing
+        # once retrain is done, we can just call normal evaluate.py to evaluate full model

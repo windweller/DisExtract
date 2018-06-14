@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+
 """
 DisSent model
 
-Code from https://github.com/facebookresearch/InferSent/blob/master/models.py
+Code based on https://github.com/facebookresearch/InferSent/blob/master/models.py
 """
 
 import numpy as np
@@ -83,7 +85,7 @@ class BLSTMEncoder(nn.Module):
         sent = sent.index_select(1, Variable(idx_sort))
 
         # apply input dropout
-        sent = self.emb_drop(sent)
+        # sent = self.emb_drop(sent)
 
         # Handling padding in Recurrent Networks
         sent_packed = nn.utils.rnn.pack_padded_sequence(sent, sent_len)

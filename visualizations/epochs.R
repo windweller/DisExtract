@@ -1,4 +1,4 @@
-source("~/Settings/startup.R")
+source("startup.R")
 df_raw = read.csv("dissent_data.csv")
 df_selected = df_raw %>%
   mutate(tag = paste(X, Epoch)) %>%
@@ -27,13 +27,20 @@ df %>% filter(Task!="ACC_AVG") %>%
   filter(model %in% c(
     "DisSent 5", "DisSent 8", "DisSent ALL"
   )) %>%
+  filter(Task %in% c(
+    "MR", "CR", "SUBJ", "MPQA", "SST",
+    "TREC", "SICKEntailment", "MRPC_ACC", "DIS"
+  )) %>%
   group_by(Epoch, model) %>%
   summarise(Performance = mean(Performance)) %>%
-  ggplot(., aes(x=Epoch, y=Performance, colour=model)) +
+  ggplot(., aes(x=Epoch, y=Performance, colour=model, linetype=model)) +
   geom_point() +
   geom_line() +
-  scale_x_continuous(breaks=1:12)
-ggsave("epochs.png", width=6, height=4)
+  scale_x_continuous(breaks=1:12) +
+  xlab("Training Epoch") +
+  ylab("Average Accuracy Across Tasks") +
+  scale_colour_brewer(type="qual", palette = 6)
+ggsave("epochs.png", width=8, height=5)
 
 ### plot models across epochs
 best_model = df %>% filter(model == "DisSent 5")

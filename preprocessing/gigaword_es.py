@@ -66,6 +66,7 @@ import re
 import nltk
 spanish_tokenizer = nltk.data.load('tokenizers/punkt/spanish.pickle')
 
+
 def process_sent(sent, lang="sp"):
     #sent = re.sub(r"\(.+\)", "", sent)  # get rid of parentheses (many content inside are English/other languages)
 
@@ -77,18 +78,6 @@ def process_sent(sent, lang="sp"):
     sent = sent.replace("&amp;", '&')
     sent = sent.replace("&apos;", '\'')
     sent = sent.replace("&quot;", '"')
-
-    #if lang == "ch":
-    #    sent = re.sub(r'[A-Z a-z.]+', "", sent)  # get rid of English characters
-    #    # and all spaces in the sentence. This will only work in Chinese
-    #    sent = re.sub(r'[0-9]+', "", sent)
-
-    #sent = re.sub(r"\(", "", sent)
-    #sent = re.sub(r"\)", "", sent)
-
-    # resolve weird 「 symbol
-    #sent = sent.replace("「", '"')
-    #sent = sent.replace("」", '"')
 
     return sent
 
