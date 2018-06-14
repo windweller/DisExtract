@@ -50,6 +50,7 @@ parser.add_argument("--out_prefix", type=str, required=True,
 parser.add_argument("--balanced", action='store_true', help="use this flag to cut all markers off at the minimum count")
 parser.add_argument("--count_per_marker", type=int, default=-1, help="use this for modifying the cutoff for a 'balanced' dataset, by default perfectly balanced")
 parser.add_argument("--exclude", type=str, default="")
+parser.add_argument("--include", type=str, default="")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
@@ -96,7 +97,11 @@ if __name__ == '__main__':
     filtered_examples = {}
     number_of_filtered_examples = 0
     for ex in examples:
-        s1, s2, label = ex[:-1].split('\t')
+        try:
+          s1, s2, label = ex[:-1].split('\t')
+        except:
+          continue
+          # 30 sentences extracted from spanish gigaword had tabs in them: oops :(
         ratio = float(len(s1.split())) / max(len(s2.split()), 0.0001)
         if len(s1.split()) < args.min_seq_len or args.max_seq_len < len(s1.split()):
             continue
@@ -122,12 +127,13 @@ if __name__ == '__main__':
     minimum_count_per_marker = min(data_dist.values())
 
     exclude_marker_list = args.exclude.split(",")
+    include_marker_list = args.include.split(",")
 
     examples = []
     for label in filtered_examples:
         if label in exclude_marker_list:
             pass
-        else:
+        elif (include_marker_list)==0 or label in include_marker_list:
             if args.balanced:
                 random.shuffle(filtered_examples[label])
                 if args.count_per_marker == -1:
