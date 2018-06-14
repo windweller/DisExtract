@@ -16,7 +16,7 @@ parser.add_argument("--features", type=str, default="bow", help="arora|bow|avg|m
 parser.add_argument("--ndims", type=int, default=1000)
 parser.add_argument("--min_count", type=int, default=3)
 parser.add_argument("--run_through_subset", type=bool, default=False)
-
+parser.add_argument("--concat_sentences", type=bool, default=False)
 
 params, _ = parser.parse_known_args()
 print(params)
@@ -77,7 +77,53 @@ def get_most_common_class_accuracies():
 	n_total = sum([test_counter[label] for label in test_counter])
 	print(float(n_correct)/n_total)
 
-def run_baseline_BoW_model(params):
+def get_features_combined(params):
+	corpus = read_corpus(params.corpus)
+	if params.run_through_subset:
+		corpus["train"]["s1"] = corpus["train"]["s1"][:100]
+		corpus["train"]["s2"] = corpus["train"]["s2"][:100]
+		corpus["train"]["label"] = corpus["train"]["label"][:100]
+		corpus["test"]["s1"] = corpus["test"]["s1"][:100]
+		corpus["test"]["s2"] = corpus["test"]["s2"][:100]
+		corpus["test"]["label"] = corpus["test"]["label"][:100]
+	vectorizer = sklearn.feature_extraction.DictVectorizer()
+	train_dicts = []
+	test_dicts = []
+	train_labels = []
+	test_labels = []
+	all_features = Counter([])
+	print("collecting combined ngrams")
+	for i in range(len(corpus["train"]["s1"])):
+		s1 = corpus["train"]["s1"][i]
+		s2 = corpus["train"]["s2"][i]
+		label = corpus["train"]["label"][i]
+		features = ngrams(s1) + ngrams(s2)
+		all_features.update(features)
+		train_labels.append(label)
+		train_dicts.append(Counter(features))
+		if i%100000==0:
+                        print("{}K of {}K in training set processed".format(round(i/1000), round(len(corpus["train"]["s1"])/1000)))
+	for i in range(len(corpus["test"]["s1"])):
+		s1 = corpus["test"]["s1"][i]
+		s2 = corpus["test"]["s2"][i]
+		label = corpus["test"]["label"][i]
+		features = ngrams(s1) + ngrams(s2)
+		all_features.update(features)
+		test_labels.append(label)
+		test_dicts.append(Counter(features))
+		if i%100000==0:
+			print("{}K of {}K in training set processed".format(round(i/1000), round(len(corpus["test"]["s1"])/1000)))
+	all_dicts = train_dicts + test_dicts
+	support = [feature for feature in all_features if all_features[feature]>=params.min_count]
+	print("vectorizing dataset")
+	feat_matrix = vectorizer.fit(all_dicts)
+	vectorizer.restrict(support)
+	train = vectorizer.transform(train_dicts)
+	test = vectorizer.transform(test_dicts)
+	return (train, test, train_labels, test_labels)
+
+
+def get_features(params):
 	corpus = read_corpus(params.corpus)
 	if params.run_through_subset:
 		corpus["train"]["s1"] = corpus["train"]["s1"][:100]
@@ -120,7 +166,7 @@ def run_baseline_BoW_model(params):
 		if i%100000==0:
 			print("{}K of {}K in test set processed".format(round(i/1000), round(len(corpus["test"]["s1"])/1000)))
 	all_dicts = train_dicts_1 + train_dicts_2 + test_dicts_1 + test_dicts_2
-	support = [feature for feature in all_features if all_features[feature]>=3]
+	support = [feature for feature in all_features if all_features[feature]>=params.min_count]
 	print("vectorizing dataset")
 	feat_matrix = vectorizer.fit(all_dicts)
 	vectorizer.restrict(support)
@@ -128,15 +174,19 @@ def run_baseline_BoW_model(params):
 	train2 = vectorizer.transform(train_dicts_2)
 	test1 = vectorizer.transform(test_dicts_1)
 	test2 = vectorizer.transform(test_dicts_2)
-	train_X = hstack([train1, train2]).toarray()
-	test_X = hstack([test1, test2]).toarray()
+	return (train1, train2, test1, test2, train_labels, test_labels)
+
+def aggregate_features(params):
+	train1, train2, test1, test2, train_labels, test_labels = get_features(params)
+	return (hstack([train1, train2]).toarray(), hstack([test1, test2]).toarray(), train_labels, test_labels)
+
+def run_baseline_BoW_model(params):
+	if params.concat_sentences:
+		train_X, test_X, train_y, test_y = aggregate_features(params)
+	else:
+		train_X, test_X, train_y, test_y = get_features_combined(params)
 	print(train_X.shape)
-	print(train_X.shape)
-	#print(type(train1))
-	#train_X = np.concatenate((train1, train2), axis=0)
-	#test_X = np.concatenate((test1, test2), axis=1)
-	train_y = train_labels
-	test_y = test_labels
+	print(test_X.shape)
 	print("fitting model")
 	model = sklearn.linear_model.LogisticRegression(max_iter=100, verbose=0, fit_intercept=True)
 	model.fit(train_X, train_y)
