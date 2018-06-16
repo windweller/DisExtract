@@ -188,14 +188,16 @@ class TextEncoder(object):
                 text = self.nlp(text_standardize(ftfy.fix_text(text))) if not lazy else text.split()
                 text_tokens = []
                 for token in text:
-                    text_tokens.extend([self.encoder.get(t, 0) for t in self.bpe(token.text.lower()).split(' ')])
+                    token_text = token.text if not lazy else token
+                    text_tokens.extend([self.encoder.get(t, 0) for t in self.bpe(token_text.lower()).split(' ')])
                 texts_tokens.append(text_tokens)
         else:
             for text in texts:
                 text = self.nlp(text_standardize(ftfy.fix_text(text))) if not lazy else text.split()
                 text_tokens = []
                 for token in text:
-                    text_tokens.extend([self.encoder.get(t, 0) for t in self.bpe(token.text.lower()).split(' ')])
+                    token_text = token.text if not lazy else token
+                    text_tokens.extend([self.encoder.get(t, 0) for t in self.bpe(token_text.lower()).split(' ')])
                 texts_tokens.append(text_tokens)
         return texts_tokens
 
