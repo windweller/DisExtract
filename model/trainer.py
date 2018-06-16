@@ -149,6 +149,8 @@ config_dis_model = {
     'encoder_type': params.encoder_type,
     'tied_weights': params.tied_weights,
     'use_cuda': True,
+    's1_only': params.s1,
+    's2_only': params.s2
 }
 
 if params.cur_epochs == 1:
