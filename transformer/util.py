@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """
 Adapted from
 https://github.com/facebookresearch/InferSent/blob/master/mutils.py
