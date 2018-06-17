@@ -70,8 +70,11 @@ def list_to_map(dis_label):
     return dis_map
 
 def get_dis(data_dir, prefix, discourse_tag="books_5"):
+    # we are not padding anything in here, this is just repeating
     s1 = {}
     s2 = {}
+    y_s1 = {}
+    y_s2 = {}
     target = {}
 
     if discourse_tag == "books_5":
@@ -103,6 +106,9 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
 
         s1[data_type]['sent'] = []
         s2[data_type]['sent'] = []
+        y_s1[data_type]['sent'] = []
+        y_s2[data_type]['sent'] = []
+
         target[data_type]['data'] = []
 
         with open(text_path, 'r') as f:
@@ -113,6 +119,8 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
                     continue
                 s1[data_type]['sent'].append(columns[0])
                 s2[data_type]['sent'].append(columns[1])
+                y_s1[data_type]['sent'].append(columns[0])
+                y_s2[data_type]['sent'].append(columns[1])
                 target[data_type]['data'].append(dis_map[columns[2].rstrip('\n')])
 
         assert len(s1[data_type]['sent']) == len(s2[data_type]['sent']) == \
@@ -124,10 +132,13 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
             data_type.upper(), len(s1[data_type]['sent']), data_type))
 
     train = {'s1': s1['train']['sent'], 's2': s2['train']['sent'],
+             'y_s1': y_s1['train']['sent'], 'y_s2': y_s2['train']['sent'],
              'label': target['train']['data']}
     dev = {'s1': s1['valid']['sent'], 's2': s2['valid']['sent'],
+           'y_s1': y_s1['valid']['sent'], 'y_s2': y_s2['valid']['sent'],
            'label': target['valid']['data']}
     test = {'s1': s1['test']['sent'], 's2': s2['test']['sent'],
+            'y_s1': y_s1['test']['sent'], 'y_s2': y_s2['test']['sent'],
             'label': target['test']['data']}
     return train, dev, test
 

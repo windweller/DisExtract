@@ -21,8 +21,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 
 from data import get_dis, get_batch, build_vocab
-from dissent import DisSent
-from util import get_optimizer, get_labels
+from util import get_optimizer, get_labels, TextEncoder
 
 import logging
 
@@ -59,8 +58,6 @@ parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
 parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
-parser.add_argument("--s1", action='store_true', help="training only on S1")
-parser.add_argument("--s2", action='store_true', help="training only on S2")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -104,26 +101,67 @@ with open(params.hypes, 'rb') as f:
 data_dir = json_config['data_dir']
 prefix = json_config[params.corpus]
 glove_path = json_config['glove_path']
+bpe_encoder_path = json_config['bpe_encoder_path']
+bpe_vocab_path = json_config['bpe_vocab_path']
+params_path = json_config['params_path']
+
+"""
+BPE encoder
+"""
+text_encoder = TextEncoder(bpe_encoder_path, bpe_vocab_path)
+encoder = text_encoder.encoder
+
+# add special token
+encoder['_start_'] = len(encoder)
+encoder['_end_'] = len(encoder)
+encoder['_delimiter_'] = len(encoder)
 
 """
 DATA
 1. build vocab through BPE
 """
 train, valid, test = get_dis(data_dir, prefix, params.corpus)  # this stays the same
-word_vec = build_vocab(train['s1'] + train['s2'] +
-                       valid['s1'] + valid['s2'] +
-                       test['s1'] + test['s2'], glove_path)
-# batching function needs to be different:
-# 1). return x_bpe, y_bpe, y triple
 
-# unknown words instead of map to <unk>, this directly takes them out
+# word_vec = build_vocab(train['s1'] + train['s2'] +
+#                        valid['s1'] + valid['s2'] +
+#                        test['s1'] + test['s2'], glove_path)
+# batching function needs to be different:
+# 1). return s1, s2, y_s1, y_s2, y_label
+
+# If this is slow...we can speed it up
+# Numericalization; No padding here
 for split in ['s1', 's2']:
     for data_type in ['train', 'valid', 'test']:
-        eval(data_type)[split] = np.array([['<s>'] +
-                                           [word for word in sent.split() if word in word_vec] +
-                                           ['</s>'] for sent in eval(data_type)[split]])
+        eval(data_type)[split] = np.array([[encoder['_start_']] +
+                                           text_encoder.encode([sent], verbose=False, lazy=True)[0]
+                                           for sent in eval(data_type)[split]])
 
-params.word_emb_dim = 300
+for split in ['y_s1', 'y_s2']:
+    for data_type in ['train', 'valid', 'test']:
+        eval(data_type)[split] = np.array([text_encoder.encode([sent], verbose=False, lazy=True)[0] +
+                                           [encoder['_end_']]
+                                           for sent in eval(data_type)[split]])
+
+# TODO: formulate best way to get max_len, so that n_ctx can be computed
+# TODO: maybe use the one in paper / data preprocessing...
+
+"""
+Params
+2. Load in parameters (word embeddings)
+"""
+
+shapes = json.load(open(pjoin(params_path, 'params_shapes.json')))
+offsets = np.cumsum([np.prod(shape) for shape in shapes])
+init_params = [np.load(pjoin(params_path, 'params_{}.npy'.format(n))) for n in range(3)]
+init_params = np.split(np.concatenate(init_params, 0), offsets[:2])[:-1]
+init_params = [param.reshape(shape) for param, shape in zip(init_params, shapes[:2])]
+
+params.n_embd = 768
+n_special = 3  # <s>, </s>, <delimiter>
+init_params[0] = init_params[0][:n_ctx]
+init_params[0] = np.concatenate([init_params[1], (np.random.randn(n_special, params.n_embd)*0.02).astype(np.float32), init_params[0]], 0)
+del init_params[1]
 
 dis_labels = get_labels(params.corpus)
 label_size = len(dis_labels)
+
