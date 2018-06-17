@@ -101,6 +101,7 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
 
     for data_type in ['train', 'valid', 'test']:
         s1[data_type], s2[data_type], target[data_type] = {}, {}, {}
+        y_s1[data_type], y_s2[data_type] = {}, {}
 
         text_path = pjoin(data_dir, prefix + "_" + data_type + ".tsv")
 

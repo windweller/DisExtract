@@ -21,7 +21,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 
 from data import get_dis, get_batch, build_vocab
-from util import get_optimizer, get_labels, TextEncoder
+from util import get_optimizer, get_labels, TextEncoder, ResultLogger
 
 import logging
 
@@ -165,3 +165,7 @@ del init_params[1]
 dis_labels = get_labels(params.corpus)
 label_size = len(dis_labels)
 
+"""
+TODO:
+1. Numpy load in context and word embedding
+"""
