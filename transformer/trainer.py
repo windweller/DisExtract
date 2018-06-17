@@ -132,15 +132,14 @@ train, valid, test = get_dis(data_dir, prefix, params.corpus)  # this stays the 
 # Numericalization; No padding here
 for split in ['s1', 's2']:
     for data_type in ['train', 'valid', 'test']:
-        eval(data_type)[split] = np.array([[encoder['_start_']] +
-                                           text_encoder.encode([sent], verbose=False, lazy=True)[0]
-                                           for sent in eval(data_type)[split]])
-
-for split in ['y_s1', 'y_s2']:
-    for data_type in ['train', 'valid', 'test']:
-        eval(data_type)[split] = np.array([text_encoder.encode([sent], verbose=False, lazy=True)[0] +
-                                           [encoder['_end_']]
-                                           for sent in eval(data_type)[split]])
+        num_sents = []
+        y_sents = []
+        for sent in eval(data_type)[split]:
+            num_sent = text_encoder.encode([sent], verbose=False, lazy=True)[0]
+            num_sents.append([encoder['_start_']] + num_sent)
+            y_sents.append(num_sent + [encoder['_end_']])
+        eval(data_type)[split] = np.array(num_sents)
+        eval(data_type)['y_'+split] = np.array(y_sents)
 
 # TODO: formulate best way to get max_len, so that n_ctx can be computed
 # TODO: maybe use the one in paper / data preprocessing...
