@@ -130,6 +130,7 @@ train, valid, test = get_dis(data_dir, prefix, params.corpus)  # this stays the 
 
 # If this is slow...we can speed it up
 # Numericalization; No padding here
+max_len = 0.
 for split in ['s1', 's2']:
     for data_type in ['train', 'valid', 'test']:
         num_sents = []
@@ -138,6 +139,7 @@ for split in ['s1', 's2']:
             num_sent = text_encoder.encode([sent], verbose=False, lazy=True)[0]
             num_sents.append([encoder['_start_']] + num_sent)
             y_sents.append(num_sent + [encoder['_end_']])
+            max_len = max_len if max_len > len(num_sent) + 1 else len(num_sent) + 1
         eval(data_type)[split] = np.array(num_sents)
         eval(data_type)['y_'+split] = np.array(y_sents)
 
@@ -155,11 +157,16 @@ init_params = [np.load(pjoin(params_path, 'params_{}.npy'.format(n))) for n in r
 init_params = np.split(np.concatenate(init_params, 0), offsets[:2])[:-1]
 init_params = [param.reshape(shape) for param, shape in zip(init_params, shapes[:2])]
 
-params.n_embd = 768
+params.n_embed = 768
 n_special = 3  # <s>, </s>, <delimiter>
+n_ctx = 512
+n_ctx = min(max_len, n_ctx)
+
 init_params[0] = init_params[0][:n_ctx]
-init_params[0] = np.concatenate([init_params[1], (np.random.randn(n_special, params.n_embd)*0.02).astype(np.float32), init_params[0]], 0)
+word_embeddings = np.concatenate([init_params[1], (np.random.randn(n_special, params.n_embed)*0.02).astype(np.float32)], 0)
+ctx_embeddings = init_params[0]
 del init_params[1]
+
 
 dis_labels = get_labels(params.corpus)
 label_size = len(dis_labels)
@@ -168,3 +175,4 @@ label_size = len(dis_labels)
 TODO:
 1. Numpy load in context and word embedding
 """
+

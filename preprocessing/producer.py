@@ -48,7 +48,7 @@ parser = argparse.ArgumentParser(description='DisExtract Producer')
 
 # parser.add_argument("--json", type=str, default="example_config.json", help="load in config params")
 parser.add_argument("--corpus", type=str, default='books',
-                    help="books|gigaword_ch|gigaword_es, marked by Spanish and Chinese")
+                    help="books|gigaword_ch|gigaword_es, marked by Spanish and Chinese, ptb|wikitext")
 parser.add_argument("--train_size", default=0.9, type=float)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
