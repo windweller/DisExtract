@@ -322,7 +322,7 @@ def run_baseline_arora_model(params):
 	vocab, rev_vocab, counts, total = initialize_vocabulary(vocab_path)
 	# get word vectors
 	glove_dict = process_glove(glove_file, vocab, pjoin(params.outputdir, params.corpus + "_glove"))
-	a = 0.001
+	a = 0.001 ## search for this tune on validation set a=[]
 
 	print("processing corpus")
 	X_train1 = get_X(corpus["train"]["s1"], glove_dict, counts, total, a)
@@ -331,28 +331,35 @@ def run_baseline_arora_model(params):
 	X_valid2 = get_X(corpus["valid"]["s2"], glove_dict, counts, total, a)
 	X_test1 = get_X(corpus["test"]["s1"], glove_dict, counts, total, a) 
 	X_test2 = get_X(corpus["test"]["s2"], glove_dict, counts, total, a)
-	X = np.concatenate((X_train1, X_train2, X_valid1, X_valid2, X_test1, X_test2), axis=0)
+	X = np.concatenate((X_train1, X_train2), axis=0) # , X_valid1, X_valid2, X_test1, X_test2
 	pca = sklearn.decomposition.PCA(n_components=1)
 	pca.fit(X)
 	u = pca.components_
-	projection_matrix = np.matmul(np.transpose(u), u)
+	# projection_matrix = np.matmul(np.transpose(u), u)
+	projection_matrix = np.outer(u, u) # or transpose u
 
 	print("getting train and test sets")
-	X_train1 = X_train1 - np.transpose(np.matmul(projection_matrix, np.transpose(X_train1)))
-	X_train2 = X_train2 - np.transpose(np.matmul(projection_matrix, np.transpose(X_train2)))
-	train_X = np.concatenate((X_train1, X_train2), axis=1)
+	# X_train1 = X_train1 - np.transpose(np.matmul(projection_matrix, np.transpose(X_train1)))
+	# X_train2 = X_train2 - np.transpose(np.matmul(projection_matrix, np.transpose(X_train2)))
+	X_train1 = X_train1 - X_train1.dot(u.transpose()).dot(u)
+	X_train2 = X_train2 - X_train2.dot(u.transpose()).dot(u)
+
+	## do all the vector functions :)
+	train_X = np.concatenate((X_train1, X_train2, X_train1 + X_train2, X_train1 - X_train2, X_train1 * X_train2 ), axis=1)
 	train_y = corpus["train"]["label"]
 
 	X_test1 = X_test1 - np.transpose(np.matmul(projection_matrix, np.transpose(X_test1)))
 	X_test2 = X_test2 - np.transpose(np.matmul(projection_matrix, np.transpose(X_test2)))
-	test_X = np.concatenate((X_test1, X_test2), axis=1)
+	test_X = np.concatenate((X_test1, X_test2, X_test1 + X_test2, X_test1 - X_test2, X_test1 * X_test2), axis=1)
 	test_y = corpus["test"]["label"]
 
 	# get 1st PC of X_train --> u
 	# rewrite v_s
 	# run linear regression
 	print("fitting model")
-	model = sklearn.linear_model.LogisticRegression(max_iter=100, verbose=0, fit_intercept=True)
+
+	# Try MLPClassifier in sklearn
+	model = sklearn.linear_model.LogisticRegression(max_iter=1000, verbose=0, fit_intercept=True)
 	model.fit(train_X, train_y)
 	print("testing model")
 	test_pred = model.predict(test_X)
