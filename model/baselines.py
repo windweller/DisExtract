@@ -318,7 +318,8 @@ def run_baseline_arora_model(params):
 		corpus["test"]["s2"] = corpus["test"]["s2"][:100]
 		corpus["test"]["label"] = corpus["test"]["label"][:100]
 
-	# create_vocabulary(vocab_path, corpus)
+	if not os.path.exists(vocab_path):
+		create_vocabulary(vocab_path, corpus)
 	vocab, rev_vocab, counts, total = initialize_vocabulary(vocab_path)
 	# get word vectors
 	glove_dict = process_glove(glove_file, vocab, pjoin(params.outputdir, params.corpus + "_glove"))
