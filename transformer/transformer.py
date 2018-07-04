@@ -249,9 +249,9 @@ class PositionalEncoding(nn.Module):
         #                      -(math.log(10000.0) / config.n_embed))
         # pe[:, 0::2] = torch.sin(position * div_term)
         # pe[:, 1::2] = torch.cos(position * div_term)
-        self.pe = torch.from_numpy(ctx_embeddings)
-        self.pe = self.pe.unsqueeze(0)  # add one dimension to beginning (1, time, n_embed)
-        self.register_buffer('pe', self.pe)
+        pe = torch.from_numpy(ctx_embeddings)
+        pe = pe.unsqueeze(0)  # add one dimension to beginning (1, time, n_embed)
+        self.register_buffer('pe', pe)  # this will add pe to self
 
     def forward(self, x):
         x = x + Variable(self.pe[:, :x.size(1)],
