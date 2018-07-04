@@ -57,7 +57,7 @@ parser.add_argument("--d_model", type=int, default=768, help="decoder nhid dimen
 parser.add_argument("--n_heads", type=int, default=12, help="number of attention heads")
 parser.add_argument("--n_layers", type=int, default=8, help="decoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
-parser.add_argument("--pool_type", type=str, default='max', help="flag if we do max pooling, which hasn't been done before")
+# parser.add_argument("--pool_type", type=str, default='max', help="flag if we do max pooling, which hasn't been done before")
 parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 
 # gpu
@@ -186,7 +186,7 @@ config_dis_model = {
     'fc_dim': params.fc_dim,
     'bsize': params.batch_size,
     'n_classes': label_size,
-    'pool_type': params.pool_type,
+    # 'pool_type': params.pool_type,
     'n_heads': params.n_heads,
     'use_cuda': True,
     'train_emb': params.train_emb
