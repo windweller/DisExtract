@@ -85,8 +85,8 @@ def data_gen(s1, s2, labels, batch_size, pad_id):
     # all are aligned
     for i in range(len(s1) // batch_size):
         # i becomes batch index
-        s1_batch = s1[i: i+batch_size]
-        s2_batch = s2[i: i+batch_size]
+        s1_batch = pad_batch(s1[i: i+batch_size], pad_id)
+        s2_batch = pad_batch(s2[i: i+batch_size], pad_id)
         l_batch = labels[i: i+batch_size]
         yield Batch(s1_batch, s2_batch, l_batch, pad_id)
 
