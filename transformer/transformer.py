@@ -125,7 +125,6 @@ class DisSentT(nn.Module):
         return self.decoder(self.tgt_embed(tgt), tgt_mask)
 
     # def predict_label(self, tgt, tgt_mask):
-        
 
 
 def make_model(encoder, config, word_embeddings=None, ctx_embeddings=None):
