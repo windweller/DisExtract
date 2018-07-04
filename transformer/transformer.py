@@ -131,15 +131,15 @@ def make_model(encoder, config, word_embeddings=None, ctx_embeddings=None):
     # encoder: dictionary, for vocab
     "Helper: Construct a model from hyperparameters."
     c = copy.deepcopy
-    attn = MultiHeadedAttention(config.n_heads, config.d_model)
-    ff = PositionwiseFeedForward(config.d_model, config.d_ff, config.dpout)
+    attn = MultiHeadedAttention(config['n_heads'], config['d_model'])
+    ff = PositionwiseFeedForward(config['d_model'], config['d_ff'], config['dpout'])
     position = PositionalEncoding(config, ctx_embeddings)
     model = DisSentT(
         Decoder(
-            DecoderLayer(config.d_model, c(attn), c(ff), config.dpout),
-            config.n_layers),
+            DecoderLayer(config['d_model'], c(attn), c(ff), config['dpout']),
+            config['n_layers']),
         nn.Sequential(Embeddings(encoder, config, word_embeddings), c(position)),
-        Generator(config.d_model, len(encoder))
+        Generator(config['d_model'], len(encoder))
     )
 
     # This was important from their code.
@@ -221,10 +221,10 @@ class Embeddings(nn.Module):
     def __init__(self, encoder, config, word_embeddings=None):
         # encoder is the dictionary, not text_encoder
         super(Embeddings, self).__init__()
-        self.lut = nn.Embedding(len(encoder), config.d_model)
-        self.d_model = config.d_model
+        self.lut = nn.Embedding(len(encoder), config['d_model'])
+        self.d_model = config['d_model']
 
-        if not config.train_emb:
+        if not config['train_emb']:
             assert word_embeddings is not None
             self.lut.weight.data.copy_(word_embeddings)
             self.lut.weight.requires_grad = False
@@ -240,7 +240,7 @@ class PositionalEncoding(nn.Module):
         # we don't need to define new, just use the same...
 
         super(PositionalEncoding, self).__init__()
-        self.dropout = nn.Dropout(p=config.dpout)
+        self.dropout = nn.Dropout(p=config['dpout'])
 
         # Compute the positional encodings once in log space.
         # pe = torch.zeros(max_len, config.n_embed)
