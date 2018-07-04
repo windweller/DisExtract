@@ -53,9 +53,9 @@ class LayerNorm(nn.Module):
 class Generator(nn.Module):
     "Define standard linear + softmax generation step."
 
-    def __init__(self, d_model, vocab):
+    def __init__(self, d_model, vocab_size):
         super(Generator, self).__init__()
-        self.proj = nn.Linear(d_model, vocab)
+        self.proj = nn.Linear(d_model, vocab_size)
 
     def forward(self, x):
         return F.log_softmax(self.proj(x), dim=-1)
@@ -85,30 +85,69 @@ class Decoder(nn.Module):
         self.layers = clones(layer, N)
         self.norm = LayerNorm(layer.size)
 
-    def forward(self, x, memory, src_mask, tgt_mask):
+    def forward(self, x, tgt_mask):
         for layer in self.layers:
-            x = layer(x, memory, src_mask, tgt_mask)
+            x = layer(x, tgt_mask)
         return self.norm(x)
 
 
 class DecoderLayer(nn.Module):
     "Decoder is made of self-attn, src-attn, and feed forward (defined below)"
 
-    def __init__(self, size, self_attn, src_attn, feed_forward, dropout):
+    def __init__(self, size, self_attn, feed_forward, dropout):
         super(DecoderLayer, self).__init__()
         self.size = size
         self.self_attn = self_attn
-        self.src_attn = src_attn
         self.feed_forward = feed_forward
         self.sublayer = clones(SublayerConnection(size, dropout), 3)
 
-    def forward(self, x, memory, src_mask, tgt_mask):
+    def forward(self, x, tgt_mask):
         "Follow Figure 1 (right) for connections."
-        m = memory
         x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, tgt_mask))
-        x = self.sublayer[1](x, lambda x: self.src_attn(x, m, m, src_mask))
         return self.sublayer[2](x, self.feed_forward)
 
+
+class DisSentT(nn.Module):
+    """
+    A standard Encoder-Decoder architecture. Base for this and many
+    other models.
+    """
+
+    def __init__(self, decoder, tgt_embed, generator):
+        super(DisSentT, self).__init__()
+        self.decoder = decoder
+        self.tgt_embed = tgt_embed
+        self.generator = generator
+
+    def forward(self, tgt, tgt_mask):
+        "Take in and process masked src and target sequences."
+        # this computes LM targets!! before the Generator
+        return self.decoder(self.tgt_embed(tgt), tgt_mask)
+
+    # def predict_label(self, tgt, tgt_mask):
+
+
+def make_model(encoder, config, word_embeddings=None, ctx_embeddings=None):
+    # encoder: dictionary, for vocab
+    "Helper: Construct a model from hyperparameters."
+    c = copy.deepcopy
+    attn = MultiHeadedAttention(config.n_heads, config.d_model)
+    ff = PositionwiseFeedForward(config.d_model, config.d_ff, config.dpout)
+    position = PositionalEncoding(config, ctx_embeddings)
+    model = DisSentT(
+        Decoder(
+            DecoderLayer(config.d_model, c(attn), c(ff), config.dpout),
+            config.n_layers),
+        nn.Sequential(Embeddings(encoder, config, word_embeddings), c(position)),
+        Generator(config.d_model, len(encoder))
+    )
+
+    # This was important from their code.
+    # Initialize parameters with Glorot / fan_avg.
+    for p in model.parameters():
+        if p.dim() > 1:
+            nn.init.xavier_uniform(p)
+    return model
 
 def subsequent_mask(size):
     "Mask out subsequent positions."
@@ -145,7 +184,7 @@ class MultiHeadedAttention(nn.Module):
     def forward(self, query, key, value, mask=None):
         "Implements Figure 2"
         if mask is not None:
-            # Same mask applied to all h heads.
+            # Same mask applied to all h heads.-
             mask = mask.unsqueeze(1)
         nbatches = query.size(0)
 
@@ -179,10 +218,16 @@ class PositionwiseFeedForward(nn.Module):
 
 # we will learn and predict via our own embeddings
 class Embeddings(nn.Module):
-    def __init__(self, d_model, vocab):
+    def __init__(self, encoder, config, word_embeddings=None):
+        # encoder is the dictionary, not text_encoder
         super(Embeddings, self).__init__()
-        self.lut = nn.Embedding(vocab, d_model)
-        self.d_model = d_model
+        self.lut = nn.Embedding(len(encoder), config.d_model)
+        self.d_model = config.d_model
+
+        if not config.train_emb:
+            assert word_embeddings is not None
+            self.lut.weight.data.copy_(word_embeddings)
+            self.lut.weight.requires_grad = False
 
     def forward(self, x):
         return self.lut(x) * math.sqrt(self.d_model)
@@ -190,24 +235,53 @@ class Embeddings(nn.Module):
 
 class PositionalEncoding(nn.Module):
     "Implement the PE function."
+    def __init__(self, config, ctx_embeddings=None):
+        # ctx_embeddings: (max_len, n_embed)
+        # we don't need to define new, just use the same...
 
-    def __init__(self, d_model, dropout, max_len=5000):
         super(PositionalEncoding, self).__init__()
-        self.dropout = nn.Dropout(p=dropout)
+        self.dropout = nn.Dropout(p=config.dpout)
 
         # Compute the positional encodings once in log space.
-        pe = torch.zeros(max_len, d_model)
-        position = torch.arange(0, max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2) *
-                             -(math.log(10000.0) / d_model))
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0)
-        self.register_buffer('pe', pe)
+        # pe = torch.zeros(max_len, config.n_embed)
+        # position = torch.arange(0, max_len).unsqueeze(1)
+        # div_term = torch.exp(torch.arange(0, config.n_embed, 2) *
+        #                      -(math.log(10000.0) / config.n_embed))
+        # pe[:, 0::2] = torch.sin(position * div_term)
+        # pe[:, 1::2] = torch.cos(position * div_term)
+        self.pe = torch.from_numpy(ctx_embeddings)
+        self.pe = self.pe.unsqueeze(0)  # add one dimension to beginning (1, time, n_embed)
+        self.register_buffer('pe', self.pe)
 
     def forward(self, x):
         x = x + Variable(self.pe[:, :x.size(1)],
                          requires_grad=False)
         return self.dropout(x)
 
+class NoamOpt:
+    "Optim wrapper that implements rate."
 
+    def __init__(self, model_size, factor, warmup, optimizer):
+        self.optimizer = optimizer
+        self._step = 0
+        self.warmup = warmup
+        self.factor = factor
+        self.model_size = model_size
+        self._rate = 0
+
+    def step(self):
+        "Update parameters and rate"
+        self._step += 1
+        rate = self.rate()
+        for p in self.optimizer.param_groups:
+            p['lr'] = rate
+        self._rate = rate
+        self.optimizer.step()
+
+    def rate(self, step=None):
+        "Implement `lrate` above"
+        if step is None:
+            step = self._step
+        return self.factor * \
+               (self.model_size ** (-0.5) *
+                min(step ** (-0.5), step * self.warmup ** (-1.5)))

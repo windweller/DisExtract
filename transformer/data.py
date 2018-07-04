@@ -8,6 +8,7 @@ https://github.com/facebookresearch/InferSent/blob/master/data.py
 import os
 import numpy as np
 import torch
+from torch.autograd import Variable
 import logging
 from collections import defaultdict
 from os.path import join as pjoin
@@ -16,58 +17,86 @@ from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
     CH_FIVE_DISCOURSE_MARKERS, SP_FIVE_DISCOURSE_MARKERS
 
 
-def get_batch(batch, word_vec):
-    # sent in batch in decreasing order of lengths (bsize, max_len, word_dim)
+def embed_batch(batch, word_embeddings, ctx_embeddings, n_embeds=768):
+    # comes out (bsize, max_len, word_dim)
+    # original order is preserved
     lengths = np.array([len(x) for x in batch])
     max_len = np.max(lengths)
-    embed = np.zeros((max_len, len(batch), 300))
+    embed = np.zeros((len(batch), max_len, n_embeds))
 
     for i in range(len(batch)):
         for j in range(len(batch[i])):
-            if batch[i][j] in word_vec:
-                embed[j, i, :] = word_vec[batch[i][j]]
-                # otherwise by default it's 0
+            embed[i, j, :] = word_embeddings[batch[i][j]] + ctx_embeddings[j]  # we sum them
 
     return torch.from_numpy(embed).float(), lengths
 
 
-def get_word_dict(sentences):
-    # create vocab of words
-    word_dict = {}
-    for sent in sentences:
-        for word in sent.split():
-            if word not in word_dict:
-                word_dict[word] = ''
-    word_dict['<s>'] = ''
-    word_dict['</s>'] = ''
-    word_dict['<p>'] = ''
-    return word_dict
+def pad_batch(batch, pad_id):
+    # just build a numpy array that's padded
+
+    lengths = np.array([len(x) for x in batch])
+    max_len = np.max(lengths)
+    padded_batch = np.full((len(batch), max_len), pad_id)  # fill in pad_id
+
+    for i in range(len(batch)):
+        for j in range(len(batch[i])):
+            padded_batch[i, j] = batch[i][j]
+
+    return padded_batch
 
 
-def build_vocab(sentences, glove_path):
-    word_dict = get_word_dict(sentences)
-    word_vec = get_glove(word_dict, glove_path)
-    print('Vocab size : {0}'.format(len(word_vec)))
-    return word_vec
+def subsequent_mask(size):
+    "Mask out subsequent positions."
+    attn_shape = (1, size, size)
+    subsequent_mask = np.triu(np.ones(attn_shape), k=1).astype('uint8')
+    return torch.from_numpy(subsequent_mask) == 0
 
 
-def get_glove(word_dict, glove_path):
-    # create word_vec with glove vectors
-    word_vec = {}
-    with open(glove_path) as f:
-        for line in f:
-            word, vec = line.split(' ', 1)
-            if word in word_dict:
-                word_vec[word] = np.array(list(map(float, vec.split())))
-    print('Found {0}(/{1}) words with glove vectors'.format(
-        len(word_vec), len(word_dict)))
-    return word_vec
+# TODO: Maybe we need to tune dtype but right now it's fine...
+def np_to_var(np_obj, requires_grad=False):
+    return Variable(torch.from_numpy(np_obj), requires_grad=requires_grad)
+
+class Batch:
+    "Object for holding a batch of data with mask during training."
+    def __init__(self, s1, s2, label, pad_id):
+        # require everything passed in to be in Numpy!
+        self.s1 = np_to_var(s1[:, :-1])
+        self.s1_y = np_to_var(s1[:, 1:])
+        self.s1_mask = self.make_std_mask(self.s1, pad_id)
+        self.s1_ntokens = (self.s1_y != pad_id).data.sum()  # used for loss computing
+
+        self.s2 = np_to_var(s2[:, :-1])
+        self.s2_y = np_to_var(s2[:, 1:])
+        self.s2_mask = self.make_std_mask(self.s2, pad_id)
+        self.s2_ntokens = (self.s2_y != pad_id).data.sum()  # used for loss computing
+
+        self.label = np_to_var(label)
+
+    @staticmethod
+    def make_std_mask(tgt, pad_id):
+        "Create a mask to hide padding and future words."
+        tgt_mask = (tgt != pad_id).unsqueeze(-2)
+        tgt_mask = tgt_mask & Variable(
+            subsequent_mask(tgt.size(-1)).type_as(tgt_mask.data))
+        return tgt_mask
+
+def data_gen(s1, s2, labels, batch_size, pad_id):
+    # can get train/valid/test by putting in different ones
+    # all are aligned
+    for i in range(len(s1) // batch_size):
+        # i becomes batch index
+        s1_batch = s1[i: i+batch_size]
+        s2_batch = s2[i: i+batch_size]
+        l_batch = labels[i: i+batch_size]
+        yield Batch(s1_batch, s2_batch, l_batch, pad_id)
+
 
 def list_to_map(dis_label):
     dis_map = {}
     for i, l in enumerate(dis_label):
         dis_map[l] = i
     return dis_map
+
 
 def get_dis(data_dir, prefix, discourse_tag="books_5"):
     # we are not padding anything in here, this is just repeating
@@ -133,6 +162,7 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
             'label': target['test']['data']}
     return train, dev, test
 
+
 def get_merged_data(data_dir, prefix, discourse_tag="books_5"):
     # for evaluation
     s1 = defaultdict(list)
@@ -166,10 +196,6 @@ def get_merged_data(data_dir, prefix, discourse_tag="books_5"):
 
         text_path = pjoin(data_dir, prefix + "_" + data_type + ".tsv")
 
-        # s1['sent'] = []
-        # s2[data_type]['sent'] = []
-        # target[data_type]['data'] = []
-
         with open(text_path, 'r') as f:
             for line in f:
                 columns = line.split('\t')
@@ -186,11 +212,6 @@ def get_merged_data(data_dir, prefix, discourse_tag="books_5"):
 
     print('** DATA : Found {0} pairs of sentences.'.format(
         len(s1['sent'])))
-
-    # train = {'s1': s1['train']['sent'], 's2': s2['train']['sent'],
-    #          'label': target['train']['data']}
-    # dev = {'s1': s1['valid']['sent'], 's2': s2['valid']['sent'],
-    #        'label': target['valid']['data']}
 
     test = {'s1': s1['sent'], 's2': s2['sent'], 'label': target['data']}
     return test

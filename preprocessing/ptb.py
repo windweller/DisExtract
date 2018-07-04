@@ -216,7 +216,6 @@ from collections import defaultdict
 def split_parsed_sentences(source_dir, marker_set_tag):
     markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
-    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
     output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
 
     five_sents = []

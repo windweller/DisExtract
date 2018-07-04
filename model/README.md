@@ -16,3 +16,8 @@ If you want to take a look at the old Tensorflow code, here's the repo: [https:/
 
 We also extended InferSent code to include logging and automatically saves log files and hyperparameters.
 Snapshots are also taken due to long training time.
+
+## Evaluate
+
+`evaluate.py` is designed to actually process files that are split into "train", "dev", "test". It will simply load them all and combine
+those files into a test file. No need to worry about combining them.

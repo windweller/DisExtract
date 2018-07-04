@@ -22,7 +22,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-from data import get_dis, get_batch, build_vocab
+from data import get_dis, get_batch, build_vocab, build_emb_mat, get_target_batch
 from dissent import DisSent
 from util import get_optimizer, get_labels
 
@@ -43,6 +43,7 @@ parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set thi
 
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
+parser.add_argument("--dpout_decoder", type=float, default=0., help="decoder dropout")
 parser.add_argument("--dpout_emb", type=float, default=0., help="embedding dropout")
 parser.add_argument("--dpout_fc", type=float, default=0., help="classifier dropout")
 parser.add_argument("--optimizer", type=str, default="sgd,lr=0.1", help="adam or sgd,lr=0.1")
@@ -53,12 +54,15 @@ parser.add_argument("--max_norm", type=float, default=5., help="max norm (grad c
 parser.add_argument("--log_interval", type=int, default=100, help="how many batches to log once")
 
 # model
-parser.add_argument("--encoder_type", type=str, default='BLSTMEncoder', help="see list of encoders")
+parser.add_argument("--encoder_type", type=str, default='BGRUEncoder', help="see list of encoders")
+parser.add_argument("--decoder_type", type=str, default='LSTMDecoder', help="see list of decoders")
 parser.add_argument("--enc_lstm_dim", type=int, default=2048, help="encoder nhid dimension")
+parser.add_argument("--dec_lstm_dim", type=int, default=2048, help="decoder nhid dimension")
 parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
 parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
 parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
+parser.add_argument("--tied_emb", action='store_true', help="decoder will map to GloVE embedding space")
 parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
 parser.add_argument("--s1", action='store_true', help="training only on S1")
@@ -117,6 +121,8 @@ train, valid, test = get_dis(data_dir, prefix, params.corpus)
 word_vec = build_vocab(train['s1'] + train['s2'] +
                        valid['s1'] + valid['s2'] +
                        test['s1'] + test['s2'], glove_path)
+vocab_list = word_vec.keys()
+vocab_emb, vocab_map = build_emb_mat(vocab_list, word_vec)
 
 # unknown words instead of map to <unk>, this directly takes them out
 for split in ['s1', 's2']:
@@ -138,6 +144,7 @@ config_dis_model = {
     'n_words': len(word_vec),
     'word_emb_dim': params.word_emb_dim,
     'enc_lstm_dim': params.enc_lstm_dim,
+    'dec_lstm_dim': params.dec_lstm_dim,
     'n_enc_layers': params.n_enc_layers,
     'dpout_emb': params.dpout_emb,
     'dpout_model': params.dpout_model,
@@ -149,6 +156,9 @@ config_dis_model = {
     'encoder_type': params.encoder_type,
     'tied_weights': params.tied_weights,
     'use_cuda': True,
+    'dpout_decoder': params.dpout_decoder,
+    'decoder_type': params.decoder_type,
+    'tied_emb': params.tied_emb
 }
 
 if params.cur_epochs == 1:
@@ -211,14 +221,19 @@ def trainepoch(epoch):
         # prepare batch
         s1_batch, s1_len = get_batch(s1[stidx:stidx + params.batch_size],
                                      word_vec)
+        s1_tgt = get_target_batch(s1[stidx:stidx + params.batch_size], vocab_map)
         s2_batch, s2_len = get_batch(s2[stidx:stidx + params.batch_size],
                                      word_vec)
+        s2_tgt = get_target_batch(s2[stidx:stidx + params.batch_size], vocab_map)
+
+        s1_tgt, s2_tgt = Variable(s1_tgt.cuda()), Variable(s2_tgt.cuda())
+
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
         tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
         k = s1_batch.size(1)  # actual batch size
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), s1_tgt, s2_tgt)
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
@@ -326,8 +341,13 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
         s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
         tgt_batch = Variable(torch.LongTensor(target[i:i + params.batch_size])).cuda()
 
+        s1_tgt = get_target_batch(s1[i:i + params.batch_size], vocab_map)
+        s2_tgt = get_target_batch(s2[i:i + params.batch_size], vocab_map)
+
+        s1_tgt, s2_tgt = Variable(s1_tgt.cuda()), Variable(s2_tgt.cuda())
+
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len))
+        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), s1_tgt, s2_tgt)
 
         pred = output.data.max(1)[1]
         correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
