@@ -226,7 +226,7 @@ class Embeddings(nn.Module):
 
         if not config['train_emb']:
             assert word_embeddings is not None
-            self.lut.weight.data.copy_(word_embeddings)
+            self.lut.weight.data.copy_(torch.from_numpy(word_embeddings))
             self.lut.weight.requires_grad = False
 
     def forward(self, x):
