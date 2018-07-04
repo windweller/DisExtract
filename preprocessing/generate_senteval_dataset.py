@@ -16,15 +16,16 @@ import numpy as np
 
 from model.data import get_dis
 from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
-    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS
+    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS, EN_DIS_FIVE
 
 parser = argparse.ArgumentParser(description='NLI training')
 parser.add_argument("--corpus", type=str, default='books_5',
                     help="books_5|books_old_5|books_8|books_all|gw_5|gw_8")
-parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
-parser.add_argument("--senteval", type=str, default='~/SentEval/data/senteval_data',
+parser.add_argument("--hypes", type=str, default='/home/erindb/DisExtract/model/hypes/default.json', help="load in a hyperparameter file")
+parser.add_argument("--senteval", type=str, default='/home/erindb/SentEval/data/senteval_data',
                     help="point to senteval data directory")
 parser.add_argument("--merge", action='store_false', help="by default, we merge test and dev")
+parser.add_argument("--subset", action='store_true', help="use a higher quality subset of 5 discourse markers")
 parser.add_argument("--train_size", default=0.9, type=float)
 parser.add_argument("--seed", type=int, default=1234, help="seed")
 
@@ -60,7 +61,9 @@ def write_to_file(file_name, contents, assignments, label_list=None):
 
 
 def write_to_senteval_format(valid, test):
-    if params.corpus == "books_5":
+    if params.subset:
+        dis_list = EN_DIS_FIVE
+    elif  params.corpus == "books_5":
         dis_list = EN_FIVE_DISCOURSE_MARKERS
     elif params.corpus == "books_8":
         dis_list = EN_EIGHT_DISCOURSE_MARKERS
@@ -74,12 +77,24 @@ def write_to_senteval_format(valid, test):
     if not os.path.exists(DIS_dir):
         os.makedirs(DIS_dir)
 
+    ## super hacky way to subset...
+    #valid_i = [i for i in range(len(valid['label'].tolist())) if valid['label'].tolist()[i] in dis_list]
+    #print(len(valid_i))
+    #valid['s1'] = [valid['s1'][i] for i in valid_i]
+    #valid['s2'] = [valid['s2'][i] for i in valid_i]
+    #valid['label'] = [valid['label'][i] for i in valid_i]
+    #test_i = [i for i in range(len(test['label'].tolist())) if test['label'].tolist()[i] in dis_list]
+    #test['s1'] = [test['s1'][i] for i in test_i]
+    #test['s2'] = [test['s2'][i] for i in test_i]
+    #test['label'] = [test['label'][i] for i in test_i]
+
     if params.merge:
         merged = {'s1': valid['s1'] + test['s1'], 's2': valid['s2'] + test['s2'],
                   'label': valid['label'].tolist() + test['label'].tolist()}
     else:
         valid['label'] = valid['label'].tolist()
         merged = valid
+
 
     num_examples = len(merged['s1'])
     assignments = range(num_examples)
@@ -107,6 +122,11 @@ if __name__ == '__main__':
     data_dir = json_config['data_dir']
     prefix = json_config[params.corpus]
 
-    _, valid, test = get_dis(data_dir, prefix, params.corpus)
+    if params.subset:
+        markers_tag = "books_dis_five"
+    else:
+        markers_tag = params.corpus
+
+    _, valid, test = get_dis(data_dir, prefix, markers_tag)
 
     write_to_senteval_format(valid, test)
