@@ -21,7 +21,7 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-from data import get_dis, data_gen, pad_batch, build_vocab
+from data import get_dis, data_gen, pad_batch
 from util import get_labels, TextEncoder, ResultLogger
 
 import logging
