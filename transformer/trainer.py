@@ -251,7 +251,7 @@ def trainepoch(epoch):
 
         # s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
         # tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
-        k = s1_batch.size(0)  # actual batch size
+        k = s1_batch.shape[0]  # actual batch size
 
         # model forward
         clf_output, s1_y, s2_y = dis_net(b)
