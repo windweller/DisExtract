@@ -129,12 +129,10 @@ class DisSentT(nn.Module):
             nn.Linear(config['fc_dim'], config['n_classes'])
         )
 
-        self.ce_loss = nn.CrossEntropyLoss()
+        self.ce_loss = nn.CrossEntropyLoss(reduce=False)
 
     def encode(self, tgt, tgt_mask):
-        if self.config['gpu_id'] != -1:
-            tgt = tgt.cuda(self.config['gpu_id'])
-            tgt_mask = tgt_mask.cuda(self.config['gpu_id'])
+        # tgt, tgt_mask need to be on CUDA before being put in here
         return self.decoder(self.tgt_embed(tgt), tgt_mask)
 
     def pick_h(self, h, loss_mask):
@@ -166,10 +164,15 @@ class DisSentT(nn.Module):
 
         return clf_output
 
-    def compute_lm_loss(self, tgt, tgt_loss_mask):
-        # we put the loss computing inside
-        # or outside..not sure
-        pass
+    def compute_clf_loss(self, logits, labels):
+        return self.ce_loss(logits, labels).mean()
+
+    def compute_lm_loss(self, s_h, s_y, s_loss_mask):
+        # get the ingredients...compute loss
+        seq_loss = self.ce_loss(s_h.contiguous().view(-1, self.config['n_words']),
+                                s_y.view(-1)).view(s_h.size(0), -1)
+        seq_loss *= s_loss_mask  # mask sequence loss
+        return seq_loss.mean()
 
 
 def make_model(encoder, config, word_embeddings=None, ctx_embeddings=None):
