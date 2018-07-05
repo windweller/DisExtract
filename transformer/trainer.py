@@ -199,6 +199,7 @@ config_dis_model = {
 
 # TODO: reload model in here...
 dis_net = make_model(encoder, config_dis_model, word_embeddings, ctx_embeddings)
+logger.info(dis_net)
 
 # TODO: shuffling data happens inside train_epoch
 
