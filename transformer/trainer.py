@@ -274,11 +274,12 @@ def trainepoch(epoch):
         model_opt.step()
 
         if len(all_costs) == params.log_interval:
-            logs.append('{0} ; loss {1} ; sentence/s {2} ; words/s {3} ; accuracy train : {4}'.format(
+            logs.append('{0} ; loss {1} ; sentence/s {2} ; words/s {3} ; accuracy train: {4} ; lr: {5}'.format(
                 stidx, round(np.mean(all_costs), 2),
                 int(len(all_costs) * params.batch_size / (time.time() - last_time)),
                 int(words_count * 1.0 / (time.time() - last_time)),
-                round(100. * correct / (stidx + k), 2)))
+                round(100. * correct / (stidx + k), 2),
+                model_opt.rate()))
             logger.info(logs[-1])
             last_time = time.time()
             words_count = 0
