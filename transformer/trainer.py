@@ -204,8 +204,9 @@ dis_net = make_model(encoder, config_dis_model, word_embeddings, ctx_embeddings)
 # TODO: shuffling data happens inside train_epoch
 
 # warmup_steps: 8000
+need_grad = lambda x: x.requires_grad
 model_opt = NoamOpt(params.d_model, 1, params.warmup_steps,
-            torch.optim.Adam(dis_net.parameters(), lr=0, betas=(0.9, 0.98), eps=1e-9))
+            torch.optim.Adam(filter(need_grad, dis_net.parameters()), lr=0, betas=(0.9, 0.98), eps=1e-9))
 
 if params.gpu_id != -1:
     dis_net.cuda(params.gpu_id)
