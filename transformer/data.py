@@ -60,15 +60,20 @@ class Batch:
     "Object for holding a batch of data with mask during training."
     def __init__(self, s1, s2, label, pad_id):
         # require everything passed in to be in Numpy!
+        # also none of them is in GPU! we can use data here to pick out correct
+        # last hidden states
         self.s1 = np_to_var(s1[:, :-1])
         self.s1_y = np_to_var(s1[:, 1:])
         self.s1_mask = self.make_std_mask(self.s1, pad_id)
+        # this is total number of tokens
         self.s1_ntokens = (self.s1_y != pad_id).data.sum()  # used for loss computing
+        self.s1_loss_mask = (self.s1_y != pad_id).type(torch.float)  # need to mask loss
 
         self.s2 = np_to_var(s2[:, :-1])
         self.s2_y = np_to_var(s2[:, 1:])
         self.s2_mask = self.make_std_mask(self.s2, pad_id)
         self.s2_ntokens = (self.s2_y != pad_id).data.sum()  # used for loss computing
+        self.s2_loss_mask = (self.s2_y != pad_id).type(torch.float)  # need to mask loss
 
         self.label = np_to_var(label)
 

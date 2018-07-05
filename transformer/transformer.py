@@ -53,9 +53,12 @@ class LayerNorm(nn.Module):
 class Generator(nn.Module):
     "Define standard linear + softmax generation step."
 
-    def __init__(self, d_model, vocab_size):
+    def __init__(self, d_model, vocab_size, word_embeddings=None):
         super(Generator, self).__init__()
-        self.proj = nn.Linear(d_model, vocab_size)
+        self.proj = nn.Linear(d_model, vocab_size, bias=False)
+        if word_embeddings is not None:
+            self.proj.weight.data.copy_(torch.from_numpy(word_embeddings))
+            self.proj.weight.requires_grad = False
 
     def forward(self, x):
         return F.log_softmax(self.proj(x), dim=-1)
@@ -113,18 +116,60 @@ class DisSentT(nn.Module):
     other models.
     """
 
-    def __init__(self, decoder, tgt_embed, generator):
+    def __init__(self, config, decoder, tgt_embed, generator):
         super(DisSentT, self).__init__()
         self.decoder = decoder
         self.tgt_embed = tgt_embed
         self.generator = generator
+        self.config = config
 
-    def forward(self, tgt, tgt_mask):
-        "Take in and process masked src and target sequences."
-        # this computes LM targets!! before the Generator
+        self.classifier = nn.Sequential(
+            nn.Linear(config['d_model'] * 4, config['fc_dim']),
+            nn.Linear(config['fc_dim'], config['fc_dim']),
+            nn.Linear(config['fc_dim'], config['n_classes'])
+        )
+
+        self.ce_loss = nn.CrossEntropyLoss()
+
+    def encode(self, tgt, tgt_mask):
+        if self.config['gpu_id'] != -1:
+            tgt = tgt.cuda(self.config['gpu_id'])
+            tgt_mask = tgt_mask.cuda(self.config['gpu_id'])
         return self.decoder(self.tgt_embed(tgt), tgt_mask)
 
-    # def predict_label(self, tgt, tgt_mask):
+    def pick_h(self, h, loss_mask):
+        lengths = loss_mask.sum(dim=1)
+        # batch_size, lengths
+        picked_h = h[range(loss_mask.size(0)), lengths, :]
+        return picked_h
+
+    def forward(self, batch, lm=True):
+        "Take in and process masked src and target sequences."
+        # this computes LM targets!! before the Generator
+        u_h = self.encode(batch.s1, batch.s1_mask)
+        v_h = self.encode(batch.s2, batch.s2_mask)
+        # u_h, v_h: (batch_size, time_step, d_model) (which is n_embed)
+        if self.config['pick_hid']:
+            u, v = self.pick_h(u_h, batch.s1_loss_mask), self.pick_h(v_h, batch.s2_loss_mask)
+        else:
+            u, v = u_h[:, -1, :], v_h[:, -1, :] # last hidden state
+
+        features = torch.cat((u, v, u - v, u * v), 1)
+        clf_output = self.classifier(features)
+
+        # compute LM
+        if lm:
+            s1_y = self.generator(u_h)
+            s2_y = self.generator(v_h)
+
+            return clf_output, s1_y, s2_y
+
+        return clf_output
+
+    def compute_lm_loss(self, tgt, tgt_loss_mask):
+        # we put the loss computing inside
+        # or outside..not sure
+        pass
 
 
 def make_model(encoder, config, word_embeddings=None, ctx_embeddings=None):
@@ -134,18 +179,23 @@ def make_model(encoder, config, word_embeddings=None, ctx_embeddings=None):
     attn = MultiHeadedAttention(config['n_heads'], config['d_model'])
     ff = PositionwiseFeedForward(config['d_model'], config['d_ff'], config['dpout'])
     position = PositionalEncoding(config, ctx_embeddings)
+
+    generator_tied_embeddings = word_embeddings if config['tied'] else None
+
     model = DisSentT(
+        config,
         Decoder(
             DecoderLayer(config['d_model'], c(attn), c(ff), config['dpout']),
             config['n_layers']),
         nn.Sequential(Embeddings(encoder, config, word_embeddings), c(position)),
-        Generator(config['d_model'], len(encoder))
+        Generator(config['d_model'], len(encoder), generator_tied_embeddings)
     )
 
     # This was important from their code.
     # Initialize parameters with Glorot / fan_avg.
     for p in model.parameters():
-        if p.dim() > 1:
+        # we won't update anything that has fixed parameters!
+        if p.dim() > 1 and p.requires_grad is True:
             nn.init.xavier_uniform(p)
     return model
 
