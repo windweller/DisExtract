@@ -43,7 +43,6 @@ parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set thi
 parser.add_argument("--batch_size", type=int, default=64)
 parser.add_argument("--dpout", type=float, default=0.1, help="residual, embedding, attention dropout") # 3 dropouts
 parser.add_argument("--dpout_fc", type=float, default=0., help="classifier dropout")
-parser.add_argument("--optimizer", type=str, default="sgd,lr=0.1", help="adam or sgd,lr=0.1")
 parser.add_argument("--maxlr", type=float, default=2.5e-4, help="this is not used...")
 parser.add_argument("--warmup_steps", type=int, default=8000, help="OpenNMT uses steps")
 parser.add_argument("--l2", type=float, default=0.01, help="on non-bias non-gain weights")
