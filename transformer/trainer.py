@@ -167,8 +167,8 @@ n_ctx = min(max_len, n_ctx)
 
 init_params[0] = init_params[0][:n_ctx]
 word_embeddings = np.concatenate([init_params[1],
-                                   np.zeros((1, params.n_embed), np.float32), # pad, zero-value!
-                                  (np.random.randn(n_special-1, params.n_embed)*0.02).astype(np.float32)], 0)
+                                   np.zeros((1, params.d_model), np.float32), # pad, zero-value!
+                                  (np.random.randn(n_special-1, params.d_model)*0.02).astype(np.float32)], 0)
 ctx_embeddings = init_params[0]
 del init_params[1]
 
@@ -264,7 +264,7 @@ def trainepoch(epoch):
         loss = clf_loss + params.lm_coef * s1_lm_loss + params.lm_coef * s2_lm_loss
 
         all_costs.append(loss.data[0])
-        words_count += (s1_batch.nelement() + s2_batch.nelement()) / params.n_embed
+        words_count += (s1_batch.nelement() + s2_batch.nelement()) / params.d_model
 
         # backward
         model_opt.optimizer.zero_grad()
