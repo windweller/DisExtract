@@ -136,7 +136,7 @@ class DisSentT(nn.Module):
         return self.decoder(self.tgt_embed(tgt), tgt_mask)
 
     def pick_h(self, h, loss_mask):
-        lengths = loss_mask.sum(dim=1)
+        lengths = loss_mask.sum(dim=1).long()  # indices must be Long type
         # batch_size, lengths
         picked_h = h[range(loss_mask.size(0)), lengths, :]
         return picked_h
@@ -266,6 +266,7 @@ class PositionwiseFeedForward(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
+        # can consider changing this non-linearity!
         return self.w_2(self.dropout(F.relu(self.w_1(x))))
 
 
