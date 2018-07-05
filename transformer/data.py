@@ -84,7 +84,7 @@ class Batch:
         self.s2_ntokens = (self.s2_y != pad_id).data.sum()  # used for loss computing
         self.s2_loss_mask = to_cuda((self.s2_y != pad_id).type(torch.float), gpu_id)
 
-        self.label = np_to_var(label)
+        self.label = np_to_var(label, gpu_id)
 
     @staticmethod
     def make_std_mask(tgt, pad_id):
