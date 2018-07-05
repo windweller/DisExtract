@@ -446,7 +446,3 @@ if __name__ == '__main__':
     logger.info('\nTEST : Epoch {0}'.format(epoch))
     evaluate(1e6, 'valid', True)
     evaluate(0, 'test', True, True)  # save confusion results on test data
-
-    # Save encoder instead of full model
-    torch.save(dis_net.encoder,
-               os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
