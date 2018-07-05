@@ -235,7 +235,10 @@ def trainepoch(epoch):
     s2 = train['s2'][permutation]
     target = train['label'][permutation]
 
-    logger.info('Current learning rate : {0}'.format(model_opt.rate()))
+    if model_opt._step == 0:
+        logger.info('Current learning rate : {0}'.format(model_opt.rate(1)))
+    else:
+        logger.info('Current learning rate : {0}'.format(model_opt.rate()))
 
     for stidx in range(0, len(s1), params.batch_size):
         # prepare batch
