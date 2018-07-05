@@ -253,16 +253,16 @@ def trainepoch(epoch):
         k = s1_batch.shape[0]  # actual batch size
 
         # model forward
-        clf_output, s1_y, s2_y = dis_net(b)
+        clf_output, s1_y_hat, s2_y_hat = dis_net(b)
 
         pred = clf_output.data.max(1)[1]
         correct += pred.long().eq(b.label.data.long()).cpu().sum()
         assert len(pred) == len(s1[stidx:stidx + params.batch_size])
 
         # loss
-        clf_loss = dis_net.compute_clf_loss()
-        s1_lm_loss = dis_net.compute_lm_loss()
-        s2_lm_loss = dis_net.compute_lm_loss()
+        clf_loss = dis_net.compute_clf_loss(clf_output, b.label)
+        s1_lm_loss = dis_net.compute_lm_loss(s1_y_hat, b.s1_y, b.s1_loss_mask)
+        s2_lm_loss = dis_net.compute_lm_loss(s2_y_hat, b.s2_y, b.s2_loss_mask)
 
         loss = clf_loss + params.lm_coef * s1_lm_loss + params.lm_coef * s2_lm_loss
 
@@ -352,7 +352,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
         b = Batch(s1_batch, s2_batch, label_batch, encoder['_pad_'], gpu_id=params.gpu_id)
 
         # model forward
-        clf_output, s1_y, s2_y = dis_net(b)
+        clf_output = dis_net(b, lm=False)
 
         pred = clf_output.data.max(1)[1]
         correct += pred.long().eq(b.label.data.long()).cpu().sum()
