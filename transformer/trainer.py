@@ -268,7 +268,7 @@ def trainepoch(epoch):
         loss = clf_loss + params.lm_coef * s1_lm_loss + params.lm_coef * s2_lm_loss
 
         all_costs.append(loss.data[0])
-        words_count += (s1_batch.nelement() + s2_batch.nelement()) / params.d_model
+        words_count += (s1_batch.size + s2_batch.size) / params.d_model
 
         # backward
         model_opt.optimizer.zero_grad()
