@@ -45,6 +45,7 @@ parser.add_argument("--dpout", type=float, default=0.1, help="residual, embeddin
 parser.add_argument("--dpout_fc", type=float, default=0., help="classifier dropout")
 parser.add_argument("--maxlr", type=float, default=2.5e-4, help="this is not used...")
 parser.add_argument("--warmup_steps", type=int, default=8000, help="OpenNMT uses steps")
+parser.add_argument("--factor", type=float, default=1.0, help="learning rate scaling factor")
 parser.add_argument("--l2", type=float, default=0.01, help="on non-bias non-gain weights")
 parser.add_argument("--max_norm", type=float, default=2., help="max norm (grad clipping). Original paper uses 1.")
 parser.add_argument("--log_interval", type=int, default=100, help="how many batches to log once")
@@ -198,14 +199,22 @@ config_dis_model = {
 }
 
 # TODO: reload model in here...
-dis_net = make_model(encoder, config_dis_model, word_embeddings, ctx_embeddings)
-logger.info(dis_net)
+if params.cur_epochs == 1:
+    dis_net = make_model(encoder, config_dis_model, word_embeddings, ctx_embeddings)
+    logger.info(dis_net)
+else:
+    # if starting epoch is not 1, we resume training
+    # 1. load in model
+    # 2. resume with the previous learning rate
+    model_path = pjoin(params.outputdir, params.outputmodelname + ".pickle")  # this is the best model
+    # this might have conflicts with gpu_idx...
+    dis_net = torch.load(model_path)
 
 # TODO: shuffling data happens inside train_epoch
 
 # warmup_steps: 8000
 need_grad = lambda x: x.requires_grad
-model_opt = NoamOpt(params.d_model, 1, params.warmup_steps,
+model_opt = NoamOpt(params.d_model, params.factor, params.warmup_steps,
             torch.optim.Adam(filter(need_grad, dis_net.parameters()), lr=0, betas=(0.9, 0.98), eps=1e-9))
 
 if params.gpu_id != -1:
