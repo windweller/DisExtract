@@ -49,6 +49,8 @@ parser.add_argument("--max_norm", type=float, default=2., help="max norm (grad c
 parser.add_argument("--log_interval", type=int, default=100, help="how many batches to log once")
 parser.add_argument('--lm_coef', type=float, default=0.5)
 parser.add_argument("--train_emb", action='store_true', help="Initialize embedding randomly, and then learn it, default to False")
+parser.add_argument("--pick_hid", action='store_true', help="Pick correct hidden states")
+parser.add_argument("--tied", action='store_true', help="Tie weights to embedding, should be always flagged True")
 # for now we fix non-linearity to whatever PyTorch provides...could be SELU
 
 # model
@@ -58,10 +60,10 @@ parser.add_argument("--n_heads", type=int, default=12, help="number of attention
 parser.add_argument("--n_layers", type=int, default=8, help="decoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
 # parser.add_argument("--pool_type", type=str, default='max', help="flag if we do max pooling, which hasn't been done before")
-parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
+# parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
 
 # gpu
-parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
+parser.add_argument("--gpu_id", type=int, default=-1, help="GPU ID")
 parser.add_argument("--seed", type=int, default=1234, help="seed")
 
 params, _ = parser.parse_known_args()
@@ -188,8 +190,10 @@ config_dis_model = {
     'n_classes': label_size,
     # 'pool_type': params.pool_type,
     'n_heads': params.n_heads,
-    'use_cuda': True,
-    'train_emb': params.train_emb
+    'gpu_id': params.gpu_id,
+    'train_emb': params.train_emb,
+    'pick_hid': params.pick_hid,
+    'tied': params.tied
 }
 
 # TODO: shuffling data happens inside train_epoch
