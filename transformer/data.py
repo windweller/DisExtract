@@ -63,7 +63,7 @@ def to_cuda(obj, gpu_id):
     if gpu_id == -1:
         return obj
     else:
-        obj.cuda(gpu_id)
+        return obj.cuda(gpu_id)
 
 class Batch:
     "Object for holding a batch of data with mask during training."
