@@ -135,11 +135,13 @@ class DisSentT(nn.Module):
         # tgt, tgt_mask need to be on CUDA before being put in here
         return self.decoder(self.tgt_embed(tgt), tgt_mask)
 
-    def pick_h(self, h, loss_mask):
-        lengths = loss_mask.sum(dim=1).long()  # indices must be Long type
+    def pick_h(self, h, lengths):
         # batch_size, lengths
-        picked_h = h[range(loss_mask.size(0)), lengths, :]
-        return picked_h
+        corr_h = []
+        for i, j in enumerate(lengths):
+            corr_h.append(h[i, j, :])
+        corr_h = torch.stack(corr_h, dim=0)
+        return corr_h
 
     def forward(self, batch, lm=True):
         "Take in and process masked src and target sequences."
@@ -148,7 +150,7 @@ class DisSentT(nn.Module):
         v_h = self.encode(batch.s2, batch.s2_mask)
         # u_h, v_h: (batch_size, time_step, d_model) (which is n_embed)
         if self.config['pick_hid']:
-            u, v = self.pick_h(u_h, batch.s1_loss_mask), self.pick_h(v_h, batch.s2_loss_mask)
+            u, v = self.pick_h(u_h, batch.s1_lengths), self.pick_h(v_h, batch.s2_lengths)
         else:
             u, v = u_h[:, -1, :], v_h[:, -1, :] # last hidden state
 
