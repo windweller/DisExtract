@@ -299,10 +299,10 @@ class PositionalEncoding(nn.Module):
         self.dropout = nn.Dropout(p=config['dpout'])
 
         # Compute the positional encodings once in log space.
-        pe = torch.zeros(max_len, config.d_model)
+        pe = torch.zeros(max_len, config['d_model'])
         position = torch.arange(0, max_len).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, config.d_model, 2) *
-                             -(math.log(10000.0) / config.d_model))
+        div_term = torch.exp(torch.arange(0, config['d_model'], 2) *
+                             -(math.log(10000.0) / config['d_model']))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         # pe = torch.from_numpy(ctx_embeddings)
