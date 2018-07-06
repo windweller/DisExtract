@@ -53,11 +53,11 @@ class LayerNorm(nn.Module):
 class Generator(nn.Module):
     "Define standard linear + softmax generation step."
 
-    def __init__(self, d_model, vocab_size, word_embeddings=None):
+    def __init__(self, d_model, vocab_size, word_embedding_weight=None):
         super(Generator, self).__init__()
         self.proj = nn.Linear(d_model, vocab_size, bias=False)
-        if word_embeddings is not None:
-            self.proj.weight.data.copy_(torch.from_numpy(word_embeddings))
+        if word_embedding_weight is not None:
+            self.proj.weight.data.copy_(word_embedding_weight)
             self.proj.weight.requires_grad = False
 
     def forward(self, x):
@@ -185,14 +185,19 @@ def make_model(encoder, config, word_embeddings=None): # , ctx_embeddings=None
     ff = PositionwiseFeedForward(config['d_model'], config['d_ff'], config['dpout'])
     position = PositionalEncoding(config) # ctx_embeddings
 
-    generator_tied_embeddings = word_embeddings if config['tied'] else None
+    embedding_layer = Embeddings(encoder, config, word_embeddings)
+
+    if config['tied']:
+        generator_tied_embeddings = torch.from_numpy(word_embeddings) if not config['train_emb'] else embedding_layer.lut.weight
+    else:
+        generator_tied_embeddings = None
 
     model = DisSentT(
         config,
         Decoder(
             DecoderLayer(config['d_model'], c(attn), c(ff), config['dpout']),
             config['n_layers']),
-        nn.Sequential(Embeddings(encoder, config, word_embeddings), c(position)),
+        nn.Sequential(embedding_layer, c(position)),
         Generator(config['d_model'], len(encoder), generator_tied_embeddings)
     )
 
