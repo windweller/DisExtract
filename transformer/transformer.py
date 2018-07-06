@@ -53,12 +53,14 @@ class LayerNorm(nn.Module):
 class Generator(nn.Module):
     "Define standard linear + softmax generation step."
 
-    def __init__(self, d_model, vocab_size, word_embedding_weight=None):
+    def __init__(self, d_model, vocab_size, np_word_embedding=None, word_embedding_weight=None):
         super(Generator, self).__init__()
         self.proj = nn.Linear(d_model, vocab_size, bias=False)
-        if word_embedding_weight is not None:
-            self.proj.weight.data.copy_(word_embedding_weight)
+        if np_word_embedding is not None:
+            self.proj.weight.data.copy_(torch.from_numpy(np_word_embedding))
             self.proj.weight.requires_grad = False
+        if word_embedding_weight is not None:
+            self.proj.weight = word_embedding_weight  # tied-weights
 
     def forward(self, x):
         return F.log_softmax(self.proj(x), dim=-1)
@@ -188,9 +190,12 @@ def make_model(encoder, config, word_embeddings=None): # , ctx_embeddings=None
     embedding_layer = Embeddings(encoder, config, word_embeddings)
 
     if config['tied']:
-        generator_tied_embeddings = torch.from_numpy(word_embeddings) if not config['train_emb'] else embedding_layer.lut.weight
+        if config['train_emb']:
+            generator = Generator(config['d_model'], len(encoder), word_embedding_weight=embedding_layer.lut.weight)
+        else:
+            generator = Generator(config['d_model'], len(encoder), np_word_embedding=word_embeddings)
     else:
-        generator_tied_embeddings = None
+        generator = Generator(config['d_model'], len(encoder))
 
     model = DisSentT(
         config,
@@ -198,7 +203,7 @@ def make_model(encoder, config, word_embeddings=None): # , ctx_embeddings=None
             DecoderLayer(config['d_model'], c(attn), c(ff), config['dpout']),
             config['n_layers']),
         nn.Sequential(embedding_layer, c(position)),
-        Generator(config['d_model'], len(encoder), generator_tied_embeddings)
+        generator
     )
 
     # This was important from their code.
