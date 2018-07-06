@@ -106,7 +106,6 @@ with open(params.hypes, 'rb') as f:
 
 data_dir = json_config['data_dir']
 prefix = json_config[params.corpus]
-glove_path = json_config['glove_path']
 bpe_encoder_path = json_config['bpe_encoder_path']
 bpe_vocab_path = json_config['bpe_vocab_path']
 params_path = json_config['params_path']
@@ -162,8 +161,7 @@ init_params = np.split(np.concatenate(init_params, 0), offsets[:2])[:-1]
 init_params = [param.reshape(shape) for param, shape in zip(init_params, shapes[:2])]
 
 n_special = 3  # <s>, </s>, <pad>
-n_ctx = 512
-n_ctx = min(max_len, n_ctx)
+n_ctx = 1024
 
 init_params[0] = init_params[0][:n_ctx]
 word_embeddings = np.concatenate([init_params[1],
@@ -200,7 +198,7 @@ config_dis_model = {
 
 # TODO: reload model in here...
 if params.cur_epochs == 1:
-    dis_net = make_model(encoder, config_dis_model, word_embeddings, ctx_embeddings)
+    dis_net = make_model(encoder, config_dis_model, word_embeddings) # ctx_embeddings
     logger.info(dis_net)
 else:
     # if starting epoch is not 1, we resume training
