@@ -62,7 +62,8 @@ parser.add_argument("--n_heads", type=int, default=12, help="number of attention
 parser.add_argument("--n_layers", type=int, default=8, help="decoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
 # parser.add_argument("--pool_type", type=str, default='max', help="flag if we do max pooling, which hasn't been done before")
-# parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
+parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should "
+                                                              "be used with tied weights")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=-1, help="GPU ID")
