@@ -56,6 +56,8 @@ class Generator(nn.Module):
     def __init__(self, d_model, vocab_size, np_word_embedding=None, word_embedding_weight=None):
         super(Generator, self).__init__()
         self.proj = nn.Linear(d_model, vocab_size, bias=False)
+        # this has the advantage that we don't need an embedding matrix actually...
+        # only need this one...
         if np_word_embedding is not None:
             self.proj.weight.data.copy_(torch.from_numpy(np_word_embedding))
             self.proj.weight.requires_grad = False
