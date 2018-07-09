@@ -429,6 +429,11 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
                 print("saving by epoch error, maybe due to disk space limit")
 
             val_acc_best = eval_acc
+
+            if adam_stop is True:
+                # we reset both when there's an improvement
+                adam_stop = False
+                stop_training = False
         else:
             # early stopping (at 2nd decrease in accuracy)
             stop_training = adam_stop
