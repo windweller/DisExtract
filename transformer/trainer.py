@@ -37,7 +37,6 @@ parser.add_argument("--outputmodelname", type=str, default='dis-model')
 # training
 parser.add_argument("--n_epochs", type=int, default=10)
 parser.add_argument("--cur_epochs", type=int, default=1)
-parser.add_argument("--cur_lr", type=float, default=0.1)
 parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set this otherwise resumed model will be saved by default")
 
 parser.add_argument("--batch_size", type=int, default=64)
@@ -209,12 +208,15 @@ else:
     # this might have conflicts with gpu_idx...
     dis_net = torch.load(model_path)
 
-# TODO: shuffling data happens inside train_epoch
-
 # warmup_steps: 8000
 need_grad = lambda x: x.requires_grad
 model_opt = NoamOpt(params.d_model, params.factor, params.warmup_steps,
             torch.optim.Adam(filter(need_grad, dis_net.parameters()), lr=0, betas=(0.9, 0.98), eps=1e-9))
+
+if params.cur_epochs != 1:
+    # now we need to set the correct learning rate
+    prev_steps = train['s1'] // params.batch_size
+    model_opt._step = prev_steps  # now we start with correct learning rate
 
 if params.gpu_id != -1:
     dis_net.cuda(params.gpu_id)
