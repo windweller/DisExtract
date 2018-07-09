@@ -215,7 +215,7 @@ model_opt = NoamOpt(params.d_model, params.factor, params.warmup_steps,
 
 if params.cur_epochs != 1:
     # now we need to set the correct learning rate
-    prev_steps = (train['s1'] // params.batch_size) * (params.cur_epochs - 1)
+    prev_steps = (len(train['s1']) // params.batch_size) * (params.cur_epochs - 1)
     model_opt._step = prev_steps  # now we start with correct learning rate
 
 if params.gpu_id != -1:
