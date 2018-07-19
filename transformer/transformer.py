@@ -150,6 +150,13 @@ class DisSentT(nn.Module):
         corr_h = torch.stack(corr_h, dim=0)
         return corr_h
 
+    def pick_mask(self, mask, lengths):
+        corr_mask = []
+        for i, j in enumerate(lengths):
+            corr_mask.append(mask[i, j-1, :])
+        corr_mask = torch.stack(corr_mask, dim=0)
+        return corr_mask
+
     def forward(self, batch, lm=True):
         "Take in and process masked src and target sequences."
         # this computes LM targets!! before the Generator
@@ -165,8 +172,10 @@ class DisSentT(nn.Module):
         # self.project(u_h) -- u_h: (batch_size, time_step, d_model)
         # --> u = self.project(u_h), u: (batch_size, d_model * n_head) n_head = 4
         if self.config['proj_head'] != 1:
-            u = self.projection_layer(u, u_h, u_h, batch.s1_mask)
-            v = self.projection_layer(v, v_h, v_h, batch.s2_mask)
+            picked_s1_mask = self.pick_mask(batch.s1_mask)
+            picked_s2_mask = self.pick_mask(batch.s2_mask)
+            u = self.projection_layer(u, u_h, u_h, picked_s1_mask)
+            v = self.projection_layer(v, v_h, v_h, picked_s2_mask)
 
         features = torch.cat((u, v, u - v, u * v), 1)
         clf_output = self.classifier(features)
@@ -303,10 +312,10 @@ class MultiHeadedAttentionProjection(nn.Module):
 
     def forward(self, query, key, value, mask=None):
         "Implements Figure 2"
+        nbatches = query.size(0)
         if mask is not None:
             # Same mask applied to all h heads.-
-            mask = mask.unsqueeze(1)
-        nbatches = query.size(0)
+            mask = mask.view(nbatches, 1, 1, -1)
         nd = self.d_model if self.proj_type == 1 else self.d_k
         # 1) Do all the linear projections in batch from d_model => h x d_k
         # query, key, value = \
