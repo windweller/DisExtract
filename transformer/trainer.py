@@ -53,7 +53,7 @@ parser.add_argument('--lm_coef', type=float, default=0.5)
 parser.add_argument("--train_emb", action='store_true', help="Initialize embedding randomly, and then learn it, default to False")
 parser.add_argument("--pick_hid", action='store_true', help="Pick correct hidden states")
 parser.add_argument("--tied", action='store_true', help="Tie weights to embedding, should be always flagged True")
-parser.add_argument("--proj_head", type=int, default=4, help="last docoder layer head number")
+parser.add_argument("--proj_head", type=int, default=1, help="last docoder layer head number")
 parser.add_argument("--proj_type", type=int, default=1, help="last decoder layer blow up type, 1 for initial linear transformation, 2 for final linear transformation")
 # for now we fix non-linearity to whatever PyTorch provides...could be SELU
 

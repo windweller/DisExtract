@@ -163,9 +163,10 @@ class DisSentT(nn.Module):
             u, v = u_h[:, -1, :], v_h[:, -1, :] # last hidden state
 
         # self.project(u_h) -- u_h: (batch_size, time_step, d_model)
-        # --> u = self.project(u_h), u: (batch_size, d_model * n_head) n_head = 4 
-        u = self.projection_layer(u, u_h, u_h, batch.s1_mask)
-        v = self.projection_layer(v, v_h, v_h, batch.s2_mask)
+        # --> u = self.project(u_h), u: (batch_size, d_model * n_head) n_head = 4
+        if self.config['proj_head'] != 1:
+            u = self.projection_layer(u, u_h, u_h, batch.s1_mask)
+            v = self.projection_layer(v, v_h, v_h, batch.s2_mask)
 
         features = torch.cat((u, v, u - v, u * v), 1)
         clf_output = self.classifier(features)
