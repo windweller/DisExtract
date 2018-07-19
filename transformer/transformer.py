@@ -172,8 +172,8 @@ class DisSentT(nn.Module):
         # self.project(u_h) -- u_h: (batch_size, time_step, d_model)
         # --> u = self.project(u_h), u: (batch_size, d_model * n_head) n_head = 4
         if self.config['proj_head'] != 1:
-            picked_s1_mask = self.pick_mask(batch.s1_mask)
-            picked_s2_mask = self.pick_mask(batch.s2_mask)
+            picked_s1_mask = self.pick_mask(batch.s1_mask, batch.s1_lengths)
+            picked_s2_mask = self.pick_mask(batch.s2_mask, batch.s2_lengths)
             u = self.projection_layer(u, u_h, u_h, picked_s1_mask)
             v = self.projection_layer(v, v_h, v_h, picked_s2_mask)
 
