@@ -295,7 +295,7 @@ class MultiHeadedAttentionProjection(nn.Module):
     def __init__(self, h, d_model, proj_type=1, dropout=0.1):
         "Take in model size and number of heads."
         super(MultiHeadedAttentionProjection, self).__init__()
-        assert d_model % h == 0
+        # assert d_model % h == 0
         # We assume d_v always equals d_k
         self.d_model = d_model
         self.d_k = d_model // h
