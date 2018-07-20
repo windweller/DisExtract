@@ -302,7 +302,7 @@ class MultiHeadedAttentionProjection(nn.Module):
         self.h = h
         if proj_type == 1:
             self.linear = nn.Linear(d_model, d_model * h)
-            self.linear_out = nn.Linear(d_model, d_model)
+            self.linear_out = nn.Linear(d_model * h, d_model * h)
         elif proj_type == 2:
             self.linear = nn.Linear(d_model, d_model)
             self.linear_out = nn.Linear(d_model, d_model * h)
