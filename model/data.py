@@ -12,9 +12,9 @@ import logging
 from collections import defaultdict
 from os.path import join as pjoin
 from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
-    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS, \
+    EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS, EN_DIS_FIVE, \
     CH_FIVE_DISCOURSE_MARKERS, SP_FIVE_DISCOURSE_MARKERS
-
+from sys import exit
 
 def get_batch(batch, word_vec):
     # sent in batch in decreasing order of lengths (bsize, max_len, word_dim)
@@ -76,22 +76,34 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
 
     if discourse_tag == "books_5":
         dis_map = list_to_map(EN_FIVE_DISCOURSE_MARKERS)
+        markers = EN_FIVE_DISCOURSE_MARKERS
     elif discourse_tag == "books_8":
         dis_map = list_to_map(EN_EIGHT_DISCOURSE_MARKERS)
+        markers = EN_EIGHT_DISCOURSE_MARKERS
     elif discourse_tag == "books_all" or discourse_tag == "books_perfectly_balanced" or discourse_tag == "books_mostly_balanced":
         dis_map = list_to_map(EN_DISCOURSE_MARKERS)
+        markers = EN_DISCOURSE_MARKERS
+    elif discourse_tag == "books_dis_five":
+        dis_map = list_to_map(EN_DIS_FIVE)
+        markers = EN_DIS_FIVE
     elif discourse_tag == "books_old_5":
         dis_map = list_to_map(EN_OLD_FIVE_DISCOURSE_MARKERS)
+        markers = EN_OLD_FIVE_DISCOURSE_MARKERS
     elif discourse_tag == "gw_cn_5":
         dis_map = list_to_map(CH_FIVE_DISCOURSE_MARKERS)
+        markers = CH_FIVE_DISCOURSE_MARKERS
     elif discourse_tag == "gw_es_5":
         dis_map = list_to_map(SP_FIVE_DISCOURSE_MARKERS)
+        markers = SP_FIVE_DISCOURSE_MARKERS
     elif discourse_tag == "gw_es_1M_5":
         dis_map = list_to_map(SP_FIVE_DISCOURSE_MARKERS)
+        markers = SP_FIVE_DISCOURSE_MARKERS
     elif discourse_tag == 'dat':
         dis_map = list_to_map(['entail', 'contradict'])
+        markers = ['entail', 'contradict']
     else:
         raise Exception("Corpus/Discourse Tag Set {} not found".format(discourse_tag))
+    print(markers)
 
     logging.info(dis_map)
     # dis_map: {'and': 0, ...}
@@ -111,9 +123,11 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
                 # we use this to avoid/skip lines that are empty
                 if len(columns) != 3:
                     continue
-                s1[data_type]['sent'].append(columns[0])
-                s2[data_type]['sent'].append(columns[1])
-                target[data_type]['data'].append(dis_map[columns[2].rstrip('\n')])
+                marker = columns[2].rstrip('\n')
+                if marker in markers:
+                    s1[data_type]['sent'].append(columns[0])
+                    s2[data_type]['sent'].append(columns[1])
+                    target[data_type]['data'].append(dis_map[columns[2].rstrip('\n')])
 
         assert len(s1[data_type]['sent']) == len(s2[data_type]['sent']) == \
                len(target[data_type]['data'])
@@ -143,6 +157,8 @@ def get_merged_data(data_dir, prefix, discourse_tag="books_5"):
         dis_map = list_to_map(EN_EIGHT_DISCOURSE_MARKERS)
     elif discourse_tag == "books_all" or discourse_tag == "books_perfectly_balanced" or discourse_tag == "books_mostly_balanced":
         dis_map = list_to_map(EN_DISCOURSE_MARKERS)
+    elif discourse_tag == "books_dis_five":
+        dis_map = list_to_map(EN_DIS_FIVE)
     elif discourse_tag == "books_old_5":
         dis_map = list_to_map(EN_OLD_FIVE_DISCOURSE_MARKERS)
     elif discourse_tag == "gw_cn_5":
