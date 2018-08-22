@@ -7,7 +7,7 @@ import torch
 from data import get_batch
 from torch.autograd import Variable
 
-def evaluate(dis_net, data, word_vec, target_marker_id, batch_size=32):
+def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=32):
     """
     :param dis_net: Model
     :param data: Either valid or test or combined, should be a dictionary
