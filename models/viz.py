@@ -15,8 +15,6 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=32
     :return: (type1_list, type2_list)
     """
     dis_net.eval()
-    correct = 0.
-    global val_acc_best, lr, stop_training, adam_stop
 
     # it will only be "valid" during retraining (fine-tuning)
     s1 = data['s1']
@@ -52,6 +50,9 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=32
             elif p != target_marker_id and l == target_marker_id:
                 type_two_list.append([s1[i+counter], s2[i+counter], p, l])
             counter += 1
+
+        if i % 100 == 0:
+            print("processed {}".format(i))
 
         # valid_preds.extend(preds.tolist())
         # valid_labels.extend(labels.tolist())
