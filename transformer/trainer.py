@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Code adapted from
 https://github.com/facebookresearch/InferSent/blob/master/train_nli.py
@@ -17,14 +15,15 @@ from os.path import join as pjoin
 from itertools import izip
 
 import numpy as np
+import random
 
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
 
-from data import get_dis, get_batch, build_vocab, build_emb_mat, get_target_batch
-from dissent import DisSent
-from util import get_optimizer, get_labels
+from data import get_dis, pad_batch, Batch
+from util import get_labels, TextEncoder
+from transformer import NoamOpt, make_model
 
 import logging
 
@@ -38,38 +37,39 @@ parser.add_argument("--outputmodelname", type=str, default='dis-model')
 # training
 parser.add_argument("--n_epochs", type=int, default=10)
 parser.add_argument("--cur_epochs", type=int, default=1)
-parser.add_argument("--cur_lr", type=float, default=0.1)
 parser.add_argument("--cur_valid", type=float, default=-1e10, help="must set this otherwise resumed model will be saved by default")
 
 parser.add_argument("--batch_size", type=int, default=64)
-parser.add_argument("--dpout_model", type=float, default=0., help="encoder dropout")
-parser.add_argument("--dpout_decoder", type=float, default=0., help="decoder dropout")
-parser.add_argument("--dpout_emb", type=float, default=0., help="embedding dropout")
+parser.add_argument("--dpout", type=float, default=0.1, help="residual, embedding, attention dropout") # 3 dropouts
 parser.add_argument("--dpout_fc", type=float, default=0., help="classifier dropout")
-parser.add_argument("--optimizer", type=str, default="sgd,lr=0.1", help="adam or sgd,lr=0.1")
-parser.add_argument("--lrshrink", type=float, default=5, help="shrink factor for sgd")
-parser.add_argument("--decay", type=float, default=0.99, help="lr decay")
-parser.add_argument("--minlr", type=float, default=1e-5, help="minimum lr")
-parser.add_argument("--max_norm", type=float, default=5., help="max norm (grad clipping)")
+parser.add_argument("--maxlr", type=float, default=2.5e-4, help="this is not used...")
+parser.add_argument("--warmup_steps", type=int, default=8000, help="OpenNMT uses steps")
+# TransformerLM uses 0.2% of training data as warmup step, that's 5785 for DisSent5/8, and 8471 for DisSent-All
+parser.add_argument("--factor", type=float, default=1.0, help="learning rate scaling factor")
+parser.add_argument("--l2", type=float, default=0.01, help="on non-bias non-gain weights")
+parser.add_argument("--max_norm", type=float, default=2., help="max norm (grad clipping). Original paper uses 1.")
 parser.add_argument("--log_interval", type=int, default=100, help="how many batches to log once")
+parser.add_argument('--lm_coef', type=float, default=0.5)
+parser.add_argument("--train_emb", action='store_true', help="Initialize embedding randomly, and then learn it, default to False")
+parser.add_argument("--pick_hid", action='store_true', help="Pick correct hidden states")
+parser.add_argument("--tied", action='store_true', help="Tie weights to embedding, should be always flagged True")
+parser.add_argument("--proj_head", type=int, default=1, help="last docoder layer head number")
+parser.add_argument("--proj_type", type=int, default=1, help="last decoder layer blow up type, 1 for initial linear transformation, 2 for final linear transformation")
+# for now we fix non-linearity to whatever PyTorch provides...could be SELU
 
 # model
-parser.add_argument("--encoder_type", type=str, default='BGRUEncoder', help="see list of encoders")
-parser.add_argument("--decoder_type", type=str, default='LSTMDecoder', help="see list of decoders")
-parser.add_argument("--enc_lstm_dim", type=int, default=2048, help="encoder nhid dimension")
-parser.add_argument("--dec_lstm_dim", type=int, default=2048, help="decoder nhid dimension")
-parser.add_argument("--n_enc_layers", type=int, default=1, help="encoder num layers")
+parser.add_argument("--d_ff", type=int, default=3072, help="decoder nhid dimension")
+parser.add_argument("--d_model", type=int, default=768, help="decoder nhid dimension")
+parser.add_argument("--n_heads", type=int, default=12, help="number of attention heads")
+parser.add_argument("--n_layers", type=int, default=8, help="decoder num layers")
 parser.add_argument("--fc_dim", type=int, default=512, help="nhid of fc layers")
-parser.add_argument("--pool_type", type=str, default='max', help="max or mean")
-parser.add_argument("--tied_weights", action='store_true', help="RNN would share weights on both directions")
-parser.add_argument("--tied_emb", action='store_true', help="decoder will map to GloVE embedding space")
-parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should be used with tied weights")
-parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
-parser.add_argument("--s1", action='store_true', help="training only on S1")
-parser.add_argument("--s2", action='store_true', help="training only on S2")
+# parser.add_argument("--pool_type", type=str, default='max', help="flag if we do max pooling, which hasn't been done before")
+parser.add_argument("--reload_val", action='store_true', help="Reload the previous best epoch on validation, should "
+                                                              "be used with tied weights")
+parser.add_argument("--no_stop", action='store_true', help="no early stopping")
 
 # gpu
-parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
+parser.add_argument("--gpu_id", type=int, default=-1, help="GPU ID")
 parser.add_argument("--seed", type=int, default=1234, help="seed")
 
 params, _ = parser.parse_known_args()
@@ -80,6 +80,7 @@ torch.cuda.set_device(params.gpu_id)
 """
 SEED
 """
+random.seed(params.seed)
 np.random.seed(params.seed)
 torch.manual_seed(params.seed)
 torch.cuda.manual_seed(params.seed)
@@ -109,29 +110,70 @@ with open(params.hypes, 'rb') as f:
 
 data_dir = json_config['data_dir']
 prefix = json_config[params.corpus]
-glove_path = json_config['glove_path']
+bpe_encoder_path = json_config['bpe_encoder_path']
+bpe_vocab_path = json_config['bpe_vocab_path']
+params_path = json_config['params_path']
 
-if params.char and params.corpus == "gw_cn_5":
-    prefix = prefix.replace('discourse', 'discourse_char')
+"""
+BPE encoder
+"""
+text_encoder = TextEncoder(bpe_encoder_path, bpe_vocab_path)
+encoder = text_encoder.encoder
+
+# add special token
+encoder['_pad_'] = len(encoder)
+encoder['_start_'] = len(encoder)
+encoder['_end_'] = len(encoder)
 
 """
 DATA
+1. build vocab through BPE
 """
-train, valid, test = get_dis(data_dir, prefix, params.corpus)
-word_vec = build_vocab(train['s1'] + train['s2'] +
-                       valid['s1'] + valid['s2'] +
-                       test['s1'] + test['s2'], glove_path)
-vocab_list = word_vec.keys()
-vocab_emb, vocab_map = build_emb_mat(vocab_list, word_vec)
+train, valid, test = get_dis(data_dir, prefix, params.corpus)  # this stays the same
 
-# unknown words instead of map to <unk>, this directly takes them out
+# word_vec = build_vocab(train['s1'] + train['s2'] +
+#                        valid['s1'] + valid['s2'] +
+#                        test['s1'] + test['s2'], glove_path)
+# batching function needs to be different:
+# 1). return s1, s2, y_label
+
+# If this is slow...we can speed it up
+# Numericalization; No padding here
+# Also, Batch class from OpenNMT will take care of target generation
+max_len = 0.
 for split in ['s1', 's2']:
     for data_type in ['train', 'valid', 'test']:
-        eval(data_type)[split] = np.array([['<s>'] +
-                                           [word for word in sent.split() if word in word_vec] +
-                                           ['</s>'] for sent in eval(data_type)[split]])
+        num_sents = []
+        y_sents = []
+        for sent in eval(data_type)[split]:
+            num_sent = text_encoder.encode([sent], verbose=False, lazy=True)[0]
+            num_sents.append([encoder['_start_']] + num_sent + [encoder['_end_']])
+            # y_sents.append(num_sent + [encoder['_end_']])
+            max_len = max_len if max_len > len(num_sent) + 1 else len(num_sent) + 1
+        eval(data_type)[split] = np.array(num_sents)
+        # eval(data_type)['y_'+split] = np.array(y_sents)
 
-params.word_emb_dim = 300
+"""
+Params
+2. Load in parameters (word embeddings)
+"""
+
+shapes = json.load(open(pjoin(params_path, 'params_shapes.json')))
+offsets = np.cumsum([np.prod(shape) for shape in shapes])
+init_params = [np.load(pjoin(params_path, 'params_{}.npy'.format(n))) for n in range(3)]
+init_params = np.split(np.concatenate(init_params, 0), offsets[:2])[:-1]
+init_params = [param.reshape(shape) for param, shape in zip(init_params, shapes[:2])]
+
+n_special = 3  # <s>, </s>, <pad>
+n_ctx = 1024
+
+init_params[0] = init_params[0][:n_ctx]
+word_embeddings = np.concatenate([init_params[1],
+                                   np.zeros((1, params.d_model), np.float32), # pad, zero-value!
+                                  (np.random.randn(n_special-1, params.d_model)*0.02).astype(np.float32)], 0)
+ctx_embeddings = init_params[0]
+del init_params[1]
+
 
 dis_labels = get_labels(params.corpus)
 label_size = len(dis_labels)
@@ -141,28 +183,28 @@ MODEL
 """
 # model config
 config_dis_model = {
-    'n_words': len(word_vec),
-    'word_emb_dim': params.word_emb_dim,
-    'enc_lstm_dim': params.enc_lstm_dim,
-    'dec_lstm_dim': params.dec_lstm_dim,
-    'n_enc_layers': params.n_enc_layers,
-    'dpout_emb': params.dpout_emb,
-    'dpout_model': params.dpout_model,
+    'n_words': len(encoder),
+    'd_model': params.d_model, # same as word embedding size
+    'd_ff': params.d_ff, # this is the bottleneck blowup dimension
+    'n_layers': params.n_layers,
+    'dpout': params.dpout,
     'dpout_fc': params.dpout_fc,
     'fc_dim': params.fc_dim,
     'bsize': params.batch_size,
     'n_classes': label_size,
-    'pool_type': params.pool_type,
-    'encoder_type': params.encoder_type,
-    'tied_weights': params.tied_weights,
-    'use_cuda': True,
-    'dpout_decoder': params.dpout_decoder,
-    'decoder_type': params.decoder_type,
-    'tied_emb': params.tied_emb
+    # 'pool_type': params.pool_type,
+    'n_heads': params.n_heads,
+    'gpu_id': params.gpu_id,
+    'train_emb': params.train_emb,
+    'pick_hid': params.pick_hid,
+    'tied': params.tied,
+    'proj_head': params.proj_head,
+    'proj_type': params.proj_type
 }
 
+# TODO: reload model in here...
 if params.cur_epochs == 1:
-    dis_net = DisSent(config_dis_model)
+    dis_net = make_model(encoder, config_dis_model, word_embeddings) # ctx_embeddings
     logger.info(dis_net)
 else:
     # if starting epoch is not 1, we resume training
@@ -172,20 +214,19 @@ else:
     # this might have conflicts with gpu_idx...
     dis_net = torch.load(model_path)
 
-# loss
-loss_fn = nn.CrossEntropyLoss()
-loss_fn.size_average = False
-
-# optimizer
-optim_fn, optim_params = get_optimizer(params.optimizer)
-optimizer = optim_fn(dis_net.parameters(), **optim_params)
+# warmup_steps: 8000
+need_grad = lambda x: x.requires_grad
+model_opt = NoamOpt(params.d_model, params.factor, params.warmup_steps,
+            torch.optim.Adam(filter(need_grad, dis_net.parameters()), lr=0, betas=(0.9, 0.98), eps=1e-9))
 
 if params.cur_epochs != 1:
-    optimizer.param_groups[0]['lr'] = params.cur_lr
+    # now we need to set the correct learning rate
+    prev_steps = (len(train['s1']) // params.batch_size) * (params.cur_epochs - 1)
+    model_opt._step = prev_steps  # now we start with correct learning rate
 
-# cuda by default
-dis_net.cuda()
-loss_fn.cuda()
+if params.gpu_id != -1:
+    dis_net.cuda(params.gpu_id)
+
 
 """
 TRAIN
@@ -193,8 +234,6 @@ TRAIN
 val_acc_best = -1e10 if params.cur_epochs == 1 else params.cur_valid
 adam_stop = False
 stop_training = False
-lr = optim_params['lr'] if 'sgd' in params.optimizer else None
-
 
 def trainepoch(epoch):
     logger.info('\nTRAINING : Epoch ' + str(epoch))
@@ -212,67 +251,55 @@ def trainepoch(epoch):
     s2 = train['s2'][permutation]
     target = train['label'][permutation]
 
-    optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] * params.decay if epoch > 1 \
-                                                                                        and 'sgd' in params.optimizer else \
-        optimizer.param_groups[0]['lr']
-    logger.info('Learning rate : {0}'.format(optimizer.param_groups[0]['lr']))
+    if model_opt._step == 0:
+        logger.info('Current learning rate : {0}'.format(model_opt.rate(1)))
+    else:
+        logger.info('Current learning rate : {0}'.format(model_opt.rate()))
 
     for stidx in range(0, len(s1), params.batch_size):
         # prepare batch
-        s1_batch, s1_len = get_batch(s1[stidx:stidx + params.batch_size],
-                                     word_vec)
-        s1_tgt = get_target_batch(s1[stidx:stidx + params.batch_size], vocab_map)
-        s2_batch, s2_len = get_batch(s2[stidx:stidx + params.batch_size],
-                                     word_vec)
-        s2_tgt = get_target_batch(s2[stidx:stidx + params.batch_size], vocab_map)
+        s1_batch = pad_batch(s1[stidx:stidx + params.batch_size],
+                                     encoder['_pad_'])
+        s2_batch = pad_batch(s2[stidx:stidx + params.batch_size],
+                                     encoder['_pad_'])
+        label_batch = target[stidx:stidx + params.batch_size]
+        b = Batch(s1_batch, s2_batch, label_batch, encoder['_pad_'], gpu_id=params.gpu_id)
 
-        s1_tgt, s2_tgt = Variable(s1_tgt.cuda()), Variable(s2_tgt.cuda())
-
-        s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-        tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
-        k = s1_batch.size(1)  # actual batch size
+        # s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
+        # tgt_batch = Variable(torch.LongTensor(target[stidx:stidx + params.batch_size])).cuda()
+        k = s1_batch.shape[0]  # actual batch size
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), s1_tgt, s2_tgt)
+        clf_output, s1_y_hat, s2_y_hat = dis_net(b)
 
-        pred = output.data.max(1)[1]
-        correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
+        pred = clf_output.data.max(1)[1]
+        correct += pred.long().eq(b.label.data.long()).cpu().sum()
         assert len(pred) == len(s1[stidx:stidx + params.batch_size])
 
         # loss
-        loss = loss_fn(output, tgt_batch)
+        clf_loss = dis_net.compute_clf_loss(clf_output, b.label)
+        s1_lm_loss = dis_net.compute_lm_loss(s1_y_hat, b.s1_y, b.s1_loss_mask)
+        s2_lm_loss = dis_net.compute_lm_loss(s2_y_hat, b.s2_y, b.s2_loss_mask)
+
+        loss = clf_loss + params.lm_coef * s1_lm_loss + params.lm_coef * s2_lm_loss
+
         all_costs.append(loss.data[0])
-        words_count += (s1_batch.nelement() + s2_batch.nelement()) / params.word_emb_dim
+        words_count += (s1_batch.size + s2_batch.size) / params.d_model
 
         # backward
-        optimizer.zero_grad()
+        model_opt.optimizer.zero_grad()
         loss.backward()
 
-        # gradient clipping (off by default)
-        shrink_factor = 1
-        total_norm = 0
-
-        for p in dis_net.parameters():
-            if p.requires_grad:
-                p.grad.data.div_(k)  # divide by the actual batch size
-                total_norm += p.grad.data.norm() ** 2
-        total_norm = np.sqrt(total_norm)
-
-        if total_norm > params.max_norm:
-            shrink_factor = params.max_norm / total_norm
-        current_lr = optimizer.param_groups[0]['lr']  # current lr (no external "lr", for adam)
-        optimizer.param_groups[0]['lr'] = current_lr * shrink_factor  # just for update
-
         # optimizer step
-        optimizer.step()
-        optimizer.param_groups[0]['lr'] = current_lr
+        model_opt.step()
 
         if len(all_costs) == params.log_interval:
-            logs.append('{0} ; loss {1} ; sentence/s {2} ; words/s {3} ; accuracy train : {4}'.format(
+            logs.append('{0} ; loss {1} ; sentence/s {2} ; words/s {3} ; accuracy train: {4} ; lr: {5}'.format(
                 stidx, round(np.mean(all_costs), 2),
                 int(len(all_costs) * params.batch_size / (time.time() - last_time)),
                 int(words_count * 1.0 / (time.time() - last_time)),
-                round(100. * correct / (stidx + k), 2)))
+                round(100. * correct / (stidx + k), 2),
+                model_opt.rate()))
             logger.info(logs[-1])
             last_time = time.time()
             words_count = 0
@@ -281,7 +308,6 @@ def trainepoch(epoch):
     logger.info('results : epoch {0} ; mean accuracy train : {1}'
                 .format(epoch, train_acc))
     return train_acc
-
 
 def get_multiclass_recall(preds, y_label):
     # preds: (label_size), y_label; (label_size)
@@ -317,7 +343,6 @@ def get_multiclass_prec(preds, y_label):
 
     return labels_accu
 
-
 def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     global dis_net
 
@@ -334,26 +359,23 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 
     valid_preds, valid_labels = [], []
 
-    for i in range(0, len(s1), params.batch_size):
+    for stidx in range(0, len(s1), params.batch_size):
         # prepare batch
-        s1_batch, s1_len = get_batch(s1[i:i + params.batch_size], word_vec)
-        s2_batch, s2_len = get_batch(s2[i:i + params.batch_size], word_vec)
-        s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
-        tgt_batch = Variable(torch.LongTensor(target[i:i + params.batch_size])).cuda()
-
-        s1_tgt = get_target_batch(s1[i:i + params.batch_size], vocab_map)
-        s2_tgt = get_target_batch(s2[i:i + params.batch_size], vocab_map)
-
-        s1_tgt, s2_tgt = Variable(s1_tgt.cuda()), Variable(s2_tgt.cuda())
+        s1_batch = pad_batch(s1[stidx:stidx + params.batch_size],
+                             encoder['_pad_'])
+        s2_batch = pad_batch(s2[stidx:stidx + params.batch_size],
+                             encoder['_pad_'])
+        label_batch = target[stidx:stidx + params.batch_size]
+        b = Batch(s1_batch, s2_batch, label_batch, encoder['_pad_'], gpu_id=params.gpu_id)
 
         # model forward
-        output = dis_net((s1_batch, s1_len), (s2_batch, s2_len), s1_tgt, s2_tgt)
+        clf_output = dis_net(b, lm=False)
 
-        pred = output.data.max(1)[1]
-        correct += pred.long().eq(tgt_batch.data.long()).cpu().sum()
+        pred = clf_output.data.max(1)[1]
+        correct += pred.long().eq(b.label.data.long()).cpu().sum()
 
         # we collect samples
-        labels = target[i:i + params.batch_size]
+        labels = target[stidx:stidx + params.batch_size]
         preds = pred.cpu().numpy()
 
         valid_preds.extend(preds.tolist())
@@ -413,27 +435,23 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
                 print("saving by epoch error, maybe due to disk space limit")
 
             val_acc_best = eval_acc
+
+            if adam_stop is True:
+                # we reset both when there's an improvement
+                adam_stop = False
+                stop_training = False
         else:
-            # can reload previous best model
-            if 'sgd' in params.optimizer:
-                optimizer.param_groups[0]['lr'] = optimizer.param_groups[0]['lr'] / params.lrshrink
-                logger.info('Shrinking lr by : {0}. New lr = {1}'
-                      .format(params.lrshrink,
-                              optimizer.param_groups[0]['lr']))
-                if optimizer.param_groups[0]['lr'] < params.minlr:
-                    stop_training = True
-            if 'adam' in params.optimizer:
-                # early stopping (at 2nd decrease in accuracy)
-                stop_training = adam_stop
-                adam_stop = True
+            # early stopping (at 2nd decrease in accuracy)
+            stop_training = adam_stop
+            adam_stop = True if not params.no_stop else False
 
             # now we finished annealing, we can reload
             if params.reload_val:
                 del dis_net
                 dis_net = torch.load(os.path.join(params.outputdir, params.outputmodelname + ".pickle"))
                 logger.info("Load in previous best epoch")
-    return eval_acc
 
+    return eval_acc
 
 """
 Train model on Discourse Classification task
@@ -453,7 +471,3 @@ if __name__ == '__main__':
     logger.info('\nTEST : Epoch {0}'.format(epoch))
     evaluate(1e6, 'valid', True)
     evaluate(0, 'test', True, True)  # save confusion results on test data
-
-    # Save encoder instead of full model
-    torch.save(dis_net.encoder,
-               os.path.join(params.outputdir, params.outputmodelname + ".pickle" + '.encoder'))
