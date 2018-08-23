@@ -58,7 +58,13 @@ Conclusion: when threshold for the same amount of data
 
 **Books 5 Model Performance**
 
+When we threshold to create a perfectly balanced dataset, we observe that both `but` and `because` are the hardest discourse relations to learn.
 
+| Model | Epoch | Accuracy | Precision | Recall | F1   |
+| ----- | ----- | -------- | --------- | ------ | ---- |
+| 1024  | 6     | 71.0     | 71.1      | 71.1   | 71.0 |
+| 2048  | 7     |          |           |        |      |
+| 4096  | 7     |          |           |        |      |
 
 ## Investigating old data
 
