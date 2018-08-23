@@ -3,11 +3,13 @@ Generate visualization for the model
 methods accept data passed in from outside
 """
 import numpy as np
+import itertools
 import torch
 from data import get_batch
 from torch.autograd import Variable
 
-def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=32):
+
+def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=512):
     """
     :param dis_net: Model
     :param data: Either valid or test or combined, should be a dictionary
@@ -18,11 +20,13 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=32
 
     # it will only be "valid" during retraining (fine-tuning)
     s1 = data['s1']
-    s2 = data['s2'] # if eval_type == 'valid' else test['s2']
+    s2 = data['s2']  # if eval_type == 'valid' else test['s2']
     target = data['label']
 
     # valid_preds, valid_labels = [], []
     type_one_list, type_two_list = [], []
+    num_pred_made = 0.
+    num_target_marker = 0.
 
     for i in range(0, len(s1), batch_size):
         # prepare batch
@@ -43,18 +47,24 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=32
 
         # analyze and collect Type I and Type II
         counter = 0
-        for p, l in zip(preds.tolist(), labels.tolist()):
+        for p, l in itertools.izip(preds.tolist(), labels.tolist()):
             # false positive, Type I error
             if p == target_marker_id and l != target_marker_id:
-                type_one_list.append([s1[i+counter], s2[i+counter], p, l])
+                type_one_list.append([s1[i + counter], s2[i + counter], p, l])
             elif p != target_marker_id and l == target_marker_id:
-                type_two_list.append([s1[i+counter], s2[i+counter], p, l])
+                type_two_list.append([s1[i + counter], s2[i + counter], p, l])
             counter += 1
+
+            if p == target_marker_id:
+                num_pred_made += 1
+            if l == target_marker_id:
+                num_target_marker += 1
 
         if i % 100 == 0:
             print("processed {}".format(i))
 
-        # valid_preds.extend(preds.tolist())
-        # valid_labels.extend(labels.tolist())
+    return type_one_list, type_two_list, num_pred_made, num_target_marker
 
-    return type_one_list, type_two_list
+
+def visualize(dis_net, sentence):
+    pass
