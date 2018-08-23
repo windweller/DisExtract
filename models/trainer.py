@@ -30,7 +30,7 @@ import logging
 
 parser = argparse.ArgumentParser(description='NLI training')
 # paths
-parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat")
+parser.add_argument("--corpus", type=str, default='books_5', help="books_5|books_old_5|books_8|books_all|gw_cn_5|gw_cn_all|gw_es_5|dat|books_perfectly_balanced")
 parser.add_argument("--hypes", type=str, default='hypes/default.json', help="load in a hyperparameter file")
 parser.add_argument("--outputdir", type=str, default='sandbox/', help="Output directory")
 parser.add_argument("--outputmodelname", type=str, default='dis-model')
@@ -63,6 +63,8 @@ parser.add_argument("--reload_val", action='store_true', help="Reload the previo
 parser.add_argument("--char", action='store_true', help="for Chinese we can train on char-level model")
 parser.add_argument("--s1", action='store_true', help="training only on S1")
 parser.add_argument("--s2", action='store_true', help="training only on S2")
+parser.add_argument("--train_markers", type=str, default='', help="allow to only select a subset of markers "
+                                                                  "can select books_5, books_8")
 
 # gpu
 parser.add_argument("--gpu_id", type=int, default=0, help="GPU ID")
@@ -113,7 +115,12 @@ if params.char and params.corpus == "gw_cn_5":
 """
 DATA
 """
-train, valid, test = get_dis(data_dir, prefix, params.corpus)
+if params.train_markers.strip() != '' and params.train_markers != params.corpus:
+    chosen_markers_set = params.train_markers
+else:
+    chosen_markers_set = params.corpus
+
+train, valid, test = get_dis(data_dir, prefix, chosen_markers_set) # params.corpus)
 word_vec = build_vocab(train['s1'] + train['s2'] +
                        valid['s1'] + valid['s2'] +
                        test['s1'] + test['s2'], glove_path)
@@ -127,7 +134,7 @@ for split in ['s1', 's2']:
 
 params.word_emb_dim = 300
 
-dis_labels = get_labels(params.corpus)
+dis_labels = get_labels(chosen_markers_set) #params.corpus)
 label_size = len(dis_labels)
 
 """
