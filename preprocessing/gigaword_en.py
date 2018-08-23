@@ -21,7 +21,7 @@ from util import rephrase
 from os.path import join as pjoin
 
 from parser import depparse_ssplit, setup_corenlp
-from cfg import EN_BECAUSE_MARKER  # we only get "because", this will save a lot of parsing time
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_BECAUSE_MARKER, EN_DISCOURSE_MARKERS  # we only get "because", this will save a lot of parsing time
 
 
 parser = argparse.ArgumentParser(description='DisExtract Gigaword Spanish')
@@ -30,6 +30,8 @@ parser.add_argument("--json", type=str, default="example_config.json", help="cor
 
 parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
+parser.add_argument("--filter_because", action='store_true',
+                    help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence) that has because")
 parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
@@ -175,14 +177,14 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
               sentence, previous, marker = line[:-1].split("\t")
               i+=1
               if i > 0:
-                #try:
+                try:
                   parsed_output = dependency_parsing(sentence, previous, marker)
                   if parsed_output:
                     s1, s2 = parsed_output
                     line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
                     w.write(line_to_print)
-                #except:
-                #  print i, marker, sentence
+                except:
+                    print i, marker, sentence
               if i % args.filter_print_every == 0:
                 logger.info("processed {}".format(i))
               #stop
@@ -198,8 +200,10 @@ def dependency_parsing(sentence, previous_sentence, marker):
 
 
 if __name__ == '__main__':
-    if args.filter:
-        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], "ALL", EN_BECAUSE_MARKER)
+    if args.filter_because:
+        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], "BECAUSE", EN_BECAUSE_MARKER)
+    elif args.filter:
+        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:
-        setup_corenlp("sp")
-        parse_filtered_sentences(gigaword_en_dir, "ALL")
+        setup_corenlp("en")
+        parse_filtered_sentences(gigaword_en_dir, "BECAUSE")
