@@ -349,7 +349,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
         valid_preds.extend(preds.tolist())
         valid_labels.extend(labels.tolist())
 
-    p, r, f1, _ = metrics.precision_recall_fscore_support(np.array(valid_labels), np.array(valid_preds), average='micro')
+    p, r, f1, _ = metrics.precision_recall_fscore_support(valid_labels, valid_preds, average='weighted')
     logger.info("weighted precision {} recall {} F1 {}".format(p, r, f1))
 
     mean_multi_recall = get_multiclass_recall(np.array(valid_preds), np.array(valid_labels))
