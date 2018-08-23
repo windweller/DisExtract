@@ -5,6 +5,11 @@
 1. We investigated old experiment data, we can't conclude that `because` is learned badly because algorithms fail to understand causal relations (or acquire real-world knowledge) (confounding factor: number of training examples in corpus)
 2. We then follow up with balanced experiments.
 3. Analyze the error examples with visualization
+4. Preprocessing Gigaword
+
+## Preprocessing Gigaword
+
+Gigaword english has 116,456,445 (116M) raw sentences in total. Since this is a very large corpus, we only select `because` marker to make the process simpler.
 
 ## Balanced experiments
 
@@ -50,6 +55,10 @@ Conclusion: when threshold for the same amount of data
 2. Other three markers with similar performance are `but`, `when`, and `although`. If we only look at `when` and `although`, both have much worse extraction quality than `because`.
 
 <img src="./imgs/ExtractionError.jpg" width="50%" height="50%">
+
+**Books 5 Model Performance**
+
+
 
 ## Investigating old data
 
