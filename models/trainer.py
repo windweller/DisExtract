@@ -349,6 +349,9 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
         valid_preds.extend(preds.tolist())
         valid_labels.extend(labels.tolist())
 
+    p, r, f1, _ = metrics.precision_recall_fscore_support(np.array(valid_labels), np.array(valid_preds), average='micro')
+    logger.info("weighted precision {} recall {} F1 {}".format(p, r, f1))
+
     mean_multi_recall = get_multiclass_recall(np.array(valid_preds), np.array(valid_labels))
     mean_multi_prec = get_multiclass_prec(np.array(valid_preds), np.array(valid_labels))
 
@@ -365,9 +368,6 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     logger.info(multiclass_recall_msg)
     logger.info(multiclass_prec_msg)
 
-    p, r, f1, _ = metrics.precision_recall_fscore_support(np.array(valid_labels), np.array(valid_preds), average='micro')
-    logger.info("weighted precision {} recall {} F1 {}".format(p, r, f1))
-    
     # if params.corpus == "gw_cn_5" or params.corpus == "gw_es_5":
     #     print(multiclass_recall_msg)
     #     print(multiclass_prec_msg)
