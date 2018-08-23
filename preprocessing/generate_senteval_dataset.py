@@ -14,7 +14,7 @@ from itertools import izip
 
 import numpy as np
 
-from model.data import get_dis
+from models.data import get_dis
 from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, \
     EN_EIGHT_DISCOURSE_MARKERS, EN_DISCOURSE_MARKERS, EN_OLD_FIVE_DISCOURSE_MARKERS, EN_DIS_FIVE
 
