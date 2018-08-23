@@ -374,7 +374,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
 
     # save model
     # eval_acc = np.round(100 * (correct / float(len(s1))), 2)
-    eval_acc = np.round(metrics.accuracy_score(valid_labels, valid_preds), 2)
+    eval_acc = np.round(metrics.accuracy_score(valid_labels, valid_preds) * 100, 2)
     if final_eval:
         logger.info('finalgrep : accuracy {0} : {1}'.format(eval_type, eval_acc))
     else:
