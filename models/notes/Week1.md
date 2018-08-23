@@ -8,9 +8,7 @@
 
 We follow up on a balanced corpus, where we threshold every marker to be the same as the least frequent marker. We run two experiments: balanced books 5 and balanced books all. Since we no longer consider generalization, we vary the hidden states size from 1024, 2048, to 4096. 
 
-TODO:
 
-Generate balanced books 5, instead of  "filtering" markers, because can use because as a filter...
 
 ## Investigating old data
 
