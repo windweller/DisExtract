@@ -49,7 +49,7 @@ Conclusion: when threshold for the same amount of data
 1. `because` ranked the third lowest in both precision and recall. 
 2. Other three markers with similar performance are `but`, `when`, and `although`. If we only look at `when` and `although`, both have much worse extraction quality than `because`.
 
-![ExtractionError](./imgs/ExtractionError.jpg){:height="50%" width="50%"}
+<img src="./imgs/ExtractionError.jpg" width="50%" height="50%">
 
 ## Investigating old data
 
