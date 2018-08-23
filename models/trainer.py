@@ -373,7 +373,7 @@ def evaluate(epoch, eval_type='valid', final_eval=False, save_confusion=False):
     #     print(multiclass_prec_msg)
 
     # save model
-    eval_acc = round(100 * correct / len(s1), 2)
+    eval_acc = np.around(100 * (correct / float(len(s1))), 2)
     if final_eval:
         logger.info('finalgrep : accuracy {0} : {1}'.format(eval_type, eval_acc))
     else:
