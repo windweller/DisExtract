@@ -12,7 +12,7 @@ from preprocessing.cfg import EN_FIVE_DISCOURSE_MARKERS, EN_EIGHT_DISCOURSE_MARK
 
 
 def get_labels(corpus):
-    if corpus == "books_5":
+    if corpus == "books_5" or corpus == 'books_5_perfectly_balanced':
         labels = EN_FIVE_DISCOURSE_MARKERS
     elif corpus == "books_old_5":
         labels = EN_OLD_FIVE_DISCOURSE_MARKERS
