@@ -28,6 +28,10 @@ DISCOURSE_MARKER_SET_TAG = "ALL18"  # ALL15 now
 
 EN_DIS_FIVE = ["but", "because", "if", "before", "so"]
 
+EN_BECAUSE_MARKER = [
+    "because"
+]
+
 EN_FIVE_DISCOURSE_MARKERS = [
     "and",
     "because",

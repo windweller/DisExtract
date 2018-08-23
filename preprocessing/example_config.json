@@ -3,5 +3,6 @@
   "gigaword_cn_dir": "/home/anie/DisExtract/data/cmn_gw_5",
   "gigaword_sp_dir": "/home/anie/DisExtract/data/spa_gw_3",
   "ptb_dir": "/home/anie/DisExtract/preprocessing/corpus/ptb/",
-  "wikitext_dir": "/home/anie/DisExtract/preprocessing/corpus/wikitext/"
+  "wikitext_dir": "/home/anie/DisExtract/preprocessing/corpus/wikitext/",
+  "gigaword_en_dir": "/home/anie/DisExtract/preprocessing/corpus/gigaword_en"
 }
