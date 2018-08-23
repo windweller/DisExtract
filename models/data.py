@@ -74,7 +74,7 @@ def get_dis(data_dir, prefix, discourse_tag="books_5"):
     s2 = {}
     target = {}
 
-    if discourse_tag == "books_5":
+    if discourse_tag == "books_5" or discourse_tag == 'books_5_perfectly_balanced':
         dis_map = list_to_map(EN_FIVE_DISCOURSE_MARKERS)
         markers = EN_FIVE_DISCOURSE_MARKERS
     elif discourse_tag == "books_8":
