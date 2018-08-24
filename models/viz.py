@@ -134,8 +134,9 @@ class CDLSTM(object):
         for c in self.model.classifier:
             self.classifiers.append((c.weight.data.numpy(), c.bias.data.numpy()))
 
-    def classify(self, h):
-        final_res = h
+    def classify(self, u, v):
+        # note that u, v could be positional!! don't mix the two
+        final_res = np.concatenate([u, v, u - v, u * v, (u + v) / 2.])
         for c in self.classifiers:
             w, b = c
             final_res = np.dot(final_res, w) + b
@@ -224,7 +225,7 @@ class CDLSTM(object):
         # (T, bsize, word_dim)
         return embed
 
-    def get_word_level_scores(self, sentence):
+    def get_word_level_scores(self, sentA, sentB):
         """
         :param sentence: ['a', 'b', 'c', ...]
         :return:
@@ -232,22 +233,32 @@ class CDLSTM(object):
         # texts = gen_tiles(text_orig, method='cd', sweep_dim=1).transpose()
         # starts, stops = tiles_to_cd(texts)
         # [0, 1, 2,...], [0, 1, 2,...]
-        starts, stops = range(len(sentence)), range(len(sentence))
 
-        sentences, _, _ = self.prepare_samples([sentence], tokenize=False, verbose=True)
+        sent_A, _, _ = self.prepare_samples([sentA], tokenize=False, verbose=True, already_split=True)
+        sent_B, _, _ = self.prepare_samples([sentB], tokenize=False, verbose=True, already_split=True)
 
-        scores = np.array([self.cd_text(sentences, start=starts[i], stop=stops[i])
+        h_A = np.sum(self.cd_text(sent_A, start=0, stop=len(sentA)))
+        h_B = np.sum(self.cd_text(sent_B, start=0, stop=len(sentB)))
+
+        # compute A, treat B as fixed
+        starts, stops = range(len(sentA)), range(len(sentA))
+        scores_A = np.array([self.classify(self.cd_text(sent_A, start=starts[i], stop=stops[i])[0], h_B)
                            for i in range(len(starts))])
 
+        # compute B, treat A as fixed
+        starts, stops = range(len(sentB)), range(len(sentB))
+        scores_B = np.array([self.classify(h_A, self.cd_text(sent_B, start=starts[i], stop=stops[i])[0])
+                             for i in range(len(starts))])
+
         # (sent_len, num_label)
-        return scores
+        return scores_A, scores_B
 
     def cd_text(self, sentences, start, stop):
 
         # word_vecs = self.model.embed(batch.text)[:, 0].data
         word_vecs = self.get_batch(sentences).squeeze()
 
-        T = word_vecs.size(0)
+        T = word_vecs.size
         relevant = np.zeros((T, self.hidden_dim))
         irrelevant = np.zeros((T, self.hidden_dim))
         relevant_h = np.zeros((T, self.hidden_dim))
@@ -307,14 +318,16 @@ class CDLSTM(object):
             relevant_h[i] = o * new_rel_h
             irrelevant_h[i] = o * new_irrel_h
 
+        return relevant_h[T - 1], irrelevant_h[T - 1]
+
         # Sanity check: scores + irrel_scores should equal the LSTM's output minus model.hidden_to_label.bias
         # we actually apply to all the linear layers to get the final influence
 
         # scores = np.dot(self.W_out, relevant_h[T - 1])
         # irrel_scores = np.dot(self.W_out, irrelevant_h[T - 1])
 
-        scores = self.classify(relevant_h[T - 1])
-        irrel_scores = self.classify(irrelevant_h[T - 1])
+        # scores = self.classify(relevant_h[T - 1])
+        # irrel_scores = self.classify(irrelevant_h[T - 1])
 
         # (num_classes)
-        return scores
+        # return scores
