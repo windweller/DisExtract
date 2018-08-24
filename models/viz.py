@@ -117,7 +117,7 @@ def gen_tiles(text, fill=0,
 # adapted from github acd
 class CDLSTM(object):
     def __init__(self, model, glove_path):
-        self.model = model.encoder
+        self.model = model
         weights = model.encoder.enc_lstm.state_dict()
 
         self.hidden_dim = model.encoder.enc_lstm_dim
@@ -141,13 +141,14 @@ class CDLSTM(object):
             final_res = np.dot(final_res, w) + b
         return final_res
 
-    def get_word_dict(self, sentences, tokenize=True):
+    def get_word_dict(self, sentences, tokenize=True, already_split=False):
         # create vocab of words
         word_dict = {}
         if tokenize:
             from nltk.tokenize import word_tokenize
-        sentences = [s.split() if not tokenize else word_tokenize(s)
-                     for s in sentences]
+        if not already_split:
+            sentences = [s.split() if not tokenize else word_tokenize(s)
+                         for s in sentences]
         for sent in sentences:
             for word in sent:
                 if word not in word_dict:
@@ -170,10 +171,10 @@ class CDLSTM(object):
             len(word_vec), len(word_dict)))
         return word_vec
 
-    def build_vocab(self, sentences, tokenize=True):
+    def build_vocab(self, sentences, tokenize=True, already_split=False):
         assert hasattr(self, 'glove_path'), 'warning : you need \
                                              to set_glove_path(glove_path)'
-        word_dict = self.get_word_dict(sentences, tokenize)
+        word_dict = self.get_word_dict(sentences, tokenize, already_split)
         self.word_vec = self.get_glove(word_dict)
         print('Vocab size : {0}'.format(len(self.word_vec)))
 
