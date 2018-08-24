@@ -9,6 +9,10 @@ from scipy.special import expit as sigmoid
 from data import get_batch
 from torch.autograd import Variable
 
+import matplotlib.pyplot as plt
+import math
+import matplotlib.colors as colors
+
 
 def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=512):
     """
@@ -100,6 +104,7 @@ def tiles_to_cd(texts):
         stops.append(stop)
     return starts, stops
 
+
 # pytorch needs to return each input as a column
 # return batch_size x L tensor
 
@@ -119,9 +124,8 @@ def gen_tiles(text, fill=0,
         texts[start] = np.copy(text_new)
     return texts
 
+
 # adapted from github acd
-
-
 class CDLSTM(object):
     def __init__(self, model, glove_path):
         self.model = model
@@ -322,10 +326,10 @@ class CDLSTM(object):
                 rel_g, irrel_g, self.b_g, np.tanh)
 
             relevant[i] = rel_contrib_i * \
-                (rel_contrib_g + bias_contrib_g) + \
-                bias_contrib_i * rel_contrib_g
+                          (rel_contrib_g + bias_contrib_g) + \
+                          bias_contrib_i * rel_contrib_g
             irrelevant[i] = irrel_contrib_i * (rel_contrib_g + irrel_contrib_g + bias_contrib_g) + (
-                rel_contrib_i + bias_contrib_i) * irrel_contrib_g
+                                                                                                       rel_contrib_i + bias_contrib_i) * irrel_contrib_g
 
             if i >= start and i < stop:
                 relevant[i] += bias_contrib_i * bias_contrib_g
@@ -339,7 +343,7 @@ class CDLSTM(object):
                                 bias_contrib_f) * relevant[i - 1]
                 irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * irrelevant[
                     i - 1] + irrel_contrib_f * \
-                    relevant[i - 1]
+                             relevant[i - 1]
 
             o = sigmoid(np.dot(
                 self.W_io, word_vecs[i]) + np.dot(self.W_ho, prev_rel_h + prev_irrel_h) + self.b_o)
@@ -365,3 +369,84 @@ class CDLSTM(object):
 
         # (num_classes)
         # return scores
+
+
+def word_heatmap(text_orig, scores, label_pred, data=None, fontsize=9):
+    text_orig = np.array(text_orig)
+    num_words = text_orig.size
+
+    comps_list = [np.array(range(num_words))]
+    num_iters = len(comps_list)
+
+    scores_list = scores
+
+    # populate data
+    if data is None:
+        data = np.empty(shape=(num_iters, num_words))
+        data[:] = np.nan
+        data[0, :] = scores_list
+
+    data[np.isnan(data)] = 0  # np.nanmin(data) - 0.001
+    if num_iters == 1:
+        plt.figure(figsize=(16, 1), dpi=300)
+    else:
+        plt.figure(figsize=(16, 3), dpi=300)
+
+    class MidpointNormalize(colors.Normalize):
+        def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+            self.midpoint = midpoint
+            colors.Normalize.__init__(self, vmin, vmax, clip)
+
+        def __call__(self, value, clip=None):
+            x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+            return np.ma.masked_array(np.interp(value, x, y))
+
+            #     cmap = plt.get_cmap('RdBu') if label_pred == 0 else plt.get_cmap('RdBu_r')
+
+    cmap = plt.get_cmap('RdBu')
+    if label_pred == 1:
+        data *= -1
+    # cmap = matplotlib.cm.Greys
+    # cmap.set_bad(color='black')
+    #                    cmap='viridis')#'RdBu')
+    abs_lim = max(abs(np.nanmax(data)), abs(np.nanmin(data)))
+
+    c = plt.pcolor(data,
+                   edgecolors='k',
+                   linewidths=0,
+                   norm=MidpointNormalize(vmin=abs_lim * -1, midpoint=0., vmax=abs_lim),
+                   cmap=cmap)
+
+    def show_values(pc, text_orig, data, fontsize, fmt="%s", **kw):
+        val_mean = np.nanmean(data)
+        val_min = np.min(data)
+        pc.update_scalarmappable()
+        # ax = pc.get_axes()
+        ax = pc.axes
+
+        for p, color, value in zip(pc.get_paths(), pc.get_facecolors(), pc.get_array()):
+            x, y = p.vertices[:-2, :].mean(0)
+            # pick color for text
+            if np.all(color[:3] > 0.5):  # value > val_mean: #value > val_mean: #
+                color = (0.0, 0.0, 0.0)
+            else:
+                color = (1.0, 1.0, 1.0)
+            x_ind = math.floor(x)
+            y_ind = math.floor(y)
+
+            # sometimes don't display text
+            if y_ind == 0 or data[y_ind, x_ind] != 0:  # > val_min:
+                ax.text(x, y, fmt % text_orig[x_ind],
+                        ha="center", va="center",
+                        color=color, fontsize=fontsize, **kw)
+
+    show_values(c, text_orig, data, fontsize)
+    cb = plt.colorbar(c, extend='both')  # fig.colorbar(pcm, ax=ax[0], extend='both')
+    cb.outline.set_visible(False)
+    plt.xlim((0, num_words))
+    plt.ylim((0, num_iters))
+    plt.yticks([])
+    plt.plot([0, num_words], [1, 1], color='black')
+    plt.xticks([])
+
+    cb.ax.set_title('CD score')
