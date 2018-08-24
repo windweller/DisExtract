@@ -3,9 +3,9 @@
 ## Outline
 
 1. We investigated **old** experiment data, we can't conclude that `because` is learned badly because algorithms fail to understand causal relations (or acquire real-world knowledge) (confounding factor: number of training examples in corpus)
-2. We then follow up with **balanced experiments**.
-3. Analyze the error examples with visualization
-4. Preprocessing Gigaword
+2. We then follow up with **balanced experiments**. We conclude that both `because` and `but` are the hardest discourse markers to learn.
+3. Analyze the error examples with visualization. Work in progress. Visualizing LSTM is still an active area of research.
+4. Preprocessed English Gigaword (newswire). Preliminary pre-processing is finished. Want to know how to move forward.
 
 ## Preprocessing Gigaword
 
@@ -17,7 +17,7 @@ We found **1,287,503** (**1.2M**) sentences that contain `because` (we filtered 
 
 We use contextual decomposition on LSTM to visualize each word's contribution to the final prediction. This method does not take into account of word interactions, but rather provides a clear picture on how and whether each word will have a large influence over the final prediction.
 
-The code is still in development, and intermediate results can be seen in 
+The code is still in development, and intermediate results can be seen in [Visualization Notebook Link](https://github.com/windweller/DisExtract/blob/edge/models/DisExtract%205%20Error%20Analysis.ipynb).
 
 ## Balanced experiments
 
