@@ -178,11 +178,12 @@ class CDLSTM(object):
         self.word_vec = self.get_glove(word_dict)
         print('Vocab size : {0}'.format(len(self.word_vec)))
 
-    def prepare_samples(self, sentences, tokenize, verbose, no_sort=False):
+    def prepare_samples(self, sentences, tokenize, verbose, no_sort=False, already_split=False):
         if tokenize:
             from nltk.tokenize import word_tokenize
-        sentences = [['<s>'] + s.split() + ['</s>'] if not tokenize else
-                     ['<s>'] + word_tokenize(s) + ['</s>'] for s in sentences]
+        if not already_split:
+            sentences = [['<s>'] + s.split() + ['</s>'] if not tokenize else
+                         ['<s>'] + word_tokenize(s) + ['</s>'] for s in sentences]
         n_w = np.sum([len(x) for x in sentences])
 
         # filters words without glove vectors
@@ -223,7 +224,7 @@ class CDLSTM(object):
         # (T, bsize, word_dim)
         return embed
 
-    def get_word_level_scores(self, sentence, tokenize):
+    def get_word_level_scores(self, sentence):
         """
         :param sentence: ['a', 'b', 'c', ...]
         :return:
@@ -233,7 +234,7 @@ class CDLSTM(object):
         # [0, 1, 2,...], [0, 1, 2,...]
         starts, stops = range(len(sentence)), range(len(sentence))
 
-        sentences, _, _ = self.prepare_samples([sentence], tokenize=tokenize, verbose=True)
+        sentences, _, _ = self.prepare_samples([sentence], tokenize=False, verbose=True)
 
         scores = np.array([self.cd_text(sentences, start=starts[i], stop=stops[i])
                            for i in range(len(starts))])
