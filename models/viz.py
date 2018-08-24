@@ -371,7 +371,7 @@ class CDLSTM(object):
         # return scores
 
 
-def word_heatmap(text_orig, scores, label_pred, data=None, fontsize=9):
+def word_heatmap(text_orig, scores, label_pred=0, data=None, fontsize=9):
     text_orig = np.array(text_orig)
     num_words = text_orig.size
 
@@ -431,8 +431,8 @@ def word_heatmap(text_orig, scores, label_pred, data=None, fontsize=9):
                 color = (0.0, 0.0, 0.0)
             else:
                 color = (1.0, 1.0, 1.0)
-            x_ind = math.floor(x)
-            y_ind = math.floor(y)
+            x_ind = int(math.floor(x))
+            y_ind = int(math.floor(y))
 
             # sometimes don't display text
             if y_ind == 0 or data[y_ind, x_ind] != 0:  # > val_min:
