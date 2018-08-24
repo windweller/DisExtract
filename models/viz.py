@@ -33,7 +33,8 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=51
         # prepare batch
         s1_batch, s1_len = get_batch(s1[i:i + batch_size], word_vec)
         s2_batch, s2_len = get_batch(s2[i:i + batch_size], word_vec)
-        s1_batch, s2_batch = Variable(s1_batch.cuda()), Variable(s2_batch.cuda())
+        s1_batch, s2_batch = Variable(
+            s1_batch.cuda()), Variable(s2_batch.cuda())
         tgt_batch = Variable(torch.LongTensor(target[i:i + batch_size])).cuda()
 
         # model forward
@@ -71,8 +72,10 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=51
 
 # propagate a three-part
 def propagate_three(a, b, c, activation):
-    a_contrib = 0.5 * (activation(a + c) - activation(c) + activation(a + b + c) - activation(b + c))
-    b_contrib = 0.5 * (activation(b + c) - activation(c) + activation(a + b + c) - activation(a + c))
+    a_contrib = 0.5 * (activation(a + c) - activation(c) +
+                       activation(a + b + c) - activation(b + c))
+    b_contrib = 0.5 * (activation(b + c) - activation(c) +
+                       activation(a + b + c) - activation(a + c))
     return a_contrib, b_contrib, activation(c)
 
 
@@ -99,6 +102,8 @@ def tiles_to_cd(texts):
 
 # pytorch needs to return each input as a column
 # return batch_size x L tensor
+
+
 def gen_tiles(text, fill=0,
               method='cd', prev_text=None, sweep_dim=1):
     L = text.shape[0]
@@ -115,6 +120,8 @@ def gen_tiles(text, fill=0,
     return texts
 
 # adapted from github acd
+
+
 class CDLSTM(object):
     def __init__(self, model, glove_path):
         self.model = model
@@ -122,24 +129,34 @@ class CDLSTM(object):
 
         self.hidden_dim = model.encoder.enc_lstm_dim
 
-        self.W_ii, self.W_if, self.W_ig, self.W_io = np.split(weights['weight_ih_l0'], 4, 0)
-        self.W_hi, self.W_hf, self.W_hg, self.W_ho = np.split(weights['weight_hh_l0'], 4, 0)
+        self.W_ii, self.W_if, self.W_ig, self.W_io = np.split(
+            weights['weight_ih_l0'], 4, 0)
+        self.W_hi, self.W_hf, self.W_hg, self.W_ho = np.split(
+            weights['weight_hh_l0'], 4, 0)
         self.b_i, self.b_f, self.b_g, self.b_o = np.split(weights['bias_ih_l0'].numpy() + weights['bias_hh_l0'].numpy(),
                                                           4)
 
         self.word_emb_dim = 300
         self.glove_path = glove_path
 
-        self.classifiers = []
+        self.classifiers = [
+            (self.model.classifier[0].weight.data.numpy()[:, :20480],
+             self.model.classifier[0].bias.data.numpy())
+        ]
+        skip = True
         for c in self.model.classifier:
-            self.classifiers.append((c.weight.data.numpy(), c.bias.data.numpy()))
+            if skip:
+                skip = False
+                continue
+            self.classifiers.append(
+                (c.weight.data.numpy(), c.bias.data.numpy()))
 
     def classify(self, u, v):
         # note that u, v could be positional!! don't mix the two
         final_res = np.concatenate([u, v, u - v, u * v, (u + v) / 2.])
         for c in self.classifiers:
             w, b = c
-            final_res = np.dot(final_res, w) + b
+            final_res = np.dot(w, final_res) + b
         return final_res
 
     def get_word_dict(self, sentences, tokenize=True, already_split=False):
@@ -225,7 +242,7 @@ class CDLSTM(object):
         # (T, bsize, word_dim)
         return embed
 
-    def get_word_level_scores(self, sentA, sentB):
+    def get_word_level_scores(self, sentA, sentB, skip_A=False, skip_B=False):
         """
         :param sentence: ['a', 'b', 'c', ...]
         :return:
@@ -234,21 +251,29 @@ class CDLSTM(object):
         # starts, stops = tiles_to_cd(texts)
         # [0, 1, 2,...], [0, 1, 2,...]
 
-        sent_A, _, _ = self.prepare_samples([sentA], tokenize=False, verbose=True, already_split=True)
-        sent_B, _, _ = self.prepare_samples([sentB], tokenize=False, verbose=True, already_split=True)
+        sent_A, _, _ = self.prepare_samples(
+            [sentA], tokenize=False, verbose=True, already_split=True)
+        sent_B, _, _ = self.prepare_samples(
+            [sentB], tokenize=False, verbose=True, already_split=True)
 
-        h_A = np.sum(self.cd_text(sent_A, start=0, stop=len(sentA)))
-        h_B = np.sum(self.cd_text(sent_B, start=0, stop=len(sentB)))
+        tup0, tup1 = self.cd_text(sent_A, start=0, stop=len(sentA) - 1)
+        h_A = tup0 + tup1
+        tup0, tup1 = self.cd_text(sent_B, start=0, stop=len(sentB) - 1)
+        h_B = tup0 + tup1
 
         # compute A, treat B as fixed
-        starts, stops = range(len(sentA)), range(len(sentA))
-        scores_A = np.array([self.classify(self.cd_text(sent_A, start=starts[i], stop=stops[i])[0], h_B)
-                           for i in range(len(starts))])
+        scores_A = None
+        if not skip_A:
+            starts, stops = range(len(sentA)), range(len(sentA))
+            scores_A = np.array([self.classify(self.cd_text(sent_A, start=starts[i], stop=stops[i])[0], h_B)
+                                 for i in range(len(starts))])
 
         # compute B, treat A as fixed
-        starts, stops = range(len(sentB)), range(len(sentB))
-        scores_B = np.array([self.classify(h_A, self.cd_text(sent_B, start=starts[i], stop=stops[i])[0])
-                             for i in range(len(starts))])
+        scores_B = None
+        if not skip_B:
+            starts, stops = range(len(sentB)), range(len(sentB))
+            scores_B = np.array([self.classify(h_A, self.cd_text(sent_B, start=starts[i], stop=stops[i])[0])
+                                 for i in range(len(starts))])
 
         # (sent_len, num_label)
         return scores_A, scores_B
@@ -258,7 +283,7 @@ class CDLSTM(object):
         # word_vecs = self.model.embed(batch.text)[:, 0].data
         word_vecs = self.get_batch(sentences).squeeze()
 
-        T = word_vecs.size
+        T = word_vecs.shape[0]
         relevant = np.zeros((T, self.hidden_dim))
         irrelevant = np.zeros((T, self.hidden_dim))
         relevant_h = np.zeros((T, self.hidden_dim))
@@ -291,12 +316,16 @@ class CDLSTM(object):
                 irrel_f = irrel_f + np.dot(self.W_if, word_vecs[i])
                 irrel_o = irrel_o + np.dot(self.W_io, word_vecs[i])
 
-            rel_contrib_i, irrel_contrib_i, bias_contrib_i = propagate_three(rel_i, irrel_i, self.b_i, sigmoid)
-            rel_contrib_g, irrel_contrib_g, bias_contrib_g = propagate_three(rel_g, irrel_g, self.b_g, np.tanh)
+            rel_contrib_i, irrel_contrib_i, bias_contrib_i = propagate_three(
+                rel_i, irrel_i, self.b_i, sigmoid)
+            rel_contrib_g, irrel_contrib_g, bias_contrib_g = propagate_three(
+                rel_g, irrel_g, self.b_g, np.tanh)
 
-            relevant[i] = rel_contrib_i * (rel_contrib_g + bias_contrib_g) + bias_contrib_i * rel_contrib_g
+            relevant[i] = rel_contrib_i * \
+                (rel_contrib_g + bias_contrib_g) + \
+                bias_contrib_i * rel_contrib_g
             irrelevant[i] = irrel_contrib_i * (rel_contrib_g + irrel_contrib_g + bias_contrib_g) + (
-                                                                                                   rel_contrib_i + bias_contrib_i) * irrel_contrib_g
+                rel_contrib_i + bias_contrib_i) * irrel_contrib_g
 
             if i >= start and i < stop:
                 relevant[i] += bias_contrib_i * bias_contrib_g
@@ -304,15 +333,20 @@ class CDLSTM(object):
                 irrelevant[i] += bias_contrib_i * bias_contrib_g
 
             if i > 0:
-                rel_contrib_f, irrel_contrib_f, bias_contrib_f = propagate_three(rel_f, irrel_f, self.b_f, sigmoid)
-                relevant[i] += (rel_contrib_f + bias_contrib_f) * relevant[i - 1]
+                rel_contrib_f, irrel_contrib_f, bias_contrib_f = propagate_three(
+                    rel_f, irrel_f, self.b_f, sigmoid)
+                relevant[i] += (rel_contrib_f +
+                                bias_contrib_f) * relevant[i - 1]
                 irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * irrelevant[
                     i - 1] + irrel_contrib_f * \
-                             relevant[i - 1]
+                    relevant[i - 1]
 
-            o = sigmoid(np.dot(self.W_io, word_vecs[i]) + np.dot(self.W_ho, prev_rel_h + prev_irrel_h) + self.b_o)
-            rel_contrib_o, irrel_contrib_o, bias_contrib_o = propagate_three(rel_o, irrel_o, self.b_o, sigmoid)
-            new_rel_h, new_irrel_h = propagate_tanh_two(relevant[i], irrelevant[i])
+            o = sigmoid(np.dot(
+                self.W_io, word_vecs[i]) + np.dot(self.W_ho, prev_rel_h + prev_irrel_h) + self.b_o)
+            rel_contrib_o, irrel_contrib_o, bias_contrib_o = propagate_three(
+                rel_o, irrel_o, self.b_o, sigmoid)
+            new_rel_h, new_irrel_h = propagate_tanh_two(
+                relevant[i], irrelevant[i])
             # relevant_h[i] = new_rel_h * (rel_contrib_o + bias_contrib_o)
             # irrelevant_h[i] = new_rel_h * (irrel_contrib_o) + new_irrel_h * (rel_contrib_o + irrel_contrib_o + bias_contrib_o)
             relevant_h[i] = o * new_rel_h
