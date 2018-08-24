@@ -81,11 +81,42 @@ def propagate_tanh_two(a, b):
     return 0.5 * (np.tanh(a) + (np.tanh(a + b) - np.tanh(b))), 0.5 * (np.tanh(b) + (np.tanh(a + b) - np.tanh(a)))
 
 
-# adapted from github acd
-# start=0, stop=len(sent) will work
+def tiles_to_cd(texts):
+    starts, stops = [], []
+    tiles = texts
+    L = tiles.shape[0]
+    for c in range(tiles.shape[1]):
+        text = tiles[:, c]
+        start = 0
+        stop = L - 1
+        while text[start] == 0:
+            start += 1
+        while text[stop] == 0:
+            stop -= 1
+        starts.append(start)
+        stops.append(stop)
+    return starts, stops
 
+# pytorch needs to return each input as a column
+# return batch_size x L tensor
+def gen_tiles(text, fill=0,
+              method='cd', prev_text=None, sweep_dim=1):
+    L = text.shape[0]
+    texts = np.zeros((L - sweep_dim + 1, L), dtype=np.int)
+    for start in range(L - sweep_dim + 1):
+        end = start + sweep_dim
+        if method == 'occlusion':
+            text_new = np.copy(text).flatten()
+            text_new[start:end] = fill
+        elif method == 'build_up' or method == 'cd':
+            text_new = np.zeros(L)
+            text_new[start:end] = text[start:end]
+        texts[start] = np.copy(text_new)
+    return texts
+
+# adapted from github acd
 class CDLSTM(object):
-    def __init__(self, model):
+    def __init__(self, model, glove_path):
         self.model = model.encoder
         weights = model.encoder.enc_lstm.state_dict()
 
@@ -93,13 +124,127 @@ class CDLSTM(object):
 
         self.W_ii, self.W_if, self.W_ig, self.W_io = np.split(weights['weight_ih_l0'], 4, 0)
         self.W_hi, self.W_hf, self.W_hg, self.W_ho = np.split(weights['weight_hh_l0'], 4, 0)
-        self.b_i, self.b_f, self.b_g, self.b_o = np.split(weights['bias_ih_l0'].numpy() + weights['bias_hh_l0'].numpy(), 4)
+        self.b_i, self.b_f, self.b_g, self.b_o = np.split(weights['bias_ih_l0'].numpy() + weights['bias_hh_l0'].numpy(),
+                                                          4)
 
-        # TODO: pre-multiply these matrices together first!!!
-        self.W_out = model.classifier.weight.data
+        self.word_emb_dim = 300
+        self.glove_path = glove_path
 
-    def cd_text(self, batch, start, stop):
-        word_vecs = self.model.embed(batch.text)[:, 0].data
+        self.classifiers = []
+        for c in self.model.classifier:
+            self.classifiers.append((c.weight.data.numpy(), c.bias.data.numpy()))
+
+    def classify(self, h):
+        final_res = h
+        for c in self.classifiers:
+            w, b = c
+            final_res = np.dot(final_res, w) + b
+        return final_res
+
+    def get_word_dict(self, sentences, tokenize=True):
+        # create vocab of words
+        word_dict = {}
+        if tokenize:
+            from nltk.tokenize import word_tokenize
+        sentences = [s.split() if not tokenize else word_tokenize(s)
+                     for s in sentences]
+        for sent in sentences:
+            for word in sent:
+                if word not in word_dict:
+                    word_dict[word] = ''
+        word_dict['<s>'] = ''
+        word_dict['</s>'] = ''
+        return word_dict
+
+    def get_glove(self, word_dict):
+        assert hasattr(self, 'glove_path'), \
+            'warning : you need to set_glove_path(glove_path)'
+        # create word_vec with glove vectors
+        word_vec = {}
+        with open(self.glove_path) as f:
+            for line in f:
+                word, vec = line.split(' ', 1)
+                if word in word_dict:
+                    word_vec[word] = np.fromstring(vec, sep=' ')
+        print('Found {0}(/{1}) words with glove vectors'.format(
+            len(word_vec), len(word_dict)))
+        return word_vec
+
+    def build_vocab(self, sentences, tokenize=True):
+        assert hasattr(self, 'glove_path'), 'warning : you need \
+                                             to set_glove_path(glove_path)'
+        word_dict = self.get_word_dict(sentences, tokenize)
+        self.word_vec = self.get_glove(word_dict)
+        print('Vocab size : {0}'.format(len(self.word_vec)))
+
+    def prepare_samples(self, sentences, tokenize, verbose, no_sort=False):
+        if tokenize:
+            from nltk.tokenize import word_tokenize
+        sentences = [['<s>'] + s.split() + ['</s>'] if not tokenize else
+                     ['<s>'] + word_tokenize(s) + ['</s>'] for s in sentences]
+        n_w = np.sum([len(x) for x in sentences])
+
+        # filters words without glove vectors
+        for i in range(len(sentences)):
+            s_f = [word for word in sentences[i] if word in self.word_vec]
+            if not s_f:
+                import warnings
+                warnings.warn('No words in "{0}" (idx={1}) have glove vectors. \
+                               Replacing by "</s>"..'.format(sentences[i], i))
+                s_f = ['</s>']
+            sentences[i] = s_f
+
+        lengths = np.array([len(s) for s in sentences])
+        n_wk = np.sum(lengths)
+        if verbose:
+            print('Nb words kept : {0}/{1} ({2} %)'.format(
+                n_wk, n_w, round((100.0 * n_wk) / n_w, 2)))
+
+        if no_sort:
+            # technically "forward" method is already sorting
+            return sentences, lengths
+
+        # sort by decreasing length
+        lengths, idx_sort = np.sort(lengths)[::-1], np.argsort(-lengths)
+        sentences = np.array(sentences)[idx_sort]
+
+        return sentences, lengths, idx_sort
+
+    def get_batch(self, batch):
+        # sent in batch in decreasing order of lengths
+        # batch: (bsize, max_len, word_dim)
+        embed = np.zeros((len(batch[0]), len(batch), self.word_emb_dim))
+
+        for i in range(len(batch)):
+            for j in range(len(batch[i])):
+                embed[j, i, :] = self.word_vec[batch[i][j]]
+
+        # (T, bsize, word_dim)
+        return embed
+
+    def get_word_level_scores(self, sentence, tokenize):
+        """
+        :param sentence: ['a', 'b', 'c', ...]
+        :return:
+        """
+        # texts = gen_tiles(text_orig, method='cd', sweep_dim=1).transpose()
+        # starts, stops = tiles_to_cd(texts)
+        # [0, 1, 2,...], [0, 1, 2,...]
+        starts, stops = range(len(sentence)), range(len(sentence))
+
+        sentences, _, _ = self.prepare_samples([sentence], tokenize=tokenize, verbose=True)
+
+        scores = np.array([self.cd_text(sentences, start=starts[i], stop=stops[i])
+                           for i in range(len(starts))])
+
+        # (sent_len, num_label)
+        return scores
+
+    def cd_text(self, sentences, start, stop):
+
+        # word_vecs = self.model.embed(batch.text)[:, 0].data
+        word_vecs = self.get_batch(sentences).squeeze()
+
         T = word_vecs.size(0)
         relevant = np.zeros((T, self.hidden_dim))
         irrelevant = np.zeros((T, self.hidden_dim))
@@ -137,7 +282,8 @@ class CDLSTM(object):
             rel_contrib_g, irrel_contrib_g, bias_contrib_g = propagate_three(rel_g, irrel_g, self.b_g, np.tanh)
 
             relevant[i] = rel_contrib_i * (rel_contrib_g + bias_contrib_g) + bias_contrib_i * rel_contrib_g
-            irrelevant[i] = irrel_contrib_i * (rel_contrib_g + irrel_contrib_g + bias_contrib_g) + (rel_contrib_i + bias_contrib_i) * irrel_contrib_g
+            irrelevant[i] = irrel_contrib_i * (rel_contrib_g + irrel_contrib_g + bias_contrib_g) + (
+                                                                                                   rel_contrib_i + bias_contrib_i) * irrel_contrib_g
 
             if i >= start and i < stop:
                 relevant[i] += bias_contrib_i * bias_contrib_g
@@ -161,8 +307,12 @@ class CDLSTM(object):
 
         # Sanity check: scores + irrel_scores should equal the LSTM's output minus model.hidden_to_label.bias
         # we actually apply to all the linear layers to get the final influence
-        scores = np.dot(self.W_out, relevant_h[T - 1])
-        irrel_scores = np.dot(self.W_out, irrelevant_h[T - 1])
 
-        # (T, num_classes)
+        # scores = np.dot(self.W_out, relevant_h[T - 1])
+        # irrel_scores = np.dot(self.W_out, irrelevant_h[T - 1])
+
+        scores = self.classify(relevant_h[T - 1])
+        irrel_scores = self.classify(irrelevant_h[T - 1])
+
+        # (num_classes)
         return scores

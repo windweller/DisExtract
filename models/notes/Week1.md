@@ -2,14 +2,16 @@
 
 ## Outline
 
-1. We investigated old experiment data, we can't conclude that `because` is learned badly because algorithms fail to understand causal relations (or acquire real-world knowledge) (confounding factor: number of training examples in corpus)
-2. We then follow up with balanced experiments.
-3. Analyze the error examples with visualization
+1. We investigated **old** experiment data, we can't conclude that `because` is learned badly because algorithms fail to understand causal relations (or acquire real-world knowledge) (confounding factor: number of training examples in corpus)
+2. We then follow up with **balanced experiments**.
+3. Analyze the error examples with visualization (to be done)
 4. Preprocessing Gigaword
 
 ## Preprocessing Gigaword
 
-Gigaword english has 116,456,445 (116M) raw sentences in total. Since this is a very large corpus, we only select `because` marker to make the process simpler.
+Gigaword english has **116,456,445** (**116M**) raw sentences in total. Since this is a very large corpus, we only select `because` marker to make the process simpler.
+
+We found **1,287,503** (**1.2M**) sentences that contain `because` (we filtered out `because of`). After parsing the number will get smaller, but will still be substantial.
 
 ## Balanced experiments
 
@@ -29,25 +31,25 @@ Books 5 balanced: **836,790** training examples, each marker has **167,358** exa
 
 (Report from the test set, because we use valid set to early stop) (conclusion: 4096 performs slightly better but 2048 is just as close, and takes half the time to train)
 
-**Model 4096 Per-class Performance**
+**Books ALL 4096 Per-class Performance**
 
-| Books ALL | Precision | Recall   |
-| ------- | --------- | -------- |
-|after|*0.58*|0.52|
-|also|0.42|0.47|
-|**although**|**0.35**|0.42|
-|and|0.54|0.48|
-|as|0.49|0.51|
-|**because**|**0.38**|**0.37**|
-|before|0.52|0.53|
-|**but**|**0.36**|**0.38**|
-|if|0.57|*0.61*|
-|so|0.52|0.54|
-|still|0.55|0.57|
-|then|0.49|0.48|
-|though|0.55|0.42|
-|**when**|**0.38**|**0.34**|
-|while|0.42|0.43|
+| Books ALL | Precision | Recall | F1 |
+| ------- | --------- | -------- | -------- |
+|after|*0.58*|0.52|0.55|
+|also|0.42|0.47|0.45|
+|**although**|**0.35**|**0.42**|**0.38**|
+|and|0.54|0.48|0.51|
+|as|0.49|0.51|0.5|
+|**because**|**0.38**|**0.37**|**0.37**|
+|before|0.52|0.53|0.53|
+|**but**|**0.36**|**0.38**|**0.37**|
+|if|0.57|0.61|0.59|
+|so|0.52|0.54|0.53|
+|still|0.55|*0.57*|0.56|
+|then|0.49|0.48|0.49|
+|though|0.55|0.42|0.47|
+|**when**|**0.38**|**0.34**|**0.36**|
+|while|0.42|0.43|0.42|
 
 Conclusion: when threshold for the same amount of data
 
@@ -63,8 +65,22 @@ When we threshold to create a perfectly balanced dataset, we observe that both `
 | Model | Epoch | Accuracy | Precision | Recall | F1   |
 | ----- | ----- | -------- | --------- | ------ | ---- |
 | 1024  | 6     | 71.0     | 71.1      | 71.1   | 71.0 |
-| 2048  | 7     |          |           |        |      |
-| 4096  | 7     |          |           |        |      |
+| 2048  | 7     | ---      | ---       | ---    | ---  |
+| 4096  | 7     | ---      | ---       | ---    | ---  |
+
+(Waiting for these experiments to finish, but from before, we can roughly believe that 1024 will perform similarly to 2048 and 4096, albeit slightly worse.)
+
+**Books 5 1024 Per-class Performance**
+
+| Books ALL | Precision | Recall | F1 |
+| ------- | --------- | -------- | --------|
+|and|0.76|0.74|0.75|
+|**because**|**0.62**|**0.67**|**0.64**|
+|**but**|**0.67**|**0.6**|**0.64**|
+|if|0.76|0.82|0.79|
+|when|0.74|0.73|0.73|
+
+**Conclusion**: It seems that `but` and `because` are equally hard to learn, but apparently with data, we can learn `but` relatively well. So maybe the hope is to increase the number of `because` training examples?
 
 ## Investigating old data
 
