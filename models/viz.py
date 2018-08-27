@@ -73,61 +73,11 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=51
 
     return correct_list, type_one_list, type_two_list, num_pred_made, num_target_marker
 
-
-# propagate a three-part
-def propagate_three(a, b, c, activation):
-    a_contrib = 0.5 * (activation(a + c) - activation(c) +
-                       activation(a + b + c) - activation(b + c))
-    b_contrib = 0.5 * (activation(b + c) - activation(c) +
-                       activation(a + b + c) - activation(a + c))
-    return a_contrib, b_contrib, activation(c)
+    # this processes and embeds text
 
 
-# propagate tanh nonlinearity
-def propagate_tanh_two(a, b):
-    return 0.5 * (np.tanh(a) + (np.tanh(a + b) - np.tanh(b))), 0.5 * (np.tanh(b) + (np.tanh(a + b) - np.tanh(a)))
-
-
-def tiles_to_cd(texts):
-    starts, stops = [], []
-    tiles = texts
-    L = tiles.shape[0]
-    for c in range(tiles.shape[1]):
-        text = tiles[:, c]
-        start = 0
-        stop = L - 1
-        while text[start] == 0:
-            start += 1
-        while text[stop] == 0:
-            stop -= 1
-        starts.append(start)
-        stops.append(stop)
-    return starts, stops
-
-
-# pytorch needs to return each input as a column
-# return batch_size x L tensor
-
-
-def gen_tiles(text, fill=0,
-              method='cd', prev_text=None, sweep_dim=1):
-    L = text.shape[0]
-    texts = np.zeros((L - sweep_dim + 1, L), dtype=np.int)
-    for start in range(L - sweep_dim + 1):
-        end = start + sweep_dim
-        if method == 'occlusion':
-            text_new = np.copy(text).flatten()
-            text_new[start:end] = fill
-        elif method == 'build_up' or method == 'cd':
-            text_new = np.zeros(L)
-            text_new[start:end] = text[start:end]
-        texts[start] = np.copy(text_new)
-    return texts
-
-
-# adapted from github acd
-class CDLSTM(object):
-    def __init__(self, model, glove_path):
+class BaseLSTM(object):
+    def __init__(self, model, glove_path, bilstm=False):
         self.model = model
         weights = model.encoder.enc_lstm.state_dict()
 
@@ -137,16 +87,33 @@ class CDLSTM(object):
             weights['weight_ih_l0'], 4, 0)
         self.W_hi, self.W_hf, self.W_hg, self.W_ho = np.split(
             weights['weight_hh_l0'], 4, 0)
-        self.b_i, self.b_f, self.b_g, self.b_o = np.split(weights['bias_ih_l0'].numpy() + weights['bias_hh_l0'].numpy(),
-                                                          4)
+        self.b_i, self.b_f, self.b_g, self.b_o = np.split(
+            weights['bias_ih_l0'].numpy() + weights['bias_hh_l0'].numpy(),
+            4)
+
+        if bilstm:
+            self.rev_W_ii, self.rev_W_if, self.rev_W_ig, self.rev_W_io = np.split(
+                weights['weight_ih_l0_reverse'], 4, 0)
+            self.rev_W_hi, self.rev_W_hf, self.rev_W_hg, self.rev_W_ho = np.split(
+                weights['weight_hh_l0_reverse'], 4, 0)
+            self.rev_b_i, self.rev_b_f, self.rev_b_g, self.rev_b_o = np.split(
+                weights['bias_ih_l0_reverse'].numpy() + weights['bias_hh_l0_reverse'].numpy(),
+                4)
 
         self.word_emb_dim = 300
         self.glove_path = glove_path
 
-        self.classifiers = [
-            (self.model.classifier[0].weight.data.numpy()[:, :20480],
-             self.model.classifier[0].bias.data.numpy())
-        ]
+        if not bilstm:
+            self.classifiers = [
+                (self.model.classifier[0].weight.data.numpy()[:, :20480],
+                 self.model.classifier[0].bias.data.numpy())
+            ]
+        else:
+            self.classifiers = [
+                (self.model.classifier[0].weight.data.numpy(),
+                 self.model.classifier[0].bias.data.numpy())
+            ]
+
         skip = True
         for c in self.model.classifier:
             if skip:
@@ -246,6 +213,73 @@ class CDLSTM(object):
         # (T, bsize, word_dim)
         return embed
 
+
+# ======== Global Max-pooling based interpretation ========
+class GMPModel(BaseLSTM):
+    def get_context_scores(self):
+        # note: not word-level scores
+        # return: (time_step, label_size)
+        pass
+
+
+# ======== CD-based interpretation =========
+# (currently broken because it doesn't extend to global max-pooling)
+
+
+
+# propagate a three-part
+def propagate_three(a, b, c, activation):
+    a_contrib = 0.5 * (activation(a + c) - activation(c) +
+                       activation(a + b + c) - activation(b + c))
+    b_contrib = 0.5 * (activation(b + c) - activation(c) +
+                       activation(a + b + c) - activation(a + c))
+    return a_contrib, b_contrib, activation(c)
+
+
+# propagate tanh nonlinearity
+def propagate_tanh_two(a, b):
+    return 0.5 * (np.tanh(a) + (np.tanh(a + b) - np.tanh(b))), 0.5 * (np.tanh(b) + (np.tanh(a + b) - np.tanh(a)))
+
+
+def tiles_to_cd(texts):
+    starts, stops = [], []
+    tiles = texts
+    L = tiles.shape[0]
+    for c in range(tiles.shape[1]):
+        text = tiles[:, c]
+        start = 0
+        stop = L - 1
+        while text[start] == 0:
+            start += 1
+        while text[stop] == 0:
+            stop -= 1
+        starts.append(start)
+        stops.append(stop)
+    return starts, stops
+
+
+# pytorch needs to return each input as a column
+# return batch_size x L tensor
+
+
+def gen_tiles(text, fill=0,
+              method='cd', prev_text=None, sweep_dim=1):
+    L = text.shape[0]
+    texts = np.zeros((L - sweep_dim + 1, L), dtype=np.int)
+    for start in range(L - sweep_dim + 1):
+        end = start + sweep_dim
+        if method == 'occlusion':
+            text_new = np.copy(text).flatten()
+            text_new[start:end] = fill
+        elif method == 'build_up' or method == 'cd':
+            text_new = np.zeros(L)
+            text_new[start:end] = text[start:end]
+        texts[start] = np.copy(text_new)
+    return texts
+
+
+class CDLSTM(BaseLSTM):
+    # this implementation is wrong...no consideration of max pooling
     def get_word_level_scores(self, sentA, sentB, skip_A=False, skip_B=False):
         """
         :param sentence: ['a', 'b', 'c', ...]
@@ -370,6 +404,186 @@ class CDLSTM(object):
         # (num_classes)
         # return scores
 
+class MaxPoolingCDBiLSTM(BaseLSTM):
+
+    def cell(self, prev_h, prev_c, x_i):
+        # x_i = word_vecs[i]
+        rel_i = np.dot(self.W_hi, prev_h)
+        rel_g = np.dot(self.W_hg, prev_h)
+        rel_f = np.dot(self.W_hf, prev_h)
+        rel_o = np.dot(self.W_ho, prev_h)
+
+        rel_i = sigmoid(rel_i + np.dot(self.W_ii, x_i) + self.b_i)
+        rel_g = np.tanh(rel_g + np.dot(self.W_ig, x_i) + self.b_g)
+        rel_f = sigmoid(rel_f + np.dot(self.W_if, x_i) + self.b_f)
+        rel_o = sigmoid(rel_o + np.dot(self.W_io, x_i) + self.b_o)
+
+        c_t = rel_f * prev_c + rel_i * rel_g
+        h_t = rel_o * np.tanh(c_t)
+
+        return h_t, c_t
+
+    def run_bi_lstm(self, sentences):
+        # this is used as validation
+        word_vecs = self.get_batch(sentences).squeeze()
+
+        T = word_vecs.shape[0]
+
+        hidden_states = np.zeros((T, self.hidden_dim))
+        rev_hidden_states = np.zeros((T, self.hidden_dim))
+
+        cell_states = np.zeros((T, self.hidden_dim))
+        rev_cell_states = np.zeros((T, self.hidden_dim))
+
+        for i in range(T):
+            if i > 0:
+                prev_h = hidden_states[i - 1]  # this is just the prev hidden state
+                prev_c = cell_states[i - 1]
+            else:
+                prev_h = np.zeros(self.hidden_dim)
+                prev_c = np.zeros(self.hidden_dim)
+
+            new_h, new_c = self.cell(prev_h, prev_c, word_vecs[i])
+
+            hidden_states[i] = new_h
+            cell_states[i] = new_c
+
+        for i in reversed(range(T)):
+            # 20, 19, 18, 17, ...
+            if i > 0:
+                prev_h = rev_hidden_states[i + 1]  # this is just the prev hidden state
+                prev_c = rev_cell_states[i + 1]
+            else:
+                prev_h = np.zeros(self.hidden_dim)
+                prev_c = np.zeros(self.hidden_dim)
+
+            new_h, new_c = self.cell(prev_h, prev_c, word_vecs[i])
+
+            rev_hidden_states[i] = new_h
+            rev_cell_states[i] = new_c
+
+        # stack second dimension
+        return np.hstack([hidden_states, rev_hidden_states]), np.hstack([cell_states, rev_cell_states])
+
+    # this is a fast leaf-level implementation for global max pooling
+    def get_word_level_scores(self, sentA, sentB, skip_A=False, skip_B=False):
+        """
+        :param sentence: ['a', 'b', 'c', ...]
+        :return:
+        """
+        # texts = gen_tiles(text_orig, method='cd', sweep_dim=1).transpose()
+        # starts, stops = tiles_to_cd(texts)
+        # [0, 1, 2,...], [0, 1, 2,...]
+
+        sent_A, _, _ = self.prepare_samples(
+            [sentA], tokenize=False, verbose=True, already_split=True)
+        sent_B, _, _ = self.prepare_samples(
+            [sentB], tokenize=False, verbose=True, already_split=True)
+
+        tup0, tup1 = self.cd_text(sent_A, start=0, stop=len(sentA) - 1)
+        h_A = tup0 + tup1
+        tup0, tup1 = self.flat_cd_text(sent_B, start=0, stop=len(sentB) - 1)
+        h_B = tup0 + tup1
+
+        # compute A, treat B as fixed
+        scores_A = None
+        if not skip_A:
+            starts, stops = range(len(sentA)), range(len(sentA))
+            scores_A = np.array([self.classify(self.flat_cd_text(sent_A, start=starts[i], stop=stops[i])[0], h_B)
+                                 for i in range(len(starts))])
+
+        # compute B, treat A as fixed
+        scores_B = None
+        if not skip_B:
+            starts, stops = range(len(sentB)), range(len(sentB))
+            scores_B = np.array([self.classify(h_A, self.flat_cd_text(sent_B, start=starts[i], stop=stops[i])[0])
+                                 for i in range(len(starts))])
+
+        # (sent_len, num_label)
+        return scores_A, scores_B
+
+    def flat_cd_text(self, sentences):
+        # collects relevance for word 0 to sent_length
+
+        # word_vecs = self.model.embed(batch.text)[:, 0].data
+        word_vecs = self.get_batch(sentences).squeeze()
+
+        T = word_vecs.shape[0]
+
+        # so prev_h is always irrelevant
+        # there's no rel_h because we only look at each time step individually
+
+        relevant = np.zeros((T, self.hidden_dim))
+        irrelevant = np.zeros((T, self.hidden_dim))
+
+        relevant_h = np.zeros((T, self.hidden_dim))
+        irrelevant_h = np.zeros((T, self.hidden_dim))  # keep track of the entire hidden state
+
+        hidden_states = np.zeros((T, self.hidden_dim))
+
+        # strategy: keep using prev_h as irrel_h
+        # every time, make sure h = irrel + rel, then prev_h = h
+
+        for i in range(T):
+            if i > 0:
+                prev_rel_h = np.zeros(self.hidden_dim)
+                prev_h = hidden_states[i - 1]
+            else:
+                prev_rel_h = np.zeros(self.hidden_dim)
+                prev_h = np.zeros(self.hidden_dim)
+
+            irrel_i = np.dot(self.W_hi, prev_h)
+            irrel_g = np.dot(self.W_hg, prev_h)
+            irrel_f = np.dot(self.W_hf, prev_h)
+            irrel_o = np.dot(self.W_ho, prev_h)
+
+            rel_i = np.dot(self.W_ii, word_vecs[i])
+            rel_g = np.dot(self.W_ig, word_vecs[i])
+            rel_f = np.dot(self.W_if, word_vecs[i])
+            rel_o = np.dot(self.W_io, word_vecs[i])
+
+            # this remains unchanged
+            rel_contrib_i, irrel_contrib_i, bias_contrib_i = propagate_three(
+                rel_i, irrel_i, self.b_i, sigmoid)
+            rel_contrib_g, irrel_contrib_g, bias_contrib_g = propagate_three(
+                rel_g, irrel_g, self.b_g, np.tanh)
+
+            relevant[i] = rel_contrib_i * (rel_contrib_g + bias_contrib_g) + \
+                          bias_contrib_i * rel_contrib_g
+            irrelevant[i] = irrel_contrib_i * (rel_contrib_g + irrel_contrib_g + bias_contrib_g) + \
+                            (rel_contrib_i + bias_contrib_i) * irrel_contrib_g
+
+            relevant[i] += bias_contrib_i * bias_contrib_g
+            # if i >= start and i < stop:
+            #     relevant[i] += bias_contrib_i * bias_contrib_g
+            # else:
+            #     irrelevant[i] += bias_contrib_i * bias_contrib_g
+
+            if i > 0:
+                rel_contrib_f, irrel_contrib_f, bias_contrib_f = propagate_three(
+                    rel_f, irrel_f, self.b_f, sigmoid)
+                # previous relevent[i-1] should be 0!!
+                # relevant[i] += (rel_contrib_f + bias_contrib_f) * relevant[i - 1]
+                # irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * irrelevant[
+                #     i - 1] + irrel_contrib_f * relevant[i - 1]
+
+                # not sure if this is completely correct
+                irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * prev_h + \
+                                 irrel_contrib_f * prev_rel_h
+
+            # prev_rel_h is always 0
+            o = sigmoid(np.dot(
+                self.W_io, word_vecs[i]) + np.dot(self.W_ho, prev_rel_h + prev_h) + self.b_o)
+            rel_contrib_o, irrel_contrib_o, bias_contrib_o = propagate_three(
+                rel_o, irrel_o, self.b_o, sigmoid)
+            new_rel_h, new_irrel_h = propagate_tanh_two(
+                relevant[i], irrelevant[i])
+            # relevant_h[i] = new_rel_h * (rel_contrib_o + bias_contrib_o)
+            # irrelevant_h[i] = new_rel_h * (irrel_contrib_o) + new_irrel_h * (rel_contrib_o + irrel_contrib_o + bias_contrib_o)
+            relevant_h[i] = o * new_rel_h
+            irrelevant_h[i] = o * new_irrel_h
+
+        return relevant_h[T - 1], irrelevant_h[T - 1]
 
 def word_heatmap(text_orig, scores, label_pred=0, data=None, fontsize=9):
     text_orig = np.array(text_orig)
