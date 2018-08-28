@@ -530,9 +530,11 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         rel_B, irrel_B = self.cd_encode(sent_B)
 
         # now we actually fire up the encoder, and get gradients w.r.t. hidden states
-        batch_A = self.get_batch([sent_A], return_len=True)
-        batch_B = self.get_batch([sent_B], return_len=True)
-        preds = self.model(batch_A, batch_B)
+        s1_batch, s1_len = self.get_batch([sent_A], return_len=True)
+        s2_batch, s2_len = self.get_batch([sent_B], return_len=True)
+
+        s1_batch, s2_batch = Variable(s1_batch), Variable(s2_batch)
+        preds = self.model((s1_batch, s1_len), (s2_batch, s2_len))
 
         # compute A, treat B as fixed
 

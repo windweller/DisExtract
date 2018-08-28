@@ -115,6 +115,43 @@ class BLSTMEncoder(nn.Module):
 
         return emb
 
+    def get_hidden_states(self, sent_tuple):
+        sent, sent_len = sent_tuple
+
+        # Sort by length (keep idx)
+        sent_len, idx_sort = np.sort(sent_len)[::-1], np.argsort(-sent_len)
+        idx_unsort = np.argsort(idx_sort)
+
+        idx_sort = torch.from_numpy(idx_sort).cuda() if self.is_cuda() \
+            else torch.from_numpy(idx_sort)
+        sent = sent.index_select(1, Variable(idx_sort))
+
+        # apply input dropout
+        # sent = self.emb_drop(sent)
+
+        # Handling padding in Recurrent Networks
+        sent_packed = nn.utils.rnn.pack_padded_sequence(sent, sent_len)
+        sent_output = self.enc_lstm(sent_packed)[0]  # seqlen x batch x 2*nhid
+        sent_output = nn.utils.rnn.pad_packed_sequence(sent_output)[0]
+        if self.tied_weights:
+            # we also compute reverse
+            sent_rev = reverse_padded_sequence(sent, sent_len)
+            sent_rev_packed = nn.utils.rnn.pack_padded_sequence(sent_rev, sent_len)
+            rev_sent_output = self.enc_lstm(sent_rev_packed)[0]
+            rev_sent_output = nn.utils.rnn.pad_packed_sequence(rev_sent_output)[0]
+            back_sent_output = reverse_padded_sequence(rev_sent_output, sent_len)
+            sent_output = sent_output + back_sent_output
+
+        # Un-sort by length
+        idx_unsort = torch.from_numpy(idx_unsort).cuda() if self.is_cuda() \
+            else torch.from_numpy(idx_unsort)
+        sent_output = sent_output.index_select(1, Variable(idx_unsort))
+
+        # for the output
+        sent_output.retain_grad()
+
+        return sent_output  # (T, b, d)
+
     def set_glove_path(self, glove_path):
         self.glove_path = glove_path
 
