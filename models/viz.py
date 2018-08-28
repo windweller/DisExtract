@@ -81,6 +81,8 @@ class BaseLSTM(object):
         self.model = model
         weights = model.encoder.enc_lstm.state_dict()
 
+        self.model.encoder.set_glove_path(glove_path)
+
         self.hidden_dim = model.encoder.enc_lstm_dim
 
         self.W_ii, self.W_if, self.W_ig, self.W_io = np.split(
@@ -167,6 +169,11 @@ class BaseLSTM(object):
         self.word_vec = self.get_glove(word_dict)
         print('Vocab size : {0}'.format(len(self.word_vec)))
 
+        if already_split:
+            self.model.encoder.build_vocab([' '.join(s) for s in sentences], tokenize=False)
+        else:
+            self.model.encoder.build_vocab(sentences, tokenize=False)
+
     def prepare_samples(self, sentences, tokenize, verbose, no_sort=False, already_split=False):
         if tokenize:
             from nltk.tokenize import word_tokenize
@@ -201,17 +208,22 @@ class BaseLSTM(object):
 
         return sentences, lengths, idx_sort
 
-    def get_batch(self, batch):
+    def get_batch(self, batch, return_len=False):
         # sent in batch in decreasing order of lengths
         # batch: (bsize, max_len, word_dim)
-        embed = np.zeros((len(batch[0]), len(batch), self.word_emb_dim))
+        lengths = np.array([len(x) for x in batch])
+        max_len = np.max(lengths)
+        embed = np.zeros((max_len, len(batch), self.word_emb_dim))
 
         for i in range(len(batch)):
             for j in range(len(batch[i])):
                 embed[j, i, :] = self.word_vec[batch[i][j]]
 
         # (T, bsize, word_dim)
-        return embed
+        if not return_len:
+            return embed
+        else:
+            return embed, lengths
 
 
 # ======== Global Max-pooling based interpretation ========
@@ -277,6 +289,10 @@ def gen_tiles(text, fill=0,
         texts[start] = np.copy(text_new)
     return texts
 
+
+def correct_propagate_max_two(a, b, d=0):
+    return 0.5 * (np.max(a, axis=d) + (np.max(a + b, axis=d) - np.max(b, axis=d))), \
+            0.5 * (np.max(b, axis=d) + (np.max(a + b, axis=d) - np.max(a, axis=d)))
 
 class CDLSTM(BaseLSTM):
     # this implementation is wrong...no consideration of max pooling
@@ -404,8 +420,21 @@ class CDLSTM(BaseLSTM):
         # (num_classes)
         # return scores
 
-class MaxPoolingCDBiLSTM(BaseLSTM):
 
+def propagate_max_two(a, b, d=0):
+    # need to return a, b with the same shape...
+    indices = np.argmax(a + b, axis=d)
+    a_mask = np.zeros_like(a)
+    a_mask[indices, np.arange(a.shape[1])] = 1
+    a = a * a_mask
+
+    b_mask = np.zeros_like(b)
+    b_mask[indices, np.arange(b.shape[1])] = 1
+    b = b * b_mask
+
+    return a, b
+
+class MaxPoolingCDBiLSTM(BaseLSTM):
     def cell(self, prev_h, prev_c, x_i):
         # x_i = word_vecs[i]
         rel_i = np.dot(self.W_hi, prev_h)
@@ -417,6 +446,23 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         rel_g = np.tanh(rel_g + np.dot(self.W_ig, x_i) + self.b_g)
         rel_f = sigmoid(rel_f + np.dot(self.W_if, x_i) + self.b_f)
         rel_o = sigmoid(rel_o + np.dot(self.W_io, x_i) + self.b_o)
+
+        c_t = rel_f * prev_c + rel_i * rel_g
+        h_t = rel_o * np.tanh(c_t)
+
+        return h_t, c_t
+
+    def rev_cell(self, prev_h, prev_c, x_i):
+        # x_i = word_vecs[i]
+        rel_i = np.dot(self.rev_W_hi, prev_h)
+        rel_g = np.dot(self.rev_W_hg, prev_h)
+        rel_f = np.dot(self.rev_W_hf, prev_h)
+        rel_o = np.dot(self.rev_W_ho, prev_h)
+
+        rel_i = sigmoid(rel_i + np.dot(self.rev_W_ii, x_i) + self.rev_b_i)
+        rel_g = np.tanh(rel_g + np.dot(self.rev_W_ig, x_i) + self.rev_b_g)
+        rel_f = sigmoid(rel_f + np.dot(self.rev_W_if, x_i) + self.rev_b_f)
+        rel_o = sigmoid(rel_o + np.dot(self.rev_W_io, x_i) + self.rev_b_o)
 
         c_t = rel_f * prev_c + rel_i * rel_g
         h_t = rel_o * np.tanh(c_t)
@@ -450,14 +496,14 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
 
         for i in reversed(range(T)):
             # 20, 19, 18, 17, ...
-            if i > 0:
+            if i < T - 1:
                 prev_h = rev_hidden_states[i + 1]  # this is just the prev hidden state
                 prev_c = rev_cell_states[i + 1]
             else:
                 prev_h = np.zeros(self.hidden_dim)
                 prev_c = np.zeros(self.hidden_dim)
 
-            new_h, new_c = self.cell(prev_h, prev_c, word_vecs[i])
+            new_h, new_c = self.rev_cell(prev_h, prev_c, word_vecs[i])
 
             rev_hidden_states[i] = new_h
             rev_cell_states[i] = new_c
@@ -480,30 +526,38 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         sent_B, _, _ = self.prepare_samples(
             [sentB], tokenize=False, verbose=True, already_split=True)
 
-        tup0, tup1 = self.cd_text(sent_A, start=0, stop=len(sentA) - 1)
-        h_A = tup0 + tup1
-        tup0, tup1 = self.flat_cd_text(sent_B, start=0, stop=len(sentB) - 1)
-        h_B = tup0 + tup1
+        rel_A, irrel_A = self.cd_encode(sent_A)
+        rel_B, irrel_B = self.cd_encode(sent_B)
+
+        # now we actually fire up the encoder, and get gradients w.r.t. hidden states
+        batch_A = self.get_batch([sent_A], return_len=True)
+        batch_B = self.get_batch([sent_B], return_len=True)
+        preds = self.model(batch_A, batch_B)
 
         # compute A, treat B as fixed
-        scores_A = None
-        if not skip_A:
-            starts, stops = range(len(sentA)), range(len(sentA))
-            scores_A = np.array([self.classify(self.flat_cd_text(sent_A, start=starts[i], stop=stops[i])[0], h_B)
-                                 for i in range(len(starts))])
+
 
         # compute B, treat A as fixed
-        scores_B = None
-        if not skip_B:
-            starts, stops = range(len(sentB)), range(len(sentB))
-            scores_B = np.array([self.classify(h_A, self.flat_cd_text(sent_B, start=starts[i], stop=stops[i])[0])
-                                 for i in range(len(starts))])
+
 
         # (sent_len, num_label)
-        return scores_A, scores_B
+        # return scores_A, scores_B
 
-    def flat_cd_text(self, sentences):
+    def cd_encode(self, sentences):
+        rel_h, irrel_h, _ = self.flat_cd_text(sentences)
+        rev_rel_h, rev_irrel_h, _ = self.flat_cd_text(sentences, reverse=True)
+        rel = np.hstack([rel_h, rev_rel_h])  # T, 2*d
+        irrel = np.hstack([irrel_h, rev_irrel_h])  #T, 2*d
+        # again, hidden-states = rel + irrel
+
+        # now we use gradient to compute score!
+
+        return rel, irrel  # (2*d), actual sentence representation
+
+
+    def flat_cd_text(self, sentences, reverse=False):
         # collects relevance for word 0 to sent_length
+        # not considering interactions between words; merely collecting word contribution
 
         # word_vecs = self.model.embed(batch.text)[:, 0].data
         word_vecs = self.get_batch(sentences).squeeze()
@@ -513,6 +567,7 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         # so prev_h is always irrelevant
         # there's no rel_h because we only look at each time step individually
 
+        # relevant cell states, irrelevant cell states
         relevant = np.zeros((T, self.hidden_dim))
         irrelevant = np.zeros((T, self.hidden_dim))
 
@@ -520,33 +575,46 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         irrelevant_h = np.zeros((T, self.hidden_dim))  # keep track of the entire hidden state
 
         hidden_states = np.zeros((T, self.hidden_dim))
+        cell_states = np.zeros((T, self.hidden_dim))
+
+        if not reverse:
+            W_ii, W_if, W_ig, W_io = self.W_ii, self.W_if, self.W_ig, self.W_io
+            W_hi, W_hf, W_hg, W_ho = self.W_hi, self.W_hf, self.W_hg, self.W_ho
+            b_i, b_f, b_g, b_o = self.b_i, self.b_f, self.b_g, self.b_o
+        else:
+            W_ii, W_if, W_ig, W_io = self.rev_W_ii, self.rev_W_if, self.rev_W_ig, self.rev_W_io
+            W_hi, W_hf, W_hg, W_ho = self.rev_W_hi, self.rev_W_hf, self.rev_W_hg, self.rev_W_ho
+            b_i, b_f, b_g, b_o = self.rev_b_i, self.rev_b_f, self.rev_b_g, self.rev_b_o
 
         # strategy: keep using prev_h as irrel_h
         # every time, make sure h = irrel + rel, then prev_h = h
 
-        for i in range(T):
-            if i > 0:
-                prev_rel_h = np.zeros(self.hidden_dim)
-                prev_h = hidden_states[i - 1]
+        indices = range(T) if not reverse else reversed(range(T))
+        for i in indices:
+            first_cond = i > 0 if not reverse else i < T - 1
+            if first_cond:
+                ret_idx = i - 1 if not reverse else i + 1
+                prev_c = cell_states[ret_idx]
+                prev_h = hidden_states[ret_idx]
             else:
-                prev_rel_h = np.zeros(self.hidden_dim)
+                prev_c = np.zeros(self.hidden_dim)
                 prev_h = np.zeros(self.hidden_dim)
 
-            irrel_i = np.dot(self.W_hi, prev_h)
-            irrel_g = np.dot(self.W_hg, prev_h)
-            irrel_f = np.dot(self.W_hf, prev_h)
-            irrel_o = np.dot(self.W_ho, prev_h)
+            irrel_i = np.dot(W_hi, prev_h)
+            irrel_g = np.dot(W_hg, prev_h)
+            irrel_f = np.dot(W_hf, prev_h)
+            irrel_o = np.dot(W_ho, prev_h)
 
-            rel_i = np.dot(self.W_ii, word_vecs[i])
-            rel_g = np.dot(self.W_ig, word_vecs[i])
-            rel_f = np.dot(self.W_if, word_vecs[i])
-            rel_o = np.dot(self.W_io, word_vecs[i])
+            rel_i = np.dot(W_ii, word_vecs[i])
+            rel_g = np.dot(W_ig, word_vecs[i])
+            rel_f = np.dot(W_if, word_vecs[i])
+            rel_o = np.dot(W_io, word_vecs[i])
 
             # this remains unchanged
             rel_contrib_i, irrel_contrib_i, bias_contrib_i = propagate_three(
-                rel_i, irrel_i, self.b_i, sigmoid)
+                rel_i, irrel_i, b_i, sigmoid)
             rel_contrib_g, irrel_contrib_g, bias_contrib_g = propagate_three(
-                rel_g, irrel_g, self.b_g, np.tanh)
+                rel_g, irrel_g, b_g, np.tanh)
 
             relevant[i] = rel_contrib_i * (rel_contrib_g + bias_contrib_g) + \
                           bias_contrib_i * rel_contrib_g
@@ -559,31 +627,34 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
             # else:
             #     irrelevant[i] += bias_contrib_i * bias_contrib_g
 
-            if i > 0:
+            cond = i > 0 if not reverse else i < T - 1
+            if cond:
                 rel_contrib_f, irrel_contrib_f, bias_contrib_f = propagate_three(
-                    rel_f, irrel_f, self.b_f, sigmoid)
+                    rel_f, irrel_f, b_f, sigmoid)
                 # previous relevent[i-1] should be 0!!
                 # relevant[i] += (rel_contrib_f + bias_contrib_f) * relevant[i - 1]
                 # irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * irrelevant[
                 #     i - 1] + irrel_contrib_f * relevant[i - 1]
 
                 # not sure if this is completely correct
-                irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * prev_h + \
-                                 irrel_contrib_f * prev_rel_h
+                irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * prev_c
 
-            # prev_rel_h is always 0
-            o = sigmoid(np.dot(
-                self.W_io, word_vecs[i]) + np.dot(self.W_ho, prev_rel_h + prev_h) + self.b_o)
+            # recompute o-gate
+            o = sigmoid(rel_o + irrel_o + b_o)
             rel_contrib_o, irrel_contrib_o, bias_contrib_o = propagate_three(
-                rel_o, irrel_o, self.b_o, sigmoid)
-            new_rel_h, new_irrel_h = propagate_tanh_two(
-                relevant[i], irrelevant[i])
+                rel_o, irrel_o, b_o, sigmoid)
+            # from current cell state
+            new_rel_h, new_irrel_h = propagate_tanh_two(relevant[i], irrelevant[i])
             # relevant_h[i] = new_rel_h * (rel_contrib_o + bias_contrib_o)
             # irrelevant_h[i] = new_rel_h * (irrel_contrib_o) + new_irrel_h * (rel_contrib_o + irrel_contrib_o + bias_contrib_o)
             relevant_h[i] = o * new_rel_h
             irrelevant_h[i] = o * new_irrel_h
 
-        return relevant_h[T - 1], irrelevant_h[T - 1]
+            hidden_states[i] = relevant_h[i] + irrelevant_h[i]
+            cell_states[i] = relevant[i] + irrelevant[i]
+
+        return relevant_h, irrelevant_h, hidden_states
+
 
 def word_heatmap(text_orig, scores, label_pred=0, data=None, fontsize=9):
     text_orig = np.array(text_orig)
