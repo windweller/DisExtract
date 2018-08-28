@@ -526,7 +526,7 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         sent_B, _, _ = self.prepare_samples(
             [sentB], tokenize=False, verbose=True, already_split=True)
 
-        rel_A, irrel_A = self.cd_encode(sent_A)
+        rel_A, irrel_A = self.cd_encode(sent_A)  # already masked
         rel_B, irrel_B = self.cd_encode(sent_B)
 
         # now we actually fire up the encoder, and get gradients w.r.t. hidden states
@@ -534,16 +534,24 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         s2_batch, s2_len = self.get_batch([sent_B], return_len=True)
 
         s1_batch, s2_batch = Variable(s1_batch), Variable(s2_batch)
-        preds = self.model((s1_batch, s1_len), (s2_batch, s2_len))
+        hid_states_A = self.model.encoder.get_hidden_states((s1_batch, s1_len))
+        hid_states_B = self.model.encoder.get_hidden_states((s2_batch, s2_len))
 
-        # compute A, treat B as fixed
+        u, v = torch.max(hid_states_A, 0)[0], torch.max(hid_states_B, 0)[0]
+        features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1)
+        output = self.model.classifier(features).squeeze()
 
+        label_id = torch.max(output, 0)[1]
+
+        # compute A score
+        output[label_id].backward()
+        scores_A = hid_states_A.grad.squeeze() * torch.from_numpy(rel_A)
 
         # compute B, treat A as fixed
-
+        scores_B = hid_states_B.grad.squeeze() * torch.from_numpy(rel_B)
 
         # (sent_len, num_label)
-        # return scores_A, scores_B
+        return scores_A, scores_B
 
     def cd_encode(self, sentences):
         rel_h, irrel_h, _ = self.flat_cd_text(sentences)
@@ -553,8 +561,9 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         # again, hidden-states = rel + irrel
 
         # we mask both
+        rel_masked, irrel_masked = propagate_max_two(rel, irrel)
 
-        return rel, irrel  # (2*d), actual sentence representation
+        return rel_masked, irrel_masked  # (2*d), actual sentence representation
 
 
     def flat_cd_text(self, sentences, reverse=False):
