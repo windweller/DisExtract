@@ -33,7 +33,7 @@ Limitations of the current approach: good interpretation methods in LSTM is stil
 
 **General observations:**
 
-1. The quality of interpretation is related to how well the classifier performs.
+1. BookCorpus has both the advantage and disadvantage that it is a corpus made of stories. For causal relations, I was hoping to extract causal pairs of events or entities ("A" -> "B"). This could happen with Gigaword (Newswire) but not so much with BookCorpus.
 
 **"But" observations:**
 
@@ -53,13 +53,19 @@ Limitations of the current approach: good interpretation methods in LSTM is stil
 
 **"Because" observations:**
 
-1. Phrases like **simply because** or **probability because** are identified.
+1. Phrases like **simply because** or **probability because** or **partially because** are identified.
 
    ![because-ex1](./assets/week1/because-ex1.jpg)
 
    ![because-ex2](./assets/week1/because-ex2.jpg)
 
-2. 
+2. A lot of verbs are being highlighted.
+
+   <img src="./assets/week1/because-ex3.jpg" width="30%" height="30%">
+
+3. A **claim** in sentence A, and then **support** in sentence B indicates an explanation.
+
+   <img src="./assets/week1/because-ex4.jpg" width="50%" height="50%">
 
 **Label is ambiguous and model still made a good call:**
 
