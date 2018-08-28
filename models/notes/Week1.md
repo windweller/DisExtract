@@ -4,7 +4,7 @@
 
 1. We investigated **old** experiment data, we can't conclude that `because` is learned badly because algorithms fail to understand causal relations (or acquire real-world knowledge) (confounding factor: number of training examples in corpus)
 2. We then follow up with **balanced experiments**. We conclude that both `because` and `but` are the hardest discourse markers to learn. We note that increasing hidden state dimension is only helpful for generalization, not necessary for the task itself.
-3. Analyze the error examples with visualization. Work in progress. Visualizing LSTM is still an active area of research.
+3. Analyze the error examples with visualization. 
 4. Preprocessed English Gigaword (newswire). Preliminary pre-processing is finished. Want to know how to move forward.
 
 ## Preprocessing Gigaword
@@ -17,7 +17,57 @@ We found **1,287,503** (**1.2M**) sentences that contain `because` (we filtered 
 
 We use contextual decomposition on LSTM to visualize each word's contribution to the final prediction. This method does not take into account of word interactions, but rather provides a clear picture on how and whether each word will have a large influence over the final prediction.
 
-The code is still in development, and intermediate results can be seen in [Visualization Notebook Link](https://github.com/windweller/DisExtract/blob/edge/models/DisExtract%205%20Error%20Analysis.ipynb).
+The code has been finished and the result can be seen in [Visualization Notebook Link](http://nbviewer.jupyter.org/github/windweller/DisExtract/blob/edge/models/DisExtract%20Books%205%20Error%20Analysis.ipynb).
+
+We use the [contextual decomposition](https://arxiv.org/pdf/1801.05453.pdf) technique. The core idea of this method is to:
+
+$h_t = \mathrm{rel}_t + \mathrm{irrel}_t$
+
+We break down each hidden state into a "relevant" vector and a "irrelevant" vector. We are working with a special case where we only look at each word's contribution to the final prediction, ignoring the interactions that happen between the time steps.
+
+After breaking each hidden state down, we then use $rel_t \times \frac{\nabla \hat y_i}{\nabla h_t}$, the gradient to the hidden state as it's influence to the final prediction.
+
+(LaTex does not render on github, the above paragraph can be found in Jupyter Notebook linked above)
+
+Limitations of the current approach: good interpretation methods in LSTM is still under development. DIS task (like SNLI), is about relations between two sentences. Current highlight only shows considering the other sentence fixed, what are the important words/phrases that increase the likelihood of predicting a certain label. It does not shed light on the relations between two words in two sentences.
+
+**General observations:**
+
+1. The quality of interpretation is related to how well the classifier performs.
+
+**"But" observations:**
+
+1. Contrast phrases are picked up, such as "assumed" vs. "n't" or "may" vs. "neither".
+
+   <img src="./assets/week1/but-ex1.jpg" width="40%" height="40%">
+
+   <img src="./assets/week1/but-ex3.jpg" width="40%" height="40%">
+
+2. Sometimes model picks up really striking pairs that at first glance doesn't make sense, but after some thought, it does make sense. For example, "love" indicates present, but "years" indicate distant future, and these two events contrast.
+
+   <img src="./assets/week1/but-ex2.jpg" width="60%" height="60%">
+
+3. Clearly certain `but` usages are very hard to rationalize...but the model makes a successful prediction anyway:
+
+   <img src="./assets/week1/but-ex4.jpg" width="40%" height="40%">
+
+**"Because" observations:**
+
+1. Phrases like **simply because** or **probability because** are identified.
+
+   ![because-ex1](./assets/week1/because-ex1.jpg)
+
+   ![because-ex2](./assets/week1/because-ex2.jpg)
+
+2. 
+
+**Label is ambiguous and model still made a good call:**
+
+There are a few examples where clearly the model makes a good call:
+
+<img src="./assets/week1/wrong-ex1.jpg" width="60%" height="60%">
+
+<img src="./assets/week1/wrong-ex2.jpg" width="70%" height="70%">
 
 ## Balanced experiments
 
@@ -62,7 +112,7 @@ Conclusion: when threshold for the same amount of data
 1. `because` ranked the third lowest in both precision and recall. 
 2. Other three markers with similar performance are `but`, `when`, and `although`. If we only look at `when` and `although`, both have much worse extraction quality than `because`.
 
-<img src="./imgs/ExtractionError.jpg" width="50%" height="50%">
+<img src="./assets/week1/ExtractionError.jpg" width="50%" height="50%">
 
 **Books 5 Model Performance**
 
@@ -71,8 +121,8 @@ When we threshold to create a perfectly balanced dataset, we observe that both `
 | Model | Epoch | Accuracy | Precision | Recall | F1   |
 | ----- | ----- | -------- | --------- | ------ | ---- |
 | 1024  | 6     | 71.0     | 71.1      | 71.1   | 71.0 |
-| 2048  | 7     | ---      | ---       | ---    | ---  |
-| 4096  | 7     | ---      | ---       | ---    | ---  |
+| 2048  | 8     | 71.0     | 71.3      | 71.3   | 71.3 |
+| 4096  | 6     | 71.0     | 71.4      | 71.4   | 71.4 |
 
 (Waiting for these experiments to finish, but from before, we can roughly believe that 1024 will perform similarly to 2048 and 4096, albeit slightly worse.)
 
