@@ -517,7 +517,7 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         return np.hstack([hidden_states, rev_hidden_states]), np.hstack([cell_states, rev_cell_states])
 
     # this is a fast leaf-level implementation for global max pooling
-    def get_word_level_scores(self, sentA, sentB, skip_A=False, skip_B=False):
+    def get_word_level_scores(self, sentA, sentB):
         """
         :param sentence: ['a', 'b', 'c', ...]
         :return:
@@ -527,9 +527,9 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         # [0, 1, 2,...], [0, 1, 2,...]
 
         sent_A, _, _ = self.prepare_samples(
-            [sentA], tokenize=False, verbose=True, already_split=True)
+            sentA, tokenize=False, verbose=True, already_split=True)
         sent_B, _, _ = self.prepare_samples(
-            [sentB], tokenize=False, verbose=True, already_split=True)
+            sentB, tokenize=False, verbose=True, already_split=True)
 
         rel_A, irrel_A = self.cd_encode(sent_A)  # already masked
         rel_B, irrel_B = self.cd_encode(sent_B)
