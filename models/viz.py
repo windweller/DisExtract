@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import math
 import matplotlib.colors as colors
 
+from IPython.display import HTML
 
 def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=512):
     """
@@ -59,7 +60,7 @@ def collect_type_errors(dis_net, data, word_vec, target_marker_id, batch_size=51
                 type_one_list.append([s1[i + counter], s2[i + counter], p, l])
             elif p != target_marker_id and l == target_marker_id:
                 type_two_list.append([s1[i + counter], s2[i + counter], p, l])
-            elif p == l:
+            elif p == l and l == target_marker_id:
                 correct_list.append([s1[i + counter], s2[i + counter], p, l])
             counter += 1
 
@@ -521,6 +522,18 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         # stack second dimension
         return np.hstack([hidden_states, rev_hidden_states]), np.hstack([cell_states, rev_cell_states])
 
+    def visualize_example(self, sentA, sentB, correct_label, label_list):
+        scores_A, scores_B, pred_label = self.get_word_level_scores(sentA, sentB)
+        string_a = html_heatmap(sentA[1:-1], scores_A.numpy()[1:-1])
+        string_b = html_heatmap(sentB[1:-1], scores_B.numpy()[1:-1])
+
+        return HTML(string_a), HTML(string_b), \
+               HTML(self.bold_label("correct", label_list[correct_label])), \
+               HTML(self.bold_label("predict", label_list[int(pred_label)]))
+
+    def bold_label(self, prefix, label):
+        return "{} label: <b>{}</b>".format(prefix, label)
+
     # this is a fast leaf-level implementation for global max pooling
     def get_word_level_scores(self, sentA, sentB):
         """
@@ -530,6 +543,8 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         # texts = gen_tiles(text_orig, method='cd', sweep_dim=1).transpose()
         # starts, stops = tiles_to_cd(texts)
         # [0, 1, 2,...], [0, 1, 2,...]
+        
+        self.zero_grad()
 
         sent_A, _, _ = self.prepare_samples(
             [sentA], tokenize=False, verbose=False, already_split=True)
