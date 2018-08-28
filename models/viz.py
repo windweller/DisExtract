@@ -527,9 +527,9 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         # [0, 1, 2,...], [0, 1, 2,...]
 
         sent_A, _, _ = self.prepare_samples(
-            sentA, tokenize=False, verbose=True, already_split=True)
+            [sentA], tokenize=False, verbose=False, already_split=True)
         sent_B, _, _ = self.prepare_samples(
-            sentB, tokenize=False, verbose=True, already_split=True)
+            [sentB], tokenize=False, verbose=False, already_split=True)
 
         rel_A, irrel_A = self.cd_encode(sent_A)  # already masked
         rel_B, irrel_B = self.cd_encode(sent_B)
