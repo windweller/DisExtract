@@ -223,7 +223,7 @@ class BaseLSTM(object):
         if not return_len:
             return embed
         else:
-            return embed, lengths
+            return torch.from_numpy(embed).float(), lengths
 
 
 # ======== Global Max-pooling based interpretation ========
