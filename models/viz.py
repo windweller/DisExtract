@@ -83,6 +83,8 @@ class BaseLSTM(object):
 
         self.model.encoder.set_glove_path(glove_path)
 
+        self.optimizer = torch.optim.SGD(self.model.parameters(), 0.1)
+
         self.hidden_dim = model.encoder.enc_lstm_dim
 
         self.W_ii, self.W_if, self.W_ig, self.W_io = np.split(
@@ -123,6 +125,9 @@ class BaseLSTM(object):
                 continue
             self.classifiers.append(
                 (c.weight.data.numpy(), c.bias.data.numpy()))
+
+    def zero_grad(self):
+        self.optimizer.zero_grad()
 
     def classify(self, u, v):
         # note that u, v could be positional!! don't mix the two
