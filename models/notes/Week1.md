@@ -39,13 +39,13 @@ Limitations of the current approach: good interpretation methods in LSTM is stil
 
 1. Contrast phrases are picked up, such as "assumed" vs. "n't" or "may" vs. "neither".
 
-   <img src="./assets/week1/but-ex1.jpg" width="50%" height="50%">
+   <img src="./assets/week1/but-ex1.jpg" width="40%" height="40%">
 
-   <img src="./assets/week1/but-ex3.jpg" width="50%" height="50%">
+   <img src="./assets/week1/but-ex3.jpg" width="40%" height="40%">
 
 2. Sometimes model picks up really striking pairs that at first glance doesn't make sense, but after some thought, it does make sense. For example, "love" indicates present, but "years" indicate distant future, and these two events contrast.
 
-   <img src="./assets/week1/but-ex2.jpg" width="70%" height="70%">
+   <img src="./assets/week1/but-ex2.jpg" width="60%" height="60%">
 
 3. Clearly certain `but` usages are very hard to rationalize...but the model makes a successful prediction anyway:
 
