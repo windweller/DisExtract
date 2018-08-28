@@ -101,7 +101,8 @@ class BaseLSTM(object):
             self.rev_W_hi, self.rev_W_hf, self.rev_W_hg, self.rev_W_ho = np.split(
                 weights['weight_hh_l0_reverse'], 4, 0)
             self.rev_b_i, self.rev_b_f, self.rev_b_g, self.rev_b_o = np.split(
-                weights['bias_ih_l0_reverse'].numpy() + weights['bias_hh_l0_reverse'].numpy(),
+                weights['bias_ih_l0_reverse'].numpy(
+                ) + weights['bias_hh_l0_reverse'].numpy(),
                 4)
 
         self.word_emb_dim = 300
@@ -175,7 +176,8 @@ class BaseLSTM(object):
         print('Vocab size : {0}'.format(len(self.word_vec)))
 
         if already_split:
-            self.model.encoder.build_vocab([' '.join(s) for s in sentences], tokenize=False)
+            self.model.encoder.build_vocab(
+                [' '.join(s) for s in sentences], tokenize=False)
         else:
             self.model.encoder.build_vocab(sentences, tokenize=False)
 
@@ -243,7 +245,6 @@ class GMPModel(BaseLSTM):
 # (currently broken because it doesn't extend to global max-pooling)
 
 
-
 # propagate a three-part
 def propagate_three(a, b, c, activation):
     a_contrib = 0.5 * (activation(a + c) - activation(c) +
@@ -297,7 +298,8 @@ def gen_tiles(text, fill=0,
 
 def correct_propagate_max_two(a, b, d=0):
     return 0.5 * (np.max(a, axis=d) + (np.max(a + b, axis=d) - np.max(b, axis=d))), \
-            0.5 * (np.max(b, axis=d) + (np.max(a + b, axis=d) - np.max(a, axis=d)))
+        0.5 * (np.max(b, axis=d) + (np.max(a + b, axis=d) - np.max(a, axis=d)))
+
 
 class CDLSTM(BaseLSTM):
     # this implementation is wrong...no consideration of max pooling
@@ -381,10 +383,10 @@ class CDLSTM(BaseLSTM):
                 rel_g, irrel_g, self.b_g, np.tanh)
 
             relevant[i] = rel_contrib_i * \
-                          (rel_contrib_g + bias_contrib_g) + \
-                          bias_contrib_i * rel_contrib_g
+                (rel_contrib_g + bias_contrib_g) + \
+                bias_contrib_i * rel_contrib_g
             irrelevant[i] = irrel_contrib_i * (rel_contrib_g + irrel_contrib_g + bias_contrib_g) + (
-                                                                                                       rel_contrib_i + bias_contrib_i) * irrel_contrib_g
+                rel_contrib_i + bias_contrib_i) * irrel_contrib_g
 
             if i >= start and i < stop:
                 relevant[i] += bias_contrib_i * bias_contrib_g
@@ -398,7 +400,7 @@ class CDLSTM(BaseLSTM):
                                 bias_contrib_f) * relevant[i - 1]
                 irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * irrelevant[
                     i - 1] + irrel_contrib_f * \
-                             relevant[i - 1]
+                    relevant[i - 1]
 
             o = sigmoid(np.dot(
                 self.W_io, word_vecs[i]) + np.dot(self.W_ho, prev_rel_h + prev_irrel_h) + self.b_o)
@@ -438,6 +440,7 @@ def propagate_max_two(a, b, d=0):
     b = b * b_mask
 
     return a, b
+
 
 class MaxPoolingCDBiLSTM(BaseLSTM):
     def cell(self, prev_h, prev_c, x_i):
@@ -488,7 +491,8 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
 
         for i in range(T):
             if i > 0:
-                prev_h = hidden_states[i - 1]  # this is just the prev hidden state
+                # this is just the prev hidden state
+                prev_h = hidden_states[i - 1]
                 prev_c = cell_states[i - 1]
             else:
                 prev_h = np.zeros(self.hidden_dim)
@@ -502,7 +506,8 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         for i in reversed(range(T)):
             # 20, 19, 18, 17, ...
             if i < T - 1:
-                prev_h = rev_hidden_states[i + 1]  # this is just the prev hidden state
+                # this is just the prev hidden state
+                prev_h = rev_hidden_states[i + 1]
                 prev_c = rev_cell_states[i + 1]
             else:
                 prev_h = np.zeros(self.hidden_dim)
@@ -550,26 +555,26 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
 
         # compute A score
         output[label_id].backward()
-        scores_A = hid_states_A.grad.squeeze() * torch.from_numpy(rel_A)
+        scores_A = hid_states_A.grad.data.squeeze() * torch.from_numpy(rel_A).float()
 
         # compute B, treat A as fixed
-        scores_B = hid_states_B.grad.squeeze() * torch.from_numpy(rel_B)
+        scores_B = hid_states_B.grad.data.squeeze() * torch.from_numpy(rel_B).float()
 
         # (sent_len, num_label)
-        return scores_A, scores_B
+        return scores_A.sum(dim=1), scores_B.sum(dim=1), label_id
 
     def cd_encode(self, sentences):
         rel_h, irrel_h, _ = self.flat_cd_text(sentences)
         rev_rel_h, rev_irrel_h, _ = self.flat_cd_text(sentences, reverse=True)
         rel = np.hstack([rel_h, rev_rel_h])  # T, 2*d
-        irrel = np.hstack([irrel_h, rev_irrel_h])  #T, 2*d
+        irrel = np.hstack([irrel_h, rev_irrel_h])  # T, 2*d
         # again, hidden-states = rel + irrel
 
         # we mask both
         rel_masked, irrel_masked = propagate_max_two(rel, irrel)
 
-        return rel_masked, irrel_masked  # (2*d), actual sentence representation
-
+        # (2*d), actual sentence representation
+        return rel_masked, irrel_masked
 
     def flat_cd_text(self, sentences, reverse=False):
         # collects relevance for word 0 to sent_length
@@ -588,7 +593,8 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         irrelevant = np.zeros((T, self.hidden_dim))
 
         relevant_h = np.zeros((T, self.hidden_dim))
-        irrelevant_h = np.zeros((T, self.hidden_dim))  # keep track of the entire hidden state
+        # keep track of the entire hidden state
+        irrelevant_h = np.zeros((T, self.hidden_dim))
 
         hidden_states = np.zeros((T, self.hidden_dim))
         cell_states = np.zeros((T, self.hidden_dim))
@@ -633,9 +639,9 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
                 rel_g, irrel_g, b_g, np.tanh)
 
             relevant[i] = rel_contrib_i * (rel_contrib_g + bias_contrib_g) + \
-                          bias_contrib_i * rel_contrib_g
+                bias_contrib_i * rel_contrib_g
             irrelevant[i] = irrel_contrib_i * (rel_contrib_g + irrel_contrib_g + bias_contrib_g) + \
-                            (rel_contrib_i + bias_contrib_i) * irrel_contrib_g
+                (rel_contrib_i + bias_contrib_i) * irrel_contrib_g
 
             relevant[i] += bias_contrib_i * bias_contrib_g
             # if i >= start and i < stop:
@@ -653,14 +659,16 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
                 #     i - 1] + irrel_contrib_f * relevant[i - 1]
 
                 # not sure if this is completely correct
-                irrelevant[i] += (rel_contrib_f + irrel_contrib_f + bias_contrib_f) * prev_c
+                irrelevant[i] += (rel_contrib_f +
+                                  irrel_contrib_f + bias_contrib_f) * prev_c
 
             # recompute o-gate
             o = sigmoid(rel_o + irrel_o + b_o)
             rel_contrib_o, irrel_contrib_o, bias_contrib_o = propagate_three(
                 rel_o, irrel_o, b_o, sigmoid)
             # from current cell state
-            new_rel_h, new_irrel_h = propagate_tanh_two(relevant[i], irrelevant[i])
+            new_rel_h, new_irrel_h = propagate_tanh_two(
+                relevant[i], irrelevant[i])
             # relevant_h[i] = new_rel_h * (rel_contrib_o + bias_contrib_o)
             # irrelevant_h[i] = new_rel_h * (irrel_contrib_o) + new_irrel_h * (rel_contrib_o + irrel_contrib_o + bias_contrib_o)
             relevant_h[i] = o * new_rel_h
@@ -715,7 +723,8 @@ def word_heatmap(text_orig, scores, label_pred=0, data=None, fontsize=9):
     c = plt.pcolor(data,
                    edgecolors='k',
                    linewidths=0,
-                   norm=MidpointNormalize(vmin=abs_lim * -1, midpoint=0., vmax=abs_lim),
+                   norm=MidpointNormalize(
+                       vmin=abs_lim * -1, midpoint=0., vmax=abs_lim),
                    cmap=cmap)
 
     def show_values(pc, text_orig, data, fontsize, fmt="%s", **kw):
@@ -742,7 +751,8 @@ def word_heatmap(text_orig, scores, label_pred=0, data=None, fontsize=9):
                         color=color, fontsize=fontsize, **kw)
 
     show_values(c, text_orig, data, fontsize)
-    cb = plt.colorbar(c, extend='both')  # fig.colorbar(pcm, ax=ax[0], extend='both')
+    # fig.colorbar(pcm, ax=ax[0], extend='both')
+    cb = plt.colorbar(c, extend='both')
     cb.outline.set_visible(False)
     plt.xlim((0, num_words))
     plt.ylim((0, num_iters))
@@ -751,3 +761,74 @@ def word_heatmap(text_orig, scores, label_pred=0, data=None, fontsize=9):
     plt.xticks([])
 
     cb.ax.set_title('CD score')
+
+'''
+@author: Leila Arras
+@maintainer: Leila Arras
+@date: 21.06.2017
+@version: 1.0
+@copyright: Copyright (c) 2017, Leila Arras, Gregoire Montavon, Klaus-Robert Mueller, Wojciech Samek
+@license: BSD-2-Clause
+'''
+
+import matplotlib.pyplot as plt
+
+def rescale_score_by_abs(score, max_score, min_score):
+    """
+    rescale positive score to the range [0.5, 1.0], negative score to the range [0.0, 0.5],
+    using the extremal scores max_score and min_score for normalization
+    """
+    
+    # CASE 1: positive AND negative scores occur --------------------
+    if max_score>0 and min_score<0:
+    
+        if max_score >= abs(min_score):   # deepest color is positive
+            if score>=0:
+                return 0.5 + 0.5*(score/max_score)
+            else:
+                return 0.5 - 0.5*(abs(score)/max_score)
+
+        else:                             # deepest color is negative
+            if score>=0:
+                return 0.5 + 0.5*(score/abs(min_score))
+            else:
+                return 0.5 - 0.5*(score/min_score)   
+    
+    # CASE 2: ONLY positive scores occur -----------------------------       
+    elif max_score>0 and min_score>=0: 
+        if max_score == min_score:
+            return 1.0
+        else:
+            return 0.5 + 0.5*(score/max_score)
+    
+    # CASE 3: ONLY negative scores occur -----------------------------
+    elif max_score<=0 and min_score<0: 
+        if max_score == min_score:
+            return 0.0
+        else:
+            return 0.5 - 0.5*(score/min_score)    
+  
+      
+def getRGB(c_tuple):
+    return "#%02x%02x%02x"%(int(c_tuple[0]*255), int(c_tuple[1]*255), int(c_tuple[2]*255))
+
+     
+def span_word(word, score, colormap):
+    return "<span style=\"background-color:"+getRGB(colormap(score))+"\">"+word+"</span>"
+
+
+def html_heatmap(words, scores, cmap_name="bwr"):
+    
+    colormap  = plt.get_cmap(cmap_name)
+     
+    assert len(words)==len(scores)
+    max_s     = max(scores)
+    min_s     = min(scores)
+    
+    output_text = ""
+    
+    for idx, w in enumerate(words):
+        score       = rescale_score_by_abs(scores[idx], max_s, min_s)
+        output_text = output_text + span_word(w, score, colormap) + " "
+    
+    return output_text + "\n"
