@@ -27,11 +27,47 @@ We break down each hidden state into a "relevant" vector and a "irrelevant" vect
 
 After breaking each hidden state down, we then use $rel_t \times \frac{\nabla \hat y_i}{\nabla h_t}$, the gradient to the hidden state as it's influence to the final prediction.
 
-**Observations**:
+(LaTex does not render on github, the above paragraph can be found in Jupyter Notebook linked above)
+
+Limitations of the current approach: good interpretation methods in LSTM is still under development. DIS task (like SNLI), is about relations between two sentences. Current highlight only shows considering the other sentence fixed, what are the important words/phrases that increase the likelihood of predicting a certain label. It does not shed light on the relations between two words in two sentences.
+
+**General observations:**
+
+1. The quality of interpretation is related to how well the classifier performs.
+
+**"But" observations:**
+
+1. Contrast phrases are picked up, such as "assumed" vs. "n't" or "may" vs. "neither".
+
+   <img src="./assets/week1/but-ex1.jpg" width="50%" height="50%">
+
+   <img src="./assets/week1/but-ex3.jpg" width="50%" height="50%">
+
+2. Sometimes model picks up really striking pairs that at first glance doesn't make sense, but after some thought, it does make sense. For example, "love" indicates present, but "years" indicate distant future, and these two events contrast.
+
+   <img src="./assets/week1/but-ex2.jpg" width="70%" height="70%">
+
+3. Clearly certain `but` usages are very hard to rationalize...but the model makes a successful prediction anyway:
+
+   <img src="./assets/week1/but-ex4.jpg" width="40%" height="40%">
+
+**"Because" observations:**
 
 1. Phrases like **simply because** or **probability because** are identified.
 
+   ![because-ex1](./assets/week1/because-ex1.jpg)
+
+   ![because-ex2](./assets/week1/because-ex2.jpg)
+
 2. 
+
+**Label is ambiguous and model still made a good call:**
+
+There are a few examples where clearly the model makes a good call:
+
+<img src="./assets/week1/wrong-ex1.jpg" width="60%" height="60%">
+
+<img src="./assets/week1/wrong-ex2.jpg" width="70%" height="70%">
 
 ## Balanced experiments
 
