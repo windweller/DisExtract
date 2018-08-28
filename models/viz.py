@@ -550,7 +550,7 @@ class MaxPoolingCDBiLSTM(BaseLSTM):
         irrel = np.hstack([irrel_h, rev_irrel_h])  #T, 2*d
         # again, hidden-states = rel + irrel
 
-        # now we use gradient to compute score!
+        # we mask both
 
         return rel, irrel  # (2*d), actual sentence representation
 
