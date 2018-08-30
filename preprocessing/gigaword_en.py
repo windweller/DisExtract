@@ -124,6 +124,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
 
     logger.info('writing files')
 
+    # bad idea! should use tsv instead!
     with open(pjoin(output_dir, "{}.json".format(marker_set_tag)), 'wb') as f:
         json.dump(sentences, f)
 
@@ -151,7 +152,7 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
     markers_dir = pjoin(source_dir, "markers_" + marker_set_tag)
     input_dir = pjoin(markers_dir, "sentences")
-    input_file_path = pjoin(input_dir, "{}.tsv".format(marker_set_tag))
+    input_file_path = pjoin(input_dir, "{}.json".format(marker_set_tag))
     output_dir = pjoin(markers_dir, "parsed_sentence_pairs")
 
     if not os.path.exists(markers_dir):
@@ -172,21 +173,42 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
         with open(input_file_path, 'rb') as f:
             logger.info("reading {}".format(input_file_path))
-            i = 0
-            for line in f:
-              sentence, previous, marker = line[:-1].split("\t")
-              i+=1
-              if i > 0:
-                try:
-                  parsed_output = dependency_parsing(sentence, previous, marker)
-                  if parsed_output:
-                    s1, s2 = parsed_output
-                    line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-                    w.write(line_to_print)
-                except:
-                    print i, marker, sentence
-              if i % args.filter_print_every == 0:
-                logger.info("processed {}".format(i))
+            sentences = json.load(f)
+            logger.info("total sentences: {}".format(
+                sum([len(sentences[marker]["sentence"]) for marker in sentences])
+            ))
+            for marker, slists in sentences.iteritems():
+                i = 0
+                # the set will remove the same row
+                for sentence, previous in set(zip(slists["sentence"], slists["previous"])):
+                    i += 1
+                    if True:
+                        parsed_output = dependency_parsing(sentence, previous, marker)
+                        if parsed_output:
+                            s1, s2 = parsed_output
+
+                            # parsed_sentence_pairs[marker]["s1"].append(s1)
+                            # parsed_sentence_pairs[marker]["s2"].append(s2)
+                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                            w.write(line_to_print)
+
+                        if i % args.filter_print_every == 0:
+                            logger.info("processed {}".format(i))
+            # i = 0
+            # for line in f:
+            #   sentence, previous, marker = line[:-1].split("\t")
+            #   i+=1
+            #   if i > 0:
+            #     try:
+            #       parsed_output = dependency_parsing(sentence, previous, marker)
+            #       if parsed_output:
+            #         s1, s2 = parsed_output
+            #         line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+            #         w.write(line_to_print)
+            #     except:
+            #         print i, marker, sentence
+            #   if i % args.filter_print_every == 0:
+            #     logger.info("processed {}".format(i))
               #stop
             #logger.info("total sentences: {}".format(
             #    sum([len(sentences[marker]["sentence"]) for marker in sentences])
