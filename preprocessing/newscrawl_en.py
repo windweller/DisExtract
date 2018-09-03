@@ -50,8 +50,8 @@ logger = logging.getLogger(__name__)
 with open(args.json, 'rb') as f:
     json_config = json.load(f)
 
-gigaword_en_dir = json_config['news_crawl_dir']
-gigaword_en_file = 'news_crawl_0717_flattened.txt'
+newscrawl_en_dir = json_config['news_crawl_dir']
+newscrawl_en_file = 'news_crawl_0717_flattened.txt'
 
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
@@ -216,9 +216,9 @@ def dependency_parsing(sentence, previous_sentence, marker):
 
 if __name__ == '__main__':
     if args.filter_because:
-        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], "BECAUSE", EN_BECAUSE_MARKER)
+        collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], "BECAUSE", EN_BECAUSE_MARKER)
     elif args.filter:
-        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
+        collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:
         setup_corenlp("en")
-        parse_filtered_sentences(gigaword_en_dir, "BECAUSE")
+        parse_filtered_sentences(newscrawl_en_dir, "BECAUSE")
