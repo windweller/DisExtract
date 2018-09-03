@@ -24,7 +24,7 @@ from parser import depparse_ssplit, setup_corenlp
 from cfg import DISCOURSE_MARKER_SET_TAG, EN_BECAUSE_MARKER, EN_DISCOURSE_MARKERS  # we only get "because", this will save a lot of parsing time
 
 
-parser = argparse.ArgumentParser(description='DisExtract Gigaword Spanish')
+parser = argparse.ArgumentParser(description='DisExtract Gigaword English')
 
 parser.add_argument("--json", type=str, default="example_config.json", help="corpus parameter setting to load")
 
@@ -138,7 +138,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     statistics_report = "\n".join(statistics_lines)
     with open(pjoin(markers_dir, "VERSION.txt"), "wb") as f:
         f.write(
-            "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report
+            "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report + '\n'
         )
 
 def parse_filtered_sentences(source_dir, marker_set_tag):
