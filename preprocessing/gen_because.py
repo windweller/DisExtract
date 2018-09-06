@@ -80,12 +80,13 @@ if __name__ == '__main__':
                 if line not in check_repeat:
                     check_repeat.add(line)
                     examples.append(line)
-                else:
-                    print("found repeats")
+
+    print("original {}, found repeat {}".format(len(examples), len(examples) - len(check_repeat)))
 
     del check_repeat  # release memory
 
     number_of_filtered_examples = 0
+    new_examples = []
     for i, ex in enumerate(examples):
         s1, s2, label = ex[:-1].split('\t')
 
@@ -101,12 +102,16 @@ if __name__ == '__main__':
         elif ratio < args.min_ratio or args.max_ratio < ratio:
             continue
         else:
-            example_line = "\t".join([s1, s2, label]) + "\n"
+            # example_line = "\t".join([s1, s2, label]) + "\n"
+            new_examples.append(ex)
             number_of_filtered_examples += 1
 
-    print("original number: {}, filtered out number: {}".format(len(examples), number_of_filtered_examples))
+    print("original number: {}, filtered out number: {}".format(len(examples), len(examples) - number_of_filtered_examples))
 
     assert number_of_filtered_examples != 0
+
+    del examples
+    examples = new_examples
 
     serial_numbers = range(len(examples))
     random.shuffle(serial_numbers)
