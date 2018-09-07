@@ -1,5 +1,26 @@
 # Week 1 Report
 
+## Plans
+
+1. Collect and parse Gigaword for a large `because` corpus.
+2. Try training the generation task using Transformer model.
+
+## Notes
+
+1. Why A, generate because B
+   - Why-question answering, generate answer
+   - Include all the Why questions from SQuAD as well (translate to `because`)
+2. Take a pre-trained language model (SkipThought, or others). Have a continuous sentence. Use it to generate candidate answers (sample). Then use our `because` detector to rank.
+3. Extract knowledge from because sentences.
+   - Interpret as counterfactual prediction 
+   - "He tripped because he wasn't looking at the stairs"
+4. Testing theories of explanation.
+5. Computational model of "puns". Present a theory of puns. Distinguish puns vs. non-puns. What are the properties? Theory requires relatedness measure between words and its meanings. (https://web.stanford.edu/~ngoodman/papers/KaoLevyGoodman.pdf)
+   - Show some modern NLP can predict human (in unsupervised way), predict human relatedness rating, plug into another model.
+   - Pun generation problem
+   - Many humor models are template-based 
+6. Conjunctivism on semantics (Montague lambda calculus, compose by taking output of a function and put into) (take every word pretend it's a predicate, return type is boolean, predicate depends on entities/events) (people can reformulate this ) (Neural event semantics) (different ways to get compositionality to happen) (All compositions are conjunctions) (Can you get alternative grounded language model?)
+
 ## Outline
 
 1. We investigated **old** experiment data, we can't conclude that `because` is learned badly because algorithms fail to understand causal relations (or acquire real-world knowledge) (confounding factor: number of training examples in corpus)
