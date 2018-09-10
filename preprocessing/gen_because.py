@@ -74,14 +74,16 @@ if __name__ == '__main__':
     check_repeat = set()
     examples = []
 
+    total_num = 0.
     for data_file in datafiles:
         with open(pjoin(args.data_dir, data_file), 'rb') as f:
             for line in f:
+                total_num += 1
                 if line not in check_repeat:
                     check_repeat.add(line)
                     examples.append(line)
 
-    print("original {}, found repeat {}".format(len(examples), len(examples) - len(check_repeat)))
+    print("original {}, found repeat {}".format(len(examples), total_num - len(examples)))
 
     del check_repeat  # release memory
 
