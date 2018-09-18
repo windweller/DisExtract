@@ -194,25 +194,6 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
 
                         if i % args.filter_print_every == 0:
                             logger.info("processed {}".format(i))
-            # i = 0
-            # for line in f:
-            #   sentence, previous, marker = line[:-1].split("\t")
-            #   i+=1
-            #   if i > 0:
-            #     try:
-            #       parsed_output = dependency_parsing(sentence, previous, marker)
-            #       if parsed_output:
-            #         s1, s2 = parsed_output
-            #         line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-            #         w.write(line_to_print)
-            #     except:
-            #         print i, marker, sentence
-            #   if i % args.filter_print_every == 0:
-            #     logger.info("processed {}".format(i))
-              #stop
-            #logger.info("total sentences: {}".format(
-            #    sum([len(sentences[marker]["sentence"]) for marker in sentences])
-            #))
 
     logger.info('file writing complete')
 
