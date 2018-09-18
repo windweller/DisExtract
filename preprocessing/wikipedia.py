@@ -70,21 +70,21 @@ wikipedia_dir = json_config['wikipedia_dir']
 wiki_en_dir = json_config['wiki_en_dir']
 wiki_en_file = 'flattened_tokenized.txt'
 
-wiki_files_path = []
-
-wiki_file_dirs = os.listdir(wikipedia_dir)
-for wiki_file_dir in wiki_file_dirs:
-    if not os.path.isdir(pjoin(wikipedia_dir, wiki_file_dir)):
-        continue
-    wiki_files = os.listdir(pjoin(wikipedia_dir, wiki_file_dir))
-    for w_f in wiki_files:
-        wiki_files_path.append(pjoin(wikipedia_dir, wiki_file_dir, w_f))
-
-print "total number of wikipedia files: ", len(wiki_files_path)
-
-
 # if we want to extract context, we should re-process these files
 def flatten_files():
+
+    wiki_files_path = []
+
+    wiki_file_dirs = os.listdir(wikipedia_dir)
+    for wiki_file_dir in wiki_file_dirs:
+        if not os.path.isdir(pjoin(wikipedia_dir, wiki_file_dir)):
+            continue
+        wiki_files = os.listdir(pjoin(wikipedia_dir, wiki_file_dir))
+        for w_f in wiki_files:
+            wiki_files_path.append(pjoin(wikipedia_dir, wiki_file_dir, w_f))
+
+    print "total number of wikipedia files: ", len(wiki_files_path)
+
     all_sentences = []
     for f_i, f_path in enumerate(wiki_files_path):
         with open(f_path, 'r') as f:
