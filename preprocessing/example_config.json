@@ -5,5 +5,7 @@
   "ptb_dir": "/home/anie/DisExtract/preprocessing/corpus/ptb/",
   "wikitext_dir": "/home/anie/DisExtract/preprocessing/corpus/wikitext/",
   "gigaword_en_dir": "/home/anie/DisExtract/preprocessing/corpus/gigaword_en",
-  "news_crawl_dir": "/home/anie/DisExtract/preprocessing/corpus/news_crawl"
+  "news_crawl_dir": "/home/anie/DisExtract/preprocessing/corpus/news_crawl",
+  "wikipedia_dir": "/home/anie/wikimedia/20180801/extracted_en_wiki",
+  "wiki_en_dir": "/home/anie/DisExtract/preprocessing/corpus/wikipedia_en"
 }

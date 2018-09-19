@@ -78,7 +78,7 @@ Hi Deb can you proove Gravity or that the Sun is about 91 million miles from the
 
 ## Dataset Preprocessing
 
-We preprocessed **2,595,736 (2.6M)** sentences from two datasets (Gigaword English 5th, and News Crawl 2007-2017).
+We preprocessed **2,595,736 (2.6M)** sentences from two datasets (Gigaword English 5th, and News Crawl 2007-2017). (originally we get 2.9M, but there are 305K repeats)
 
 Filter out **382,371 (382k)** sentence pairs because they don't satisfy our filtering criteria (s1, s2 < 50 words, s1, s2 > 5 words, ratio cannot be too much).
 
@@ -143,6 +143,58 @@ Tasks:
 2. Evaluate BLEU, Rogue score
 3. Count the "epoch" by checking how many times model loads data in again.
 
+Report:
+
+BLEU score caveat
+
+BLEU score calculation (translate.py) runs extremely slowly (more so than I previously thought), even if we set `beam_size=1`
+
+Two logs:
+
+```bash
+anie@arthur1:~/OpenNMT-py$ CUDA_VISIBLE_DEVICES=1 python3.6 translate.py -model save/because_transformer_sep5/dissent_step_80000.pt -src data/src-test.txt \
+>     -tgt data/tgt-test.txt -share_vocab -output save/because_transformer_sep5/dissent_step_80000_pred.txt -replace_unk \
+>      -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 1 -fast
+/home/anie/OpenNMT-py/onmt/translate/translation.py:48: UserWarning: invalid index of a 0-dim tensor. This will be an error in PyTorch 0.5. Use tensor.item() to convert a 0-dim tensor to a Python number
+  tokens[i] = src_raw[max_index[0]]
+PRED AVG SCORE: -1.4525, PRED PPL: 4.2736
+GOLD AVG SCORE: 0.0000, GOLD PPL: 1.0000
+
+>> BLEU = 1.55, 24.5/2.6/0.9/0.4 (BP=0.692, ratio=0.731, hyp_len=1034071, ref_len=1415503)
+
+anie@arthur1:~/OpenNMT-py$ CUDA_VISIBLE_DEVICES=1 python3.6 translate.py -model save/because_transformer_sep5/dissent_step_80000.pt -src data/src-test.txt     -tgt data/tgt-test.txt -share_vocab -output save/because_transformer_sep5/dissent_step_80000_pred.txt -replace_unk      -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 5 -fast
+/home/anie/OpenNMT-py/onmt/translate/translation.py:48: UserWarning: invalid index of a 0-dim tensor. This will be an error in PyTorch 0.5. Use tensor.item() to convert a 0-dim tensor to a Python number
+  tokens[i] = src_raw[max_index[0]]
+PRED AVG SCORE: -1.2157, PRED PPL: 3.3728
+GOLD AVG SCORE: 0.0000, GOLD PPL: 1.0000
+```
+
+When we flag `-fast`, beam_size does not make a huge difference. And by flagging `-fast`, the model is indeed much faster.
+
+When we remove `-fast`, it is very slow, and the BLEU score appears to be exactly the same.
+
+```bash
+anie@arthur1:~/OpenNMT-py$ CUDA_VISIBLE_DEVICES=1 python3.6 translate.py -model save/because_transformer_sep5/dissent_step_80000.pt -src data/src-test.txt     -tgt data/tgt-test.txt -share_vocab -output save/because_transformer_sep5/dissent_step_80000_pred.txt -replace_unk      -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 1
+/home/anie/OpenNMT-py/onmt/translate/translation.py:48: UserWarning: invalid index of a 0-dim tensor. This will be an error in PyTorch 0.5. Use tensor.item() to convert a 0-dim tensor to a Python number
+  tokens[i] = src_raw[max_index[0]]
+PRED AVG SCORE: -1.4523, PRED PPL: 4.2730
+GOLD AVG SCORE: -3.5099, GOLD PPL: 33.4447
+
+>> BLEU = 1.55, 24.5/2.6/0.9/0.4 (BP=0.692, ratio=0.731, hyp_len=1034071, ref_len=1415503)
+```
+
+```bash
+anie@arthur1:~/OpenNMT-py$ CUDA_VISIBLE_DEVICES=1 python3.6 translate.py -model save/because_transformer_sep6_no_shared_emb/dissent_step_170000.pt -src data/src-test.txt \
+>     -tgt data/tgt-test.txt -share_vocab -output save/because_transformer_sep6_no_shared_emb/dissent_step_170000_pred.txt -replace_unk \
+>      -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 1 -fast
+/home/anie/OpenNMT-py/onmt/translate/translation.py:48: UserWarning: invalid index of a 0-dim tensor. This will be an error in PyTorch 0.5. Use tensor.item() to convert a 0-dim tensor to a Python number
+  tokens[i] = src_raw[max_index[0]]
+PRED AVG SCORE: -1.5133, PRED PPL: 4.5417
+GOLD AVG SCORE: 0.0000, GOLD PPL: 1.0000
+
+>> BLEU = 1.30, 24.6/2.4/0.8/0.4 (BP=0.647, ratio=0.696, hyp_len=985821, ref_len=1415503)
+```
+
 ## Language Modeling Candidate Generation
 
 We'll try large language models.
@@ -152,14 +204,18 @@ LM-1-Billion is from WMT News-Crawl 2011 (nice overlap with our dataset).
 Existing language models
 
 * Google Tensorflow LM: [1Billion LM](https://github.com/tensorflow/models/tree/master/research/lm_1b): trained on LM-1-Billion
+  * There is a PyTorch equivalent, 3 days training time (https://github.com/rdspring1/PyTorch_GBW_LM)
 * Google Tensorflow [SkipThought](https://github.com/tensorflow/models/tree/master/research/skip_thoughts): trained on Gutenberg Books
 * Google Tensorflow [Common Sense LM](https://github.com/tensorflow/models/tree/master/research/lm_commonsense): trained on LM-1-Billion, CommonCrawl, SQuAD, Gutenberg Books. (a ton of data) (superset of above)
-* OpenAI PyTorch [Transformer Decoder LM](https://github.com/openai/finetune-transformer-lm): trained on Gutenberg Books.
+  * Seemingly easy enough to use
+* OpenAI Tensorflow [Transformer Decoder LM](https://github.com/openai/finetune-transformer-lm): trained on Gutenberg Books.
+  * PyTorch implementation here: https://github.com/huggingface/pytorch-openai-transformer-lm
 * NVIDIA PyTorch [ByteLSTM LM](https://github.com/NVIDIA/sentiment-discovery#pretrained-models): trained on Amazon reviews. (the sentiment neuron paper)
 
 Observation:
 
 1. Currently we don't have a language model trained on Gigaword English, WikiText/Wikipedia. 1BLM is on news, so that's good.
+2. Some of these models are definitely hard to use. These LMs have slightly different architectures. Not all are the same.
 
 Ideas:
 
@@ -167,11 +223,11 @@ Ideas:
 2. As for the quality of LM, we can measure the edit distance or Jaccard distance it has with the original s2? (Just generate all of them). 
    - Then we can also measure the distance between the original s2 and 
 
-Puzzles:
-
-1. How to pick the best language model?
-
 Tasks:
 
 1. Build a `sample(vocab_dist, prev_tokens, beam_size=1)` function that takes in a probability distribution and previously generated tokens, sample beam :) Can use KN-5 LM as the default scoring function.
 2. Provide a list of candidates to show Noah today.
+
+Problems:
+
+1. Language model does not have proper "end" token, like `</s>` because LM does not need it. For TransformerLM we use `.</w>` as the indication for end.

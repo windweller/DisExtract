@@ -1,11 +1,15 @@
 # -*- coding: utf-8 -*-
 
 """
-Preprocess gigaword english
+This processes Wikipedia dump (wikimedia)
+Needs to first process the xml with: Wikiextractor (https://github.com/attardi/wikiextractor)
 
-This file only deals with the flattened gigaword file.
-The file is already sentence-tokenized, also word-tokenized.
+python WikiExtractor.py --no-templates -o /home/anie/wikimedia/20180801/extracted_en_wiki.txt --filter_disambig_pages \
+                        --processes 6  /home/anie/wikimedia/20180801/enwiki-latest-pages-articles.xml
+(takes about 1.5 hour)
 
+This file is a bit different. We filter at one directory, and store in one file
+We then parse in a different place...
 """
 
 import os
@@ -14,20 +18,26 @@ import io
 import sys
 import json
 import gzip
+import string
 import argparse
 
 import logging
 from util import rephrase
+import nltk
+import spacy
 from os.path import join as pjoin
 
 from parser import depparse_ssplit, setup_corenlp
-from cfg import DISCOURSE_MARKER_SET_TAG, EN_BECAUSE_MARKER, EN_DISCOURSE_MARKERS  # we only get "because", this will save a lot of parsing time
-
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_BECAUSE_MARKER, \
+    EN_DISCOURSE_MARKERS  # we only get "because", this will save a lot of parsing time
 
 parser = argparse.ArgumentParser(description='DisExtract Gigaword English')
 
 parser.add_argument("--json", type=str, default="example_config.json", help="corpus parameter setting to load")
 
+parser.add_argument('--extract', action='store_true',
+                    help="Stage 1: compress all files into one flattened file")
+parser.add_argument('--extract_out', type=str, default='flattened.txt', help="file name of extracted file")
 parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
 parser.add_argument("--filter_because", action='store_true',
@@ -43,6 +53,8 @@ parser.add_argument("--no_dep_cache", action='store_false', help="not caching de
 
 args, _ = parser.parse_known_args()
 
+printable = set(string.printable)
+
 """
 Logging
 """
@@ -54,8 +66,71 @@ logger = logging.getLogger(__name__)
 with open(args.json, 'rb') as f:
     json_config = json.load(f)
 
-gigaword_en_dir = json_config['gigaword_en_dir']
-gigaword_en_file = 'gigaword_en_flattened.txt'
+wikipedia_dir = json_config['wikipedia_dir']
+wiki_en_dir = json_config['wiki_en_dir']
+wiki_en_file = 'flattened_tokenized.txt'
+
+# if we want to extract context, we should re-process these files
+def flatten_files():
+
+    wiki_files_path = []
+
+    wiki_file_dirs = os.listdir(wikipedia_dir)
+    for wiki_file_dir in wiki_file_dirs:
+        if not os.path.isdir(pjoin(wikipedia_dir, wiki_file_dir)):
+            continue
+        wiki_files = os.listdir(pjoin(wikipedia_dir, wiki_file_dir))
+        for w_f in wiki_files:
+            wiki_files_path.append(pjoin(wikipedia_dir, wiki_file_dir, w_f))
+
+    print "total number of wikipedia files: ", len(wiki_files_path)
+
+    all_sentences = []
+    for f_i, f_path in enumerate(wiki_files_path):
+        with open(f_path, 'r') as f:
+            title_mark = False
+            for line in f:
+                if '<doc id=' in line:
+                    title_mark = True
+                    continue
+                elif '</doc>' in line:
+                    continue
+                elif line.strip() == '':  # empty line
+                    continue
+                elif title_mark is True:  # so no titles
+                    title_mark = False
+                    continue
+
+                processed = filter(lambda x: x in printable, line).strip()
+                if len(processed.split()) < 5:  # take out non-ascii non-utf-8, if the sent is too short, we throw out
+                    continue
+                sentences = nltk.sent_tokenize(processed)
+                all_sentences.extend(sentences)
+
+        if f_i % 50 == 0:
+            logger.info("processing {}".format(f_i))
+
+    logger.info("writing to file...")
+    with open(pjoin(wiki_en_dir, args.extract_out), 'w') as f:
+        for s in all_sentences:
+            f.write(s + '\n')
+
+
+def tokenize_files():
+    en_nlp = spacy.load("en_core_web_sm")
+    all_sentences = []
+    with open(pjoin(wiki_en_dir, args.extract_out), 'r') as f:
+        for i, line in enumerate(f):
+            tokens = en_nlp.tokenizer(unicode(line.strip()))
+            words = [str(token) for token in tokens if not str(token).isspace()]
+            if len(words) < 5:
+                continue
+            all_sentences.append(' '.join(words))
+            if i % 10000 == 0:
+                logger.info("processed {} sentences".format(i))
+    with open(pjoin(wiki_en_dir, 'flattened_tokenized.txt'), 'w') as f:
+        for s in all_sentences:
+            f.write(s + '\n')
 
 
 def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_markers):
@@ -141,6 +216,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
             "commit: \n\ncommand: \n\nmarkers:\n" + statistics_report + '\n'
         )
 
+
 def parse_filtered_sentences(source_dir, marker_set_tag):
     """
     This function can be the same for each corpus
@@ -203,10 +279,11 @@ def dependency_parsing(sentence, previous_sentence, marker):
 
 
 if __name__ == '__main__':
-    if args.filter_because:
-        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], "BECAUSE", EN_BECAUSE_MARKER)
-    elif args.filter:
-        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
+    if args.extract:
+        flatten_files()
+        tokenize_files()
+    elif args.filter_because:
+        collect_raw_sentences(wiki_en_dir, [wiki_en_file], "BECAUSE", EN_BECAUSE_MARKER)
     elif args.parse:
         setup_corenlp("en")
-        parse_filtered_sentences(gigaword_en_dir, "BECAUSE")
+        parse_filtered_sentences(wiki_en_dir, "BECAUSE")
