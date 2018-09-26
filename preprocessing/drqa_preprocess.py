@@ -86,19 +86,16 @@ def print_range(buffer_size=10):
                         if len(buffer) == buffer_size:
                             # 2.1. if equal to buffer size and we discovered because 10 sents before
                             #      then we still add to file
-                            if len(buffer) == buffer_size:
-                                # 2.1. if equal to buffer size and we discovered because 10 sents before
-                                #      then we still add to file
-                                if found_because:
-                                    for offset, context in enumerate(buffer):
-                                        line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
-                                    buffer = []
-                                    found_because = False
-                                else:
-                                    buffer.pop(0)
-                                    buffer.append(line.strip())
+                            if found_because:
+                                for offset, context in enumerate(buffer):
+                                    line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
+                                buffer = []
+                                found_because = False
                             else:
+                                buffer.pop(0)
                                 buffer.append(line.strip())
+                        else:
+                            buffer.append(line.strip())
 
                 if i % 500000 == 0:
                     print("news crawl {} / {}, {:3f}".format(i, total, float(i) / total * 100))
