@@ -9,7 +9,7 @@ import json
 
 check_repeat = set()
 
-full = False
+full = True
 
 
 def check_because(line):
@@ -73,29 +73,7 @@ def print_range(buffer_size=10):
             for i, line in enumerate(newsflat):
                 if line.strip() not in check_repeat:
                     check_repeat.add(line.strip())
-
-                    # 1. check for because
-                    if check_because(line):
-                        # 1.1. if because is there, clear buffer, add everything
-                        buffer.append(line.strip())
-                        for offset, context in enumerate(buffer):
-                            line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
-                        buffer = []
-                    else:
-                        # 2. if because is not there, check buffer size
-                        if len(buffer) == buffer_size:
-                            # 2.1. if equal to buffer size and we discovered because 10 sents before
-                            #      then we still add to file
-                            if found_because:
-                                for offset, context in enumerate(buffer):
-                                    line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
-                                buffer = []
-                                found_because = False
-                            else:
-                                buffer.pop(0)
-                                buffer.append(line.strip())
-                        else:
-                            buffer.append(line.strip())
+                    line_to_json(file, line.strip(), i, prefix="newscrawl_")
 
                 if i % 500000 == 0:
                     print("news crawl {} / {}, {:3f}".format(i, total, float(i) / total * 100))
@@ -107,10 +85,10 @@ def print_full():
         with open('./corpus/gigaword_en/gigaword_en_flattened.txt', 'r') as gigaword:
             total = 116456445
             for i, line in enumerate(gigaword):
-                if line.strip() not in check_repeat:
+                # we add everything shorter than 50 words (context)
+                if line.strip() not in check_repeat and len(line.split()) <= 50:
                     check_repeat.add(line.strip())
-                    file.write(
-                        '{"id": "gigaword_' + str(i) + '", "text":"' + line.strip().replace('"', '\\"') + '"' '} \n')
+                    line_to_json(file, line.strip(), i, prefix="gigaword_")
 
                 if i % 500000 == 0:
                     print("gigaword {} / {}, {:3f}".format(i, total, float(i) / total * 100))
@@ -120,12 +98,9 @@ def print_full():
         with open('./corpus/news_crawl/news_crawl_0717_flattened.txt', 'r') as newsflat:
             total = 191599627
             for i, line in enumerate(newsflat):
-                # if '"' not in line.strip():
-                #     continue
-                if line.strip() not in check_repeat:
+                if line.strip() not in check_repeat and len(line.split()) <= 50:
                     check_repeat.add(line.strip())
-                    file.write(
-                        '{"id": "newscrawl_' + str(i) + '", "text":"' + line.strip().replace('"', '\\"') + '"' '} \n')
+                    line_to_json(file, line.strip(), i, prefix="newscrawl_")
                 if i % 500000 == 0:
                     print("news crawl {} / {}, {:3f}".format(i, total, float(i) / total * 100))
 

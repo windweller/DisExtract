@@ -2,7 +2,7 @@
 
 ## Plans
 
-1. Training the why-question dataset
+1. ReasonQA
    - How to turn a statement (cause) into a question?
      - Erin provided a pattern, try it!!
 2. Think about using A/B testing
@@ -27,9 +27,42 @@ We aim to create the largest distant supervision QA dataset to date for why ques
 
 One nice thing we might be able to show is that **ReasonQA is perfect for pre-training PGNet type model, without DrQA** (rationale extraction). DrQA paper showed that PGNet drastically under-performed DrQA and DrQA + PGNet. This is perhaps the training set **100k** is too small.
 
-So we get **32,812,353 (32.8M)** sentences as candidates for context! Then we build **DrQA document retriever** to pick the the candidate sentences. DrQA has a lot of filtering work. We only want some vague context. We don't care about exact retrieval.
+So we get **56,921,640 (56.9M)** sentences as candidates for context! Then we build **DrQA document retriever** to pick the the candidate sentences. DrQA has a lot of filtering work. We only want some vague context. We don't care about exact retrieval.
 
 **DrQA document retriever** will index everything and generate hash value for the bigrams. It fast-retrieves over millions of documents. We use it to match for S1 and S2 (it's ok that S1 and S2 are not exactly the same sentence as before. Also it's ok to retrieve more context/background than the original position of the sentence -- common knowledge / background / context can come from any relevant stories).
+
+We use a `inclusion_match` function to determine how much of query showed up in the reference. We manually tune and set the threshold to be **0.35** (meaning 65% of the query showed up in reference, a significant overlap). We remove reference that has significant overlap because we don't want repeating sentences or paraphrased sentences. For example:
+
+```
+That banned his most threatening challenger , Rally leader Alassane Ouattara , from running for president because he is only half - Ivorian .
+```
+
+and
+
+```
+An election law Bedie pushed through in December barred the strongest challenger , Alassane Ouattara of the Rally of the Republicans , from running for president because he is only half - Ivorian . Other opposition candidates boycotted the election in protest and have urged militants to disrupt voting . 
+```
+
+Even though the second (reference) is a paraphrasing, like `strongest` instead of `most threatening`,  we still don't want it to serve as context.
+
+We also demand the `score` returned by DrQA's method `doc_names, doc_scores = ranker.closest_docs(query, k)` to be larger than **200**. This is also manually tuned and set. Anything lower than 200 looks extremely bad. 
+
+We will exclude the data point if the query does not get references that match our criteria. Since we grabbed the +/- 10 sentences from the `because` sentence, if the match returns empty, it means the context around the `because` sentence bears very little resemblence to the sentence itself. But this situation should be rare.
+
+
+
+The commands used to preprocess:
+
+```bash
+cd ~/DisExtract/preprocessing
+python drqa_preprocess.py
+
+# build dataset
+cd ~/DrQA/scripts/retriever
+python3 build_db_single_file.py /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10.txt /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10.db
+
+python3 build_tfidf.py /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10.db  /home/anie/DisExtract/preprocessing/corpus/because/ --num-workers 8
+```
 
 
 
