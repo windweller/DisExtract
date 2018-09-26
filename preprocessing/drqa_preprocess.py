@@ -68,6 +68,8 @@ def print_range(buffer_size=10):
         buffer = []
         with open('./corpus/news_crawl/news_crawl_0717_flattened.txt', 'r') as newsflat:
             total = 191599627
+            found_because = False
+            
             for i, line in enumerate(newsflat):
                 if line.strip() not in check_repeat:
                     check_repeat.add(line.strip())
@@ -84,13 +86,18 @@ def print_range(buffer_size=10):
                         if len(buffer) == buffer_size:
                             # 2.1. if equal to buffer size and we discovered because 10 sents before
                             #      then we still add to file
-                            if found_because:
-                                for offset, context in enumerate(buffer):
-                                    line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
-                                buffer = []
-                                found_because = False
+                            if len(buffer) == buffer_size:
+                                # 2.1. if equal to buffer size and we discovered because 10 sents before
+                                #      then we still add to file
+                                if found_because:
+                                    for offset, context in enumerate(buffer):
+                                        line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
+                                    buffer = []
+                                    found_because = False
+                                else:
+                                    buffer.pop(0)
+                                    buffer.append(line.strip())
                             else:
-                                buffer.pop(0)
                                 buffer.append(line.strip())
 
                 if i % 500000 == 0:
@@ -121,9 +128,7 @@ def print_full():
                 if line.strip() not in check_repeat:
                     check_repeat.add(line.strip())
                     file.write(
-                        '{"id": "newscrawl_' + str(i) + '", "text":"' + line.strip().replace('"',
-                                                                                                                '\\"') + '"' '} \n')
-
+                        '{"id": "newscrawl_' + str(i) + '", "text":"' + line.strip().replace('"', '\\"') + '"' '} \n')
                 if i % 500000 == 0:
                     print("news crawl {} / {}, {:3f}".format(i, total, float(i) / total * 100))
 
