@@ -16,6 +16,7 @@
    * It seems to learn logical structure (like "not A because not B")
    * Can we probe it? This prompts the fact that learning `but` could also be interesting.
    * Collect negations (in antecedent and precedent, see if Seq2Seq captures it well) (Should compare with LM, if we are having a paper)
+   * But based on new evidence, a simple collection of negating sentences test won't work...This model is able to recognize implicit negations (negating verbs)...
 4. Try to generate context and make it a conditional contextual generation
    - A Question-Answer dataset
 5. Parse for 4-5 discourse marker
@@ -23,6 +24,7 @@
    - Or PERSONA, each discourse is a different "PERSONA" https://arxiv.org/pdf/1801.07243.pdf (this new work plus Jiwei Li's work)
    - This is also called a **typed decoder**. There are "hard typed decoder" and "soft typed decoder". (https://arxiv.org/pdf/1805.04843.pdf)
 6. Read into OpenNMT more carefully. If BLEU is not a good objective metric, is negative log-likelihood?
+7. Reverse-translation (back-translation) of `because` can be served as approximation of `so`. 
 
 ### Problems
 
@@ -50,6 +52,8 @@
 After filtering, we obtained 649,952 sentences that contain `because`.
 
 After parsing, we obtained 380,774 sentence pairs.
+
+After filtering (length, ratio, etc.), we get 325,259 sentence pairs.
 
 (Data is on Arthur2, OpenNMT is on Arthur1, Parsed result is on Cocoserv2)
 
@@ -116,7 +120,25 @@ Even though it's not super right, we can still generate candidate explanations f
 
 We pick sentences that are from `because` and `so`. After some simple processing to match the format, we get **62** sentences.
 
+[Link](http://nbviewer.jupyter.org/github/windweller/DisExtract/blob/edge/models/notes/assets/week3/Winograd%20S2%20Generation.ipynb)
+
+Observations and conclusions:
+
+1. Seq2Seq style model (S1 -> S2) can only leverage so much context. It's very good at finding corresponding phrases. Such as: `councilmen` -> `they`, `The man` -> `he`, `Anna`/`Lucy` -> `she`.
+2. Many generations are quite good and reasonable, and very diverse even for S1 with minimum amount of changes (young vs. old. potatoes vs. flour. yelled vs. comforted.) (This means that our model is able to notice very small changes, very *sensitive* in this regard. Maybe LM can do the same...)
+3. Count how many are correct: 
+
 **Winograd and PDP Test**
+
+We did hand-segmentation. Some sequential sentences are actually `because` (explanation type!)
+
+```
+Bob paid for Charlie 's college education . Bob is very generous .  (explanation!)
+```
+
+This Winograd scheme challenge seems to be more indicative of typed decoder idea :(
+
+Other words like `since`, can also be indicative.
 
 
 

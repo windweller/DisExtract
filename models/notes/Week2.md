@@ -195,6 +195,8 @@ GOLD AVG SCORE: 0.0000, GOLD PPL: 1.0000
 >> BLEU = 1.30, 24.6/2.4/0.8/0.4 (BP=0.647, ratio=0.696, hyp_len=985821, ref_len=1415503)
 ```
 
+Please find the actual result in slides: [link](https://docs.google.com/presentation/d/1bEQcEx1Rqj7N2usenLYlWsxD412VBvFMkaSXynSlYdY/edit?usp=sharing)
+
 ## Language Modeling Candidate Generation
 
 We'll try large language models.
