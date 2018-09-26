@@ -26,7 +26,7 @@ def line_to_json(f, line, i, prefix):
 
 
 def print_range(buffer_size=10):
-    with open('./corpus/because/because_db_buffer15.txt', 'w') as file:
+    with open('./corpus/because/because_db_buffer10.txt', 'w') as file:
         buffer = []
         with open('./corpus/gigaword_en/gigaword_en_flattened.txt', 'r') as gigaword:
             total = 116456445
@@ -69,7 +69,7 @@ def print_range(buffer_size=10):
         with open('./corpus/news_crawl/news_crawl_0717_flattened.txt', 'r') as newsflat:
             total = 191599627
             found_because = False
-            
+
             for i, line in enumerate(newsflat):
                 if line.strip() not in check_repeat:
                     check_repeat.add(line.strip())
