@@ -9,7 +9,7 @@ import json
 
 check_repeat = set()
 
-full = True
+full = False
 
 
 def check_because(line):
@@ -73,7 +73,31 @@ def print_range(buffer_size=10):
             for i, line in enumerate(newsflat):
                 if line.strip() not in check_repeat:
                     check_repeat.add(line.strip())
-                    line_to_json(file, line.strip(), i, prefix="newscrawl_")
+                    #line_to_json(file, line.strip(), i, prefix="newscrawl_")
+
+                    # 1. check for because
+                    if check_because(line):
+                        # 1.1. if because is there, clear buffer, add everything
+                        buffer.append(line.strip())
+                        for offset, context in enumerate(buffer):
+                            line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
+                        buffer = []
+                        found_because = True
+                    else:
+                        # 2. if because is not there, check buffer size
+                        if len(buffer) == buffer_size:
+                            # 2.1. if equal to buffer size and we discovered because 10 sents before
+                            #      then we still add to file
+                            if found_because:
+                                for offset, context in enumerate(buffer):
+                                    line_to_json(file, context, i - (len(buffer) - offset), prefix="newscrawl_")
+                                buffer = []
+                                found_because = False
+                            else:
+                                buffer.pop(0)
+                                buffer.append(line.strip())
+                        else:
+                            buffer.append(line.strip())
 
                 if i % 500000 == 0:
                     print("news crawl {} / {}, {:3f}".format(i, total, float(i) / total * 100))
