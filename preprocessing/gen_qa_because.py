@@ -194,7 +194,7 @@ if __name__ == '__main__':
 
     total_num = 0.
     for data_file in datafiles:
-        with open(pjoin(args.data_dir, data_file), 'rb') as f:
+        with open(pjoin(args.data_dir, data_file), 'r') as f:
             for line in f:
                 total_num += 1
                 if line not in check_repeat:
