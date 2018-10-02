@@ -26,6 +26,8 @@ from os.path import dirname, abspath
 import numpy as np
 import random
 
+from multiprocessing import Pool as ProcessPool
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 fmt = logging.Formatter('%(asctime)s: [ %(message)s ]', '%m/%d/%Y %I:%M:%S %p')
@@ -50,6 +52,7 @@ parser.add_argument("--context_len", default=6, type=int)  # 6x5=30 - 6x50 = 300
 parser.add_argument("--out_prefix", type=str, required=True,
                     help="Prefix the files that we are going to store")
 parser.add_argument("--s1_to_q", action='store_true', help="This will invoke AllenNLP SRL.")
+parser.add_argument("--workers", default=1, type=int, help="Anything larger than 1 will be multiprocessing")
 
 args, _ = parser.parse_known_args()
 args.min_ratio = 1 / args.max_ratio  # auto-generate min-ratio
@@ -157,33 +160,73 @@ def write_to_file(data, file_name):
 def fix_tok(s):
     return ' '.join(_str(w) for w in s.split())
 
+def parallel_func(line):
+    s1, s2, label = line.strip().split('\t')  # need to remove '\n'
+
+    # s1 and s2 from Stanford pipeline has tokenization issue, fix them
+    s1 = fix_tok(s1)
+    s2 = fix_tok(s2)
+
+    # we retrieve context here!
+    query = s1_s2_to_query(s1, s2, label)
+    doc_loc = find(query)[1]  # doc_name indicates location
+
+    context, misses = retrieve_context(doc_loc)
+    context = " ".join(context)  # concatenate them; no tokenization issue
+
+    full_str = context + ' ||'
+    full_str += ' <Q> ' + s1  # TODO: map S1 to question here
+
+    return full_str, s2, misses
+
 
 def write_to_opennmt(data, out_prefix, split_name):
     total_misses = 0.
+
+    if args.workers > 1:
+        workers = ProcessPool(args.workers)
+        logger.info("Using {} workers".format(args.workers))
+    else:
+        workers = None
+
     with open(pjoin(args.data_dir, '{}-src-{}.txt'.format(out_prefix, split_name)), 'w') as src:
         with open(pjoin(args.data_dir, '{}-tgt-{}.txt'.format(out_prefix, split_name)), 'w') as tgt:
-            for line in tqdm(data):
-                s1, s2, label = line.strip().split('\t')  # need to remove '\n'
+            if workers is None:
+                logger.info("Sequentially processing")
+                for line in tqdm(data):
+                    s1, s2, label = line.strip().split('\t')  # need to remove '\n'
 
-                # s1 and s2 from Stanford pipeline has tokenization issue, fix them
-                s1 = fix_tok(s1)
-                s2 = fix_tok(s2)
+                    # s1 and s2 from Stanford pipeline has tokenization issue, fix them
+                    s1 = fix_tok(s1)
+                    s2 = fix_tok(s2)
 
-                # we retrieve context here!
-                query = s1_s2_to_query(s1, s2, label)
-                doc_loc = find(query)[1]  # doc_name indicates location
+                    # we retrieve context here!
+                    query = s1_s2_to_query(s1, s2, label)
+                    doc_loc = find(query)[1]  # doc_name indicates location
 
-                context, misses = retrieve_context(doc_loc)
-                total_misses += misses
-                context = " ".join(context)  # concatenate them; no tokenization issue
+                    context, misses = retrieve_context(doc_loc)
+                    total_misses += misses
+                    context = " ".join(context)  # concatenate them; no tokenization issue
 
-                full_str = context + ' ||'
-                full_str += ' <Q> ' + s1  # TODO: map S1 to question here
+                    full_str = context + ' ||'
+                    full_str += ' <Q> ' + s1  # TODO: map S1 to question here
 
-                # src.write(s1 + '\n')
-                src.write(full_str + '\n')
-                tgt.write(s2 + '\n')
+                    # src.write(s1 + '\n')
+                    src.write(full_str + '\n')
+                    tgt.write(s2 + '\n')
+            else:
+                logger.info("Multi-processing")
+                with tqdm(total=len(data)) as pbar:
+                    for processed in tqdm(workers.imap(parallel_func, data)):
+                        full_str, s2, misses = processed
+                        total_misses += misses
 
+                        src.write(full_str + '\n')
+                        tgt.write(s2 + '\n')
+
+                        pbar.update()
+
+    logger.info("Number of missing contexts: {}".format(total_misses))
 
 if __name__ == '__main__':
 
