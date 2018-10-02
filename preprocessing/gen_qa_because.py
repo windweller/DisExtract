@@ -42,7 +42,7 @@ parser.add_argument("--corpus", type=str, default='because_qa',
                     help="books|gigaword_ch|gigaword_es|ptb|wikitext|because_qa")
 parser.add_argument('--data_json', type=str, required=True, default=None)
 parser.add_argument("--data_dir", type=str, default='default', help="the path for the data file")
-parser.add_argument("--train_size", default=0.9, type=float)
+parser.add_argument("--train_size", default=0.95, type=float)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
 parser.add_argument("--max_ratio", default=5.0, type=float)
@@ -187,7 +187,7 @@ def write_to_opennmt(data, out_prefix, split_name):
 
 if __name__ == '__main__':
 
-    datafiles = ['gigaword_en_because.txt', 'news_crawl_because.txt']
+    datafiles = ['gigaword_en_because.txt', 'news_crawl_ordered_because.txt']
 
     check_repeat = set()
     examples = []
@@ -234,7 +234,7 @@ if __name__ == '__main__':
     del examples
     examples = new_examples
 
-    serial_numbers = range(len(examples))
+    serial_numbers = list(range(len(examples)))
     random.shuffle(serial_numbers)
 
     train_numbers = serial_numbers[:int(np.rint(len(examples) * split_proportions['train']))]
