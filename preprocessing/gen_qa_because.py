@@ -75,9 +75,8 @@ def inclusion_match(query, reference, silent=True):
     else:
         return False
 
-# ======== load in src/tgt ========
-
 
 
 if __name__ == '__main__':
+    # we build
     pass
