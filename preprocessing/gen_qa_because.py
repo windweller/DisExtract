@@ -208,7 +208,7 @@ if __name__ == '__main__':
     number_of_filtered_examples = 0
     new_examples = []
     for i, ex in enumerate(examples):
-        s1, s2, label = ex[:-1].split('\t')
+        s1, s2, label = ex.strip().split('\t')
 
         s1_len = len(s1.split())
         s2_len = len(s2.split())
