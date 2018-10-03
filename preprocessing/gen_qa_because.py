@@ -169,10 +169,12 @@ def parallel_func(line):
 
     # we retrieve context here!
     query = s1_s2_to_query(s1, s2, label)
-    doc_loc = find(query)[1]  # doc_name indicates location
+    doc_loc = find(query)  # doc_name indicates location
 
     if doc_loc is None:
         return None
+    else:
+        doc_loc = doc_loc[1]
 
     context, misses = retrieve_context(doc_loc)
     context = " ".join(context)  # concatenate them; no tokenization issue
@@ -234,7 +236,7 @@ def write_to_opennmt(data, out_prefix, split_name):
                         tgt.write(s2 + '\n')
 
                         if count % 100 == 0:
-                            pbar.update(100)
+                            pbar.update()
 
     logger.info("Number of missing contexts: {}".format(total_misses))
 
