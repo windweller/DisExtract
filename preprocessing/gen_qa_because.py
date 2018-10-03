@@ -88,10 +88,10 @@ def find(query, k=1):
     # we find the location of the query in the original document
     doc_names, doc_scores = ranker.closest_docs(query, k)
 
-    assert len(doc_names) != 0
-
-    for i in range(len(doc_names)):
-        result = [i + 1, doc_names[i], '%.5g' % doc_scores[i], id_to_text[doc_names[i]]]
+    if len(doc_names) != 0:
+        result = [0, doc_names[0], '%.5g' % doc_scores[0], id_to_text[doc_names[0]]]
+    else:
+        result = None
 
     return result
 
@@ -171,6 +171,9 @@ def parallel_func(line):
     query = s1_s2_to_query(s1, s2, label)
     doc_loc = find(query)[1]  # doc_name indicates location
 
+    if doc_loc is None:
+        return None
+
     context, misses = retrieve_context(doc_loc)
     context = " ".join(context)  # concatenate them; no tokenization issue
 
@@ -217,14 +220,21 @@ def write_to_opennmt(data, out_prefix, split_name):
             else:
                 logger.info("Multi-processing")
                 with tqdm(total=len(data)) as pbar:
+                    count = 0.
                     for processed in tqdm(workers.imap(parallel_func, data)):
+
+                        if processed is None:
+                            count += 1
+                            continue
+
                         full_str, s2, misses = processed
                         total_misses += misses
 
                         src.write(full_str + '\n')
                         tgt.write(s2 + '\n')
 
-                        pbar.update()
+                        if count % 100 == 0:
+                            pbar.update(100)
 
     logger.info("Number of missing contexts: {}".format(total_misses))
 
