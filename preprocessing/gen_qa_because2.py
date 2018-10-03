@@ -26,7 +26,6 @@ logger.addHandler(console)
 np.random.seed(123)
 random.seed(123)
 
-
 gigaword_db = []
 with open('/home/anie/DisExtract/preprocessing/corpus/because/gigaword_db.txt') as f:
     for line in f:
@@ -47,6 +46,7 @@ with open('/home/anie/DisExtract/data/because_qa/news_crawl_ordered_because.txt'
     for line in f:
         newscrawl_because.append(line.strip())
 
+
 def _str(s):
     """ Convert PTB tokens to normal tokens """
     if s.lower() == '-lrb-':
@@ -63,21 +63,26 @@ def _str(s):
         s = '}'
     return s
 
+
+data_dir = "/home/anie/DisExtract/data/because_qa/"
+
+
 def write_to_opennmt(data, out_prefix, split_name):
-    with open(pjoin(args.data_dir, '{}-src-{}.txt'.format(out_prefix, split_name)), 'w') as src:
-        with open(pjoin(args.data_dir, '{}-tgt-{}.txt'.format(out_prefix, split_name)), 'w') as tgt:
+    with open(pjoin(data_dir, '{}-src-{}.txt'.format(out_prefix, split_name)), 'w') as src:
+        with open(pjoin(data_dir, '{}-tgt-{}.txt'.format(out_prefix, split_name)), 'w') as tgt:
             for tup in data:
                 s1, s2 = line  # need to remove '\n'
                 src.write(s1 + '\n')
                 tgt.write(s2 + '\n')
+
 
 def sent_similarity(s1_list, s2_list):
     s1_set = set(s1_list)
     s2_set = set(s2_list)
     return len(s1_set.intersection(s2_set)) / float(len(s1_set.union(s2_set)))
 
-def match(because_sents, dataset_sents):
 
+def match(because_sents, dataset_sents):
     context_pairs = []
     misses = 0
 
@@ -103,7 +108,7 @@ def match(because_sents, dataset_sents):
         if i_2 != len(dataset_sents) - 1:
 
             # obtained i_2, now retrieve context, non-inclusive
-            context = dataset_sents[i_2-3:i_2] + dataset_sents[i_2+1:i_2+3+1]
+            context = dataset_sents[i_2 - 3:i_2] + dataset_sents[i_2 + 1:i_2 + 3 + 1]
             context = ' '.join(context)
 
             full_str = context + ' ||'
@@ -117,4 +122,9 @@ def match(because_sents, dataset_sents):
 
     return context_pairs
 
-match(gigaword_because, gigaword_db)
+
+giga_context_pairs = match(gigaword_because, gigaword_db)
+write_to_opennmt(giga_context_pairs, "gigaword_ctx_s1_s2_2018oct2", 'all')
+
+newscrawl_context_pairs = match(newscrawl_because, newscrawl_db)
+write_to_opennmt(newscrawl_context_pairs, "newscrawl_ctx_s1_s2_2018oct2", "all")
