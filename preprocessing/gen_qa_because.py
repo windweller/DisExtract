@@ -52,6 +52,7 @@ parser.add_argument("--context_len", default=6, type=int)  # 6x5=30 - 6x50 = 300
 parser.add_argument("--out_prefix", type=str, required=True,
                     help="Prefix the files that we are going to store")
 parser.add_argument("--s1_to_q", action='store_true', help="This will invoke AllenNLP SRL.")
+parser.add_argument("--only_before", action='store_true', help="Will only extract before sentences")
 parser.add_argument("--workers", default=1, type=int, help="Anything larger than 1 will be multiprocessing")
 
 args, _ = parser.parse_known_args()
@@ -126,9 +127,13 @@ def _str(s):
 def retrieve_context(doc_loc):
     source_str = doc_loc.split("_")[0]
     loc = int(doc_loc.split("_")[1])
-    assert args.context_len % 2 == 0
-    before = int(args.context_len / 2)
-    after = int(args.context_len / 2)
+    # assert args.context_len % 2 == 0
+    if args.only_before:
+        before = args.context_len
+        after = 0
+    else:
+        before = int(args.context_len / 2)
+        after = int(args.context_len / 2)
 
     misses = 0.  # nearby context that is not available
 
@@ -235,8 +240,8 @@ def write_to_opennmt(data, out_prefix, split_name):
                         src.write(full_str + '\n')
                         tgt.write(s2 + '\n')
 
-                        if count % 100 == 0:
-                            pbar.update()
+                        # if count % 100 == 0:
+                        #     pbar.update()
 
     logger.info("Number of missing contexts: {}".format(total_misses))
 
