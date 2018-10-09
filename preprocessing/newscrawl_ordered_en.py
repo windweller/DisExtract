@@ -188,18 +188,18 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             for marker, slists in sentences.iteritems():
                 i = 0
                 # the set will remove the same row
-                for sentence, previous, ctx in set(zip(slists["sentence"], slists["previous"], slists["before"])):
+                for sentence, previous, ctx in set(zip(slists["sentence"], slists["previous"], " ".join(slists["before"]))):
                     i += 1
                     if True:
                         parsed_output = dependency_parsing(sentence, previous, marker)
                         if parsed_output:
                             s1, s2 = parsed_output
 
-                            ctx_s = " ".join(ctx)
+                            # ctx_s = " ".join(ctx)
 
                             # parsed_sentence_pairs[marker]["s1"].append(s1)
                             # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\t{}\n".format(ctx_s, s1, s2, marker)
+                            line_to_print = "{}\t{}\t{}\t{}\n".format(ctx, s1, s2, marker)
                             w.write(line_to_print)
 
                         if i % args.filter_print_every == 0:
