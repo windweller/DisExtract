@@ -194,7 +194,7 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             for marker, slists in sentences.iteritems():
                 i = 0
                 # the set will remove the same row
-                for sentence, previous, ctx in set(zip(slists["sentence"], slists["previous"], slists["before"])):
+                for sentence, previous, ctx in zip(slists["sentence"], slists["previous"], slists["before"]):
                     i += 1
                     if True:
                         parsed_output = dependency_parsing(sentence, previous, marker)
