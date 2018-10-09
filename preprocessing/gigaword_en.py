@@ -14,6 +14,7 @@ import io
 import sys
 import json
 import gzip
+from copy import copy
 import argparse
 
 import logging
@@ -78,7 +79,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    sentences = {marker: {"sentence": [], "previous": []} for marker in discourse_markers}
+    sentences = {marker: {"sentence": [], "previous": [],
+                          "before": []} for marker in discourse_markers}
 
     for filename in filenames:
         logger.info("reading {}".format(filename))
@@ -87,6 +89,9 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         previous_sentence = ""
         previous_sentence_split = None
         FIRST = True
+
+        before_list = []
+
         with io.open(file_path, 'rU', encoding="utf-8") as f:
             for i, sentence in enumerate(f):
                 words = rephrase(sentence).split()  # replace "for example"
@@ -113,6 +118,14 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     if proxy_marker in words:
                         sentences[marker]["sentence"].append(sentence)
                         sentences[marker]["previous"].append(previous_sentence)
+                        sentences[marker]["before"].append(copy(before_list))
+
+                # current methods won't allow us to capture "after" easily!
+                if len(before_list) == args.context_len:
+                    before_list.pop(0)
+                    before_list.append(sentence)
+                else:
+                    before_list.append(sentence)
 
                 previous_sentence = sentence
                 previous_sentence_split = words
