@@ -13,6 +13,7 @@ import gzip
 import argparse
 
 import logging
+from copy import copy
 from util import rephrase
 from os.path import join as pjoin
 
@@ -116,7 +117,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     if proxy_marker in words:
                         sentences[marker]["sentence"].append(sentence)
                         sentences[marker]["previous"].append(previous_sentence)
-                        sentences[marker]["before"].append(before_list)  # add list of context
+                        sentences[marker]["before"].append(copy(before_list))  # add list of context
 
                 # current methods won't allow us to capture "after" easily!
                 if len(before_list) == args.context_len:
