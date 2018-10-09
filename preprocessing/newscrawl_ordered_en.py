@@ -32,6 +32,9 @@ parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
 
+parser.add_argument("--store_context", action='store_true', help="this will save context to json")
+parser.add_argument("--context_len", default=5, type=int, help="we are storing this number of sentences previous to context")
+
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
 parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
@@ -74,7 +77,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    sentences = {marker: {"sentence": [], "previous": []} for marker in discourse_markers}
+    sentences = {marker: {"sentence": [], "previous": [],
+                          "before": []} for marker in discourse_markers}
 
     for filename in filenames:
         logger.info("reading {}".format(filename))
@@ -83,6 +87,9 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         previous_sentence = ""
         previous_sentence_split = None
         FIRST = True
+
+        before_list = []
+
         with io.open(file_path, 'rU', encoding="utf-8") as f:
             for i, sentence in enumerate(f):
                 words = rephrase(sentence).split()  # replace "for example"
@@ -109,6 +116,12 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     if proxy_marker in words:
                         sentences[marker]["sentence"].append(sentence)
                         sentences[marker]["previous"].append(previous_sentence)
+                        sentences[marker]["before"].append(before_list)  # add list of context
+
+                # current methods won't allow us to capture "after" easily!
+                if len(before_list) == args.context_len:
+                    before_list.pop(0)
+                    before_list.append(sentence)
 
                 previous_sentence = sentence
                 previous_sentence_split = words
