@@ -122,6 +122,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                 if len(before_list) == args.context_len:
                     before_list.pop(0)
                     before_list.append(sentence)
+                else:
+                    before_list.append(sentence)
 
                 previous_sentence = sentence
                 previous_sentence_split = words
