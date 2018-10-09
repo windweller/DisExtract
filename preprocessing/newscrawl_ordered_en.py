@@ -192,13 +192,8 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             for marker, slists in sentences.iteritems():
                 i = 0
                 # the set will remove the same row
-                check_repeat = set()
                 for sentence, previous, ctx in zip(slists["sentence"], slists["previous"], slists["before"]):
                     i += 1
-                    if sentence in check_repeat:
-                        continue
-                    else:
-                        check_repeat.add(sentence)
 
                     if not args.delay_print:
                         parsed_output = dependency_parsing(sentence, previous, marker)
