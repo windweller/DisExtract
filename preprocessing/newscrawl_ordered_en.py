@@ -40,6 +40,7 @@ parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
 parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
+parser.add_argument("--delay_print", action='store_true', help="not caching dependency parsed result")
 
 args, _ = parser.parse_known_args()
 
@@ -186,6 +187,8 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             logger.info("total sentences: {}".format(
                 sum([len(sentences[marker]["sentence"]) for marker in sentences])
             ))
+
+            stored_parsed_res = []
             for marker, slists in sentences.iteritems():
                 i = 0
                 # the set will remove the same row
@@ -197,7 +200,7 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
                     else:
                         check_repeat.add(sentence)
 
-                    if True:
+                    if not args.delay_print:
                         parsed_output = dependency_parsing(sentence, previous, marker)
                         if parsed_output:
                             s1, s2 = parsed_output
@@ -207,9 +210,22 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
                             # parsed_sentence_pairs[marker]["s2"].append(s2)
                             line_to_print = "{}\t{}\t{}\t{}\n".format(ctx_s, s1, s2, marker)
                             w.write(line_to_print)
+                    else:
+                        parsed_output = dependency_parsing(sentence, previous, marker)
+                        if parsed_output:
+                            s1, s2 = parsed_output
+                            ctx_s = " ".join(ctx).replace('\n', '')
 
-                        if i % args.filter_print_every == 0:
-                            logger.info("processed {}".format(i))
+                            stored_parsed_res.append((ctx_s, s1, s2, marker))
+
+                    if i % args.filter_print_every == 0:
+                        logger.info("processed {}".format(i))
+
+            logger.info("start writing to file")
+            for tup in stored_parsed_res:
+                ctx_s, s1, s2, marker = tup
+                line_to_print = "{}\t{}\t{}\t{}\n".format(ctx_s, s1, s2, marker)
+                w.write(line_to_print)
 
     logger.info('file writing complete')
 
