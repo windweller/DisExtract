@@ -195,13 +195,12 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
                         continue
                     else:
                         check_repeat.add(sentence)
-                    
+
                     if True:
                         parsed_output = dependency_parsing(sentence, previous, marker)
                         if parsed_output:
                             s1, s2 = parsed_output
-
-                            ctx_s = " ".join(ctx)
+                            ctx_s = " ".join(ctx).replace('\n', '')
 
                             # parsed_sentence_pairs[marker]["s1"].append(s1)
                             # parsed_sentence_pairs[marker]["s2"].append(s2)
