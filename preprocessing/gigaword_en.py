@@ -36,6 +36,7 @@ parser.add_argument("--filter_because", action='store_true',
 parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
+parser.add_argument("--context_len", default=5, type=int, help="we are storing this number of sentences previous to context")
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
