@@ -12,6 +12,9 @@ from os.path import dirname, abspath
 
 import logging
 import sys
+import string
+
+printable = set(string.printable)
 
 logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
@@ -89,6 +92,11 @@ def write_to_opennmt(data, out_prefix, split_name):
         with open(pjoin(args.data_dir, '{}-tgt-{}.txt'.format(out_prefix, split_name)), 'w') as tgt:
             for line in data:
                 ctx, s1, s2, label = line.strip().split('\t')  # need to remove '\n'
+
+                ctx = filter(lambda x: x in printable, ctx)
+                s1 = filter(lambda x: x in printable, s1)
+                s2 = filter(lambda x: x in printable, s2)
+
                 src.write(fix_str(" ".join(ctx)) + " || " + ' <Q> ' + fix_tok(s1) + '\n')
                 tgt.write(fix_tok(s2) + '\n')
 
