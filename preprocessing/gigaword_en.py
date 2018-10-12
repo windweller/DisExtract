@@ -14,6 +14,7 @@ import io
 import sys
 import json
 import gzip
+from copy import copy
 import argparse
 
 import logging
@@ -35,6 +36,7 @@ parser.add_argument("--filter_because", action='store_true',
 parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
+parser.add_argument("--context_len", default=5, type=int, help="we are storing this number of sentences previous to context")
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
@@ -78,7 +80,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    sentences = {marker: {"sentence": [], "previous": []} for marker in discourse_markers}
+    sentences = {marker: {"sentence": [], "previous": [],
+                          "before": []} for marker in discourse_markers}
 
     for filename in filenames:
         logger.info("reading {}".format(filename))
@@ -87,6 +90,9 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         previous_sentence = ""
         previous_sentence_split = None
         FIRST = True
+
+        before_list = []
+
         with io.open(file_path, 'rU', encoding="utf-8") as f:
             for i, sentence in enumerate(f):
                 words = rephrase(sentence).split()  # replace "for example"
@@ -113,6 +119,14 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     if proxy_marker in words:
                         sentences[marker]["sentence"].append(sentence)
                         sentences[marker]["previous"].append(previous_sentence)
+                        sentences[marker]["before"].append(copy(before_list))
+
+                # current methods won't allow us to capture "after" easily!
+                if len(before_list) == args.context_len:
+                    before_list.pop(0)
+                    before_list.append(sentence)
+                else:
+                    before_list.append(sentence)
 
                 previous_sentence = sentence
                 previous_sentence_split = words
@@ -180,16 +194,18 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             for marker, slists in sentences.iteritems():
                 i = 0
                 # the set will remove the same row
-                for sentence, previous in set(zip(slists["sentence"], slists["previous"])):
+                for sentence, previous, ctx in zip(slists["sentence"], slists["previous"], slists["before"]):
                     i += 1
                     if True:
                         parsed_output = dependency_parsing(sentence, previous, marker)
                         if parsed_output:
                             s1, s2 = parsed_output
 
+                            ctx_s = " ".join(ctx).replace('\n', '')
+
                             # parsed_sentence_pairs[marker]["s1"].append(s1)
                             # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                            line_to_print = "{}\t{}\t{}\t{}\n".format(ctx_s, s1, s2, marker)
                             w.write(line_to_print)
 
                         if i % args.filter_print_every == 0:

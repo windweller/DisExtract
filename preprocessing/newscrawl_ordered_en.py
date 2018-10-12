@@ -13,6 +13,7 @@ import gzip
 import argparse
 
 import logging
+from copy import copy
 from util import rephrase
 from os.path import join as pjoin
 
@@ -32,10 +33,14 @@ parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
 
+parser.add_argument("--store_context", action='store_true', help="this will save context to json")
+parser.add_argument("--context_len", default=5, type=int, help="we are storing this number of sentences previous to context")
+
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
 parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
+parser.add_argument("--delay_print", action='store_true', help="not caching dependency parsed result")
 
 args, _ = parser.parse_known_args()
 
@@ -74,7 +79,8 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    sentences = {marker: {"sentence": [], "previous": []} for marker in discourse_markers}
+    sentences = {marker: {"sentence": [], "previous": [],
+                          "before": []} for marker in discourse_markers}
 
     for filename in filenames:
         logger.info("reading {}".format(filename))
@@ -83,6 +89,9 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
         previous_sentence = ""
         previous_sentence_split = None
         FIRST = True
+
+        before_list = []
+
         with io.open(file_path, 'rU', encoding="utf-8") as f:
             for i, sentence in enumerate(f):
                 words = rephrase(sentence).split()  # replace "for example"
@@ -109,6 +118,14 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                     if proxy_marker in words:
                         sentences[marker]["sentence"].append(sentence)
                         sentences[marker]["previous"].append(previous_sentence)
+                        sentences[marker]["before"].append(copy(before_list))  # add list of context
+
+                # current methods won't allow us to capture "after" easily!
+                if len(before_list) == args.context_len:
+                    before_list.pop(0)
+                    before_list.append(sentence)
+                else:
+                    before_list.append(sentence)
 
                 previous_sentence = sentence
                 previous_sentence_split = words
@@ -170,42 +187,40 @@ def parse_filtered_sentences(source_dir, marker_set_tag):
             logger.info("total sentences: {}".format(
                 sum([len(sentences[marker]["sentence"]) for marker in sentences])
             ))
+
+            stored_parsed_res = []
             for marker, slists in sentences.iteritems():
                 i = 0
                 # the set will remove the same row
-                for sentence, previous in set(zip(slists["sentence"], slists["previous"])):
+                for sentence, previous, ctx in zip(slists["sentence"], slists["previous"], slists["before"]):
                     i += 1
-                    if True:
+
+                    if not args.delay_print:
                         parsed_output = dependency_parsing(sentence, previous, marker)
                         if parsed_output:
                             s1, s2 = parsed_output
+                            ctx_s = " ".join(ctx).replace('\n', '')
 
                             # parsed_sentence_pairs[marker]["s1"].append(s1)
                             # parsed_sentence_pairs[marker]["s2"].append(s2)
-                            line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
+                            line_to_print = "{}\t{}\t{}\t{}\n".format(ctx_s, s1, s2, marker)
                             w.write(line_to_print)
+                    else:
+                        parsed_output = dependency_parsing(sentence, previous, marker)
+                        if parsed_output:
+                            s1, s2 = parsed_output
+                            ctx_s = " ".join(ctx).replace('\n', '')
 
-                        if i % args.filter_print_every == 0:
-                            logger.info("processed {}".format(i))
-            # i = 0
-            # for line in f:
-            #   sentence, previous, marker = line[:-1].split("\t")
-            #   i+=1
-            #   if i > 0:
-            #     try:
-            #       parsed_output = dependency_parsing(sentence, previous, marker)
-            #       if parsed_output:
-            #         s1, s2 = parsed_output
-            #         line_to_print = "{}\t{}\t{}\n".format(s1, s2, marker)
-            #         w.write(line_to_print)
-            #     except:
-            #         print i, marker, sentence
-            #   if i % args.filter_print_every == 0:
-            #     logger.info("processed {}".format(i))
-              #stop
-            #logger.info("total sentences: {}".format(
-            #    sum([len(sentences[marker]["sentence"]) for marker in sentences])
-            #))
+                            stored_parsed_res.append((ctx_s, s1, s2, marker))
+
+                    if i % args.filter_print_every == 0:
+                        logger.info("processed {}".format(i))
+
+            logger.info("start writing to file")
+            for tup in stored_parsed_res:
+                ctx_s, s1, s2, marker = tup
+                line_to_print = "{}\t{}\t{}\t{}\n".format(ctx_s, s1, s2, marker)
+                w.write(line_to_print)
 
     logger.info('file writing complete')
 
