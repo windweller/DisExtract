@@ -93,11 +93,11 @@ def write_to_opennmt(data, out_prefix, split_name):
             for line in data:
                 ctx, s1, s2, label = line.strip().split('\t')  # need to remove '\n'
 
-                ctx = filter(lambda x: x in printable, ctx)
+                ctx = filter(lambda x: x in printable, " ".join(ctx))
                 s1 = filter(lambda x: x in printable, s1)
                 s2 = filter(lambda x: x in printable, s2)
 
-                src.write(fix_str(" ".join(ctx)) + " || " + ' <Q> ' + fix_tok(s1) + '\n')
+                src.write(fix_str(ctx) + " || " + ' <Q> ' + fix_tok(s1) + '\n')
                 tgt.write(fix_tok(s2) + '\n')
 
 
