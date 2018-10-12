@@ -70,9 +70,9 @@ def fix_tok(s):
 
 def fix_str(sent):
     if " n ' t " in sent:
-        sent = sent.replace(" n ' t ", "n't")
+        sent = sent.replace(" n ' t ", " n't ")
     if " ' m " in sent:
-        sent = sent.replace(" ' m ", "'m")
+        sent = sent.replace(" ' m ", " 'm ")
     return sent
 
 # ======== Data Path =========
