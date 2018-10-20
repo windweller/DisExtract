@@ -1,4 +1,9 @@
 """
+Attempt from another angle
+where we match and print at the same time
+no DrQA craziness
+
+=======
 We get 2 DB
 We read them in, store in list (because our memory is big enough)
 iterate through both
