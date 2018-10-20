@@ -29,6 +29,8 @@ parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
 parser.add_argument("--filter_because", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence) that has because")
+parser.add_argument("--filter_so", action='store_true',
+                    help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence) that has so")
 parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
@@ -79,6 +81,7 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    # "before" is where we grab context
     sentences = {marker: {"sentence": [], "previous": [],
                           "before": []} for marker in discourse_markers}
 
@@ -232,6 +235,8 @@ def dependency_parsing(sentence, previous_sentence, marker):
 if __name__ == '__main__':
     if args.filter_because:
         collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], "BECAUSE", EN_BECAUSE_MARKER)
+    elif args.filter_so:
+        collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], "SO", ['so'])
     elif args.filter:
         collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:

@@ -17,6 +17,8 @@
 
 ## ReasonQA
 
+Title - ReasonQA: Learning to Explain Through Automatic Dataset Curation
+
 We first prep the Gigaword (116M) and NewsCrawl (191M) corpus in the format that matches DrQA Document Retriever's [format](https://github.com/facebookresearch/DrQA/tree/master/scripts/retriever). Since the original 300M dataset is rather large, we decide to collect only a fixed context! We find the `because` sentence pairs (that does not contain `because of`), and then use the 
 
 So the reason we want a few paragraphs is not that the answer is `contained` in these paragraphs. The paragraphs are only providing `context`! Why questions are not as explicit in the paragraphs as other types of questions!
@@ -27,7 +29,9 @@ We aim to create the largest distant supervision QA dataset to date for why ques
 
 One nice thing we might be able to show is that **ReasonQA is perfect for pre-training PGNet type model, without DrQA** (rationale extraction). DrQA paper showed that PGNet drastically under-performed DrQA and DrQA + PGNet. This is perhaps the training set **100k** is too small.
 
-So we get **56,921,640 (56.9M)** sentences as candidates for context! Then we build **DrQA document retriever** to pick the the candidate sentences. DrQA has a lot of filtering work. We only want some vague context. We don't care about exact retrieval.
+Sadly, since news_crawl is shuffled, we need to hash everything. We do threshold for length, <50. We get **186,301,978 (186M)** sentences as candidates for context! This is smaller than 116 + 191, but this probably is the result of sentence tokenization error occurred in the first stage. When write the paper, avoid talking about this part.
+
+ Then we build **DrQA document retriever** to pick the the candidate sentences. DrQA has a lot of filtering work. We only want some vague context. We don't care about exact retrieval.
 
 **DrQA document retriever** will index everything and generate hash value for the bigrams. It fast-retrieves over millions of documents. We use it to match for S1 and S2 (it's ok that S1 and S2 are not exactly the same sentence as before. Also it's ok to retrieve more context/background than the original position of the sentence -- common knowledge / background / context can come from any relevant stories).
 
@@ -49,8 +53,6 @@ We also demand the `score` returned by DrQA's method `doc_names, doc_scores = ra
 
 We will exclude the data point if the query does not get references that match our criteria. Since we grabbed the +/- 10 sentences from the `because` sentence, if the match returns empty, it means the context around the `because` sentence bears very little resemblence to the sentence itself. But this situation should be rare.
 
-
-
 The commands used to preprocess:
 
 ```bash
@@ -59,12 +61,54 @@ python drqa_preprocess.py
 
 # build dataset
 cd ~/DrQA/scripts/retriever
-python3 build_db_single_file.py /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10.txt /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10.db
+python3 build_db_single_file.py /home/anie/DisExtract/preprocessing/corpus/because/because_db.txt /home/anie/DisExtract/preprocessing/corpus/because/because_db.db
 
-python3 build_tfidf.py /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10.db  /home/anie/DisExtract/preprocessing/corpus/because/ --num-workers 8
+python3 build_tfidf.py /home/anie/DisExtract/preprocessing/corpus/because/because_db.db  /home/anie/DisExtract/preprocessing/corpus/because/ --num-workers 8
+
+python3 interactive.py --model /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10-tfidf-ngram=2-hash=16777216-tokenizer=simple.npz --data_json /home/anie/DisExtract/preprocessing/corpus/because/because_db_buffer10.txt --filter
+
 ```
 
+### Fast and Memory Efficient Processing
 
+We hit a small hiccup because the OOM error on a 500GB memory machine.
+
+So we decide to split into smaller chunks (sharding)!
+
+We first use Ubuntu's own tool to split the text file. Original file has `186301978` lines. We want 20 files, so we get 186301978 / 10 = 18630197 (18.6M lines per file)
+
+```bash
+split -l 18630197 -d because_db.txt because_db_split
+
+# build dataset
+cd ~/DrQA/scripts/retriever
+python3 build_db_multi_file.py  /home/anie/DisExtract/preprocessing/corpus/because/shards/  /home/anie/DisExtract/preprocessing/corpus/because/shards_db because_db_split 10
+
+# run parallel
+bash exec_tfidf_multi.sh
+
+# interactive over all sharded databases
+python3 interactive.py --model /home/anie/DisExtract/preprocessing/corpus/because/shards_db --data_json /home/anie/DisExtract/preprocessing/corpus/because/because_db.txt --filter
+```
+
+This can split into 20 shards. Then we use script `build_db_multi_file.py` that searches for shards. One note: do need to clear out the `shards_db` if you need to re-execute the command.
+
+This attempt has failed...
+
+### Processing again from Ordered News Crawl
+
+We go back to 10 before 10 sentences after strategy.
+
+ReasonQA is a bit different from SQuAD and CoQA. It's prohibitively abstractive. The paragraph only provides context, but does not include the actual answer. It also does not try to match and detect `because`, and generate whatever is after `because`. However, the paragraph might still contain `because` sentences. It only will not contain the S1(Q) nor S2.
+
+It is generating the best explanations, asking to reason about what are the plausible scenarios that could happen under that context.
+
+We processed the new corpora, which is 43G with all file structure. This is different from the originally shuffled dataset, which is about 22 GB in total. The final tokenized file has 27GB in total, compared to originally extracted dataset that also has 22 GB storage. The new tokenized file has **233,195,563 (233M)** sentences. The original file only had **191M** sentences.
+
+So:
+
+1. We compare if this new 27GB file can give us more `because` sentence pairs! We investigate by filtering first.
+   - We obtained **3,743,177 (3.7M)**  `because` sentences, with just filtering. Compared to **3.1M** sentences filtered through.
 
 ## Paper Summary
 
@@ -72,7 +116,7 @@ python3 build_tfidf.py /home/anie/DisExtract/preprocessing/corpus/because/becaus
 
 (https://www.aaai.org/ocs/index.php/AAAI/AAAI16/paper/viewFile/12208/12056, 2016)
 
-
+This is only in Japanese and they require annotated corpus for "causal" relations.
 
 **Developing an approach for why-question answering**
 
@@ -110,5 +154,11 @@ First, co-attention or question-aligned paragraph encoding, etc., can be subsume
 
 Second, subsume extractive model under **Pointer-Generator network** (PGNet): p \<q\> q_{i-n} \<a\> a\_{i-n} ... (Just like the OpenAI paper.)
 
+DrQA + PGNet: according to Danqi, PGNet only gets fed with spans from DrQA, and in their mind, PGNet is used to squash "Mary, Andrea, and Mike" to "Three" in order to generate `abstractive` type answer.
 
+In CoQA, there are only 32.2% that are abstractive answers. 
+
+Also according to Danqi, if the answer is purely extractive, they rely solely on a SQuAD model. We can use a similar strategy :) use a good SQuAD model to answer extractive questions (pre-trained Transformer?) and use our PGNet to answer abstractive question?
+
+But it still might perform quite badly! Especially considering CoQA has many "three" or "yes/no" type answers. But maybe as a pre-training tool for PGNet, it's not too bad!
 
