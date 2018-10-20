@@ -40,6 +40,8 @@ parser.add_argument("--context_len", default=5, type=int, help="we are storing t
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
+parser.add_argument("--tag", type=str, default="BECAUSE",
+                    help="Discourse tag / also folder name / generated during filter")
 parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 parser.add_argument("--delay_print", action='store_true', help="not caching dependency parsed result")
@@ -241,4 +243,4 @@ if __name__ == '__main__':
         collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:
         setup_corenlp("en")
-        parse_filtered_sentences(newscrawl_en_dir, "BECAUSE")
+        parse_filtered_sentences(newscrawl_en_dir, args.tag)  # "BECAUSE"
