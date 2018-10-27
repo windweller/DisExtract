@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+import platform
+
+# execute this command only on 2.x Python
+if "2." in platform.python_version():
+    reload(sys)
+    sys.setdefaultencoding('utf8')
 
 EN_DISCOURSE_MARKERS = [
     "after",
