@@ -111,13 +111,14 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                         continue
 
                     # length-based filtering
-                    if not FIRST:
-                        # this part might be uncalled for...
-                        len2 = len(previous_sentence_split)
-                        ratio = float(len2) / len(words)
-
-                        if ratio <= args.min_ratio or ratio >= args.max_ratio:
-                            continue
+                    # this is throwing chaos...
+                    # if not FIRST:
+                    #     # this part might be uncalled for...
+                    #     len2 = len(previous_sentence_split)
+                    #     ratio = float(len2) / len(words)
+                    #
+                    #     if ratio <= args.min_ratio or ratio >= args.max_ratio:
+                    #         continue
 
                     # all bookcorpus text are lower case
                     if proxy_marker in words:
