@@ -44,7 +44,9 @@ Model
 
 Experiment
 
-- Objective: Common sense ranking (using common sense LM, to see if we can actually generate **even more plausible** explanation than COPA and Winograd; probably we can because we use more `generic` words...that just have high unigram probability)
+- Objective: 
+  - Common sense ranking (using common sense LM, to see if we can actually generate **even more plausible** explanation than COPA and Winograd; probably we can because we use more `generic` words...that just have high unigram probability)
+  - Causal network choice
 - Subjective: human experiments
 
 Analysis
