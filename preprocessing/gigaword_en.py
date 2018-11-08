@@ -22,7 +22,7 @@ from util import rephrase
 from os.path import join as pjoin
 
 from parser import depparse_ssplit, setup_corenlp
-from cfg import DISCOURSE_MARKER_SET_TAG, EN_BECAUSE_MARKER, EN_DISCOURSE_MARKERS  # we only get "because", this will save a lot of parsing time
+from cfg import DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS  # we only get "because", this will save a lot of parsing time
 
 
 parser = argparse.ArgumentParser(description='DisExtract Gigaword English')
@@ -107,13 +107,13 @@ def collect_raw_sentences(source_dir, filenames, marker_set_tag, discourse_marke
                         continue
 
                     # length-based filtering
-                    if not FIRST:
-                        # this part might be uncalled for...
-                        len2 = len(previous_sentence_split)
-                        ratio = float(len2) / len(words)
-
-                        if ratio <= args.min_ratio or ratio >= args.max_ratio:
-                            continue
+                    # if not FIRST:
+                    #     # this part might be uncalled for...
+                    #     len2 = len(previous_sentence_split)
+                    #     ratio = float(len2) / len(words)
+                    #
+                    #     if ratio <= args.min_ratio or ratio >= args.max_ratio:
+                    #         continue
 
                     # all bookcorpus text are lower case
                     if proxy_marker in words:
@@ -220,7 +220,7 @@ def dependency_parsing(sentence, previous_sentence, marker):
 
 if __name__ == '__main__':
     if args.filter_because:
-        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], "BECAUSE", EN_BECAUSE_MARKER)
+        collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], "BECAUSE", 'because')
     elif args.filter:
         collect_raw_sentences(gigaword_en_dir, [gigaword_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:

@@ -4,7 +4,7 @@
 *.ipynb
 *.xlsx
 *.txt
-model/exp/
+models/exp/
 *.csv
 test.py
 

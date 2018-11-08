@@ -28,12 +28,16 @@ parser.add_argument("--filter", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence)")
 parser.add_argument("--filter_because", action='store_true',
                     help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence) that has because")
+parser.add_argument("--filter_so", action='store_true',
+                    help="Stage 2: run filtering on the corpus, collect sentence pairs (sentence and previous sentence) that has so")
 parser.add_argument("--filter_print_every", default=10000, type=int)
 parser.add_argument("--max_seq_len", default=50, type=int)
 parser.add_argument("--min_seq_len", default=5, type=int)
 
 parser.add_argument("--parse", action='store_true',
                     help="Stage 3: run parsing on filtered sentences, collect sentence pairs (S1 and S2)")
+parser.add_argument("--tag", type=str, default="BECAUSE",
+                    help="Discourse tag / also folder name / generated during filter")
 parser.add_argument("--exclude_list", action='store_true', help="use exclusion list defined in this file")
 parser.add_argument("--no_dep_cache", action='store_false', help="not caching dependency parsed result")
 
@@ -217,8 +221,10 @@ def dependency_parsing(sentence, previous_sentence, marker):
 if __name__ == '__main__':
     if args.filter_because:
         collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], "BECAUSE", EN_BECAUSE_MARKER)
+    elif args.filter_so:
+        collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], "SO", ['so'])
     elif args.filter:
         collect_raw_sentences(newscrawl_en_dir, [newscrawl_en_file], DISCOURSE_MARKER_SET_TAG, EN_DISCOURSE_MARKERS)
     elif args.parse:
         setup_corenlp("en")
-        parse_filtered_sentences(newscrawl_en_dir, "BECAUSE")
+        parse_filtered_sentences(newscrawl_en_dir, args.tag) # "BECAUSE" or "SO"

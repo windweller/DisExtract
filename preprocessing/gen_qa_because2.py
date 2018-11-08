@@ -1,4 +1,9 @@
 """
+Attempt from another angle
+where we match and print at the same time
+no DrQA craziness
+
+=======
 We get 2 DB
 We read them in, store in list (because our memory is big enough)
 iterate through both
@@ -106,7 +111,6 @@ def match(because_sents, dataset_sents):
                 continue
 
         if i_2 != len(dataset_sents) - 1:
-
             # obtained i_2, now retrieve context, non-inclusive
             context = dataset_sents[i_2 - 3:i_2] + dataset_sents[i_2 + 1:i_2 + 3 + 1]
             context = ' '.join(context)
