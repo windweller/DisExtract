@@ -98,7 +98,7 @@ CUDA_VISIBLE_DEVICES=0 python3 train.py -data data/because_ctx/because_ctx -save
     -optim adam -adam_beta2 0.998 -decay_method noam -warmup_steps 8000 -learning_rate 2 \
     -max_grad_norm 0 -param_init 0  -param_init_glorot -aux_strength 1.  \
     -label_smoothing 0.1 -valid_steps 10000 -save_checkpoint_steps 10000 -world_size 1 -gpu_ranks 0 \
-    -valid_batch_size 16 -log_file save/because_ctx_aux/log.txt -share_embeddings
+    -valid_batch_size 16 -log_file save/because_ctx_aux/log.txt -share_embeddings -share_decoder_embeddings
 
 # this version aux_strength = 0.5
 CUDA_VISIBLE_DEVICES=1 python3 train.py -data data/because_ctx/because_ctx -save_model save/because_ctx_aux_str05/dissent \
@@ -109,7 +109,7 @@ CUDA_VISIBLE_DEVICES=1 python3 train.py -data data/because_ctx/because_ctx -save
     -optim adam -adam_beta2 0.998 -decay_method noam -warmup_steps 8000 -learning_rate 2 \
     -max_grad_norm 0 -param_init 0  -param_init_glorot -aux_strength 0.5  \
     -label_smoothing 0.1 -valid_steps 10000 -save_checkpoint_steps 10000 -world_size 1 -gpu_ranks 0 \
-    -valid_batch_size 16 -log_file save/because_ctx_aux_str05/log.txt -share_embeddings
+    -valid_batch_size 16 -log_file save/because_ctx_aux_str05/log.txt -share_embeddings -share_decoder_embeddings
     
 # aux_strength = 0
 CUDA_VISIBLE_DEVICES=0 python3 train.py -data data/because_ctx/because_ctx -save_model save/because_ctx_aux_str0/dissent \
@@ -120,7 +120,7 @@ CUDA_VISIBLE_DEVICES=0 python3 train.py -data data/because_ctx/because_ctx -save
     -optim adam -adam_beta2 0.998 -decay_method noam -warmup_steps 8000 -learning_rate 2 \
     -max_grad_norm 0 -param_init 0  -param_init_glorot -aux_strength 0.  \
     -label_smoothing 0.1 -valid_steps 10000 -save_checkpoint_steps 10000 -world_size 1 -gpu_ranks 0 \
-    -valid_batch_size 16 -log_file save/because_ctx_aux_str0/log.txt -share_embeddings
+    -valid_batch_size 16 -log_file save/because_ctx_aux_str0/log.txt -share_embeddings -share_decoder_embeddings
     
 # original training (OpenNMT)
 CUDA_VISIBLE_DEVICES=1 python3 train.py -data data/because_ctx/because_ctx -save_model save/because_ctx/dissent \
@@ -131,7 +131,7 @@ CUDA_VISIBLE_DEVICES=1 python3 train.py -data data/because_ctx/because_ctx -save
     -optim adam -adam_beta2 0.998 -decay_method noam -warmup_steps 8000 -learning_rate 2 \
     -max_grad_norm 0 -param_init 0  -param_init_glorot  \
     -label_smoothing 0.1 -valid_steps 10000 -save_checkpoint_steps 10000 -world_size 1 -gpu_ranks 0 \
-    -valid_batch_size 16 -log_file save/because_ctx/log.txt -share_embeddings
+    -valid_batch_size 16 -log_file save/because_ctx/log.txt -share_embeddings -share_decoder_embeddings
 ```
 
 Encoder loss is already pretty small. We can sweep a few parameters for the auxiliary strength.

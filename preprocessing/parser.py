@@ -15,19 +15,24 @@ import re
 import logging
 
 import pprint
+
 pp = pprint.PrettyPrinter(indent=1)
 
 from dep_patterns import en_dependency_patterns, ch_dependency_patterns, sp_dependency_patterns
 
 import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
+
+import platform
+
+# execute this command only on 2.x Python
+if "2." in platform.python_version():
+    reload(sys)
+    sys.setdefaultencoding('utf8')
 
 import os
 from os.path import join as pjoin
 
 import json
-from itertools import izip
 
 from copy import deepcopy as cp
 from cfg import DISCOURSE_MARKER_SET_TAG
@@ -40,7 +45,7 @@ logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-#for key in logging.Logger.manager.loggerDict:
+# for key in logging.Logger.manager.loggerDict:
 #	print(key)
 
 logging.getLogger("requests").setLevel(logging.CRITICAL)
@@ -67,27 +72,31 @@ Given (p, s), previous sentence and current sentence
 1. For each pair, parse s with corenlp, get json with dependency parse
 """
 
+
 def setup_args():
     parser = argparse.ArgumentParser()
     return parser.parse_args()
 
+
 def capitalize(s):
     return s[0].capitalize() + s[1:]
+
 
 def cleanup(s, lang="en"):
     s = s.replace(" @-@ ", "-")
     if len(s) > 0:
         s = capitalize(s)
     if lang == "en":
-      s = s.replace(" i ", " I ")
-      s = s.replace(" im ", " I'm ")
-      if len(s) > 3:
-          if s[0:3] == "im ":
-              s = "I'm " + s[3:]
-      s = re.sub(' " (.*) " ', ' "\\1" ', s)
-    #elif lang == "sp":
+        s = s.replace(" i ", " I ")
+        s = s.replace(" im ", " I'm ")
+        if len(s) > 3:
+            if s[0:3] == "im ":
+                s = "I'm " + s[3:]
+        s = re.sub(' " (.*) " ', ' "\\1" ', s)
+    # elif lang == "sp":
     #    s = s.replace(" del ", " de el ")
     return s
+
 
 def standardize_sentence_output(s, lang="en"):
     if len(s) == 0:
@@ -96,26 +105,27 @@ def standardize_sentence_output(s, lang="en"):
         s = s.strip()
         s = capitalize(s)
 
-        if lang=="sp":
-          #remove all punctuation
-          for p in PUNCTUATION:
-            #print s
-            s = s.replace(p, "")
-          return s
+        if lang == "sp":
+            # remove all punctuation
+            for p in PUNCTUATION:
+                # print s
+                s = s.replace(p, "")
+            return s
         else:
-          # strip original final punctuation
-          while s[-1] in (PUNCTUATION + '"\''):
+            # strip original final punctuation
+            while s[-1] in (PUNCTUATION + '"\''):
 
-            # keep final quotations and don't add an additional .
-            if len(s)>3 and s[-3:] in ", ', \". \". '":
-              return s
-            else:
-              # otherwise, strip ending punct
-              s = s[:-1].strip()
-              if len(s)==0:
-                return None
-          # add new standard . at end of sentence
-          return s + " ."
+                # keep final quotations and don't add an additional .
+                if len(s) > 3 and s[-3:] in ", ', \". \". '":
+                    return s
+                else:
+                    # otherwise, strip ending punct
+                    s = s[:-1].strip()
+                    if len(s) == 0:
+                        return None
+            # add new standard . at end of sentence
+            return s + " ."
+
 
 # this was chosen for english, but it's probably fine for other languages, too
 # basically, if there are multiple discourse markers,
@@ -125,36 +135,39 @@ top_level_deps_to_ignore_if_extra = [
     # ("advmod", "WRB") ## this would solve several minor problems but introduce a few major problems
 ]
 
+
 def is_verb_tag(tag):
     return tag[0] == "V" and not tag[-2:] in ["BG", "BN"]
 
+
 # https://stackoverflow.com/a/18669080
 def get_indices(lst, element, case="sensitive"):
-  result = []
-  starting_index = -1
-  while True:
-    try:
-        found_index = lst.index(element, starting_index+1)
-        starting_index = found_index
-    except ValueError:
-        return result
-    result.append(found_index)
+    result = []
+    starting_index = -1
+    while True:
+        try:
+            found_index = lst.index(element, starting_index + 1)
+            starting_index = found_index
+        except ValueError:
+            return result
+        result.append(found_index)
+
 
 def get_nearest(lst, element):
-    distances = [abs(e-element) for e in lst]
+    distances = [abs(e - element) for e in lst]
     return lst[np.argmin(distances)]
 
 
 def redo_tokenization(lst, lang="en"):
     if lang == "en":
-      s = " ".join(lst)
-      separated_s = re.sub(" @([^ ]+)@ ", " @ \1 @ ", s)
-      separated_s = re.sub(" 't", " ' t", separated_s)
-      separated_s = re.sub(' "', ' " ', separated_s)
-      separated_s = re.sub('" ', ' " ', separated_s)
-      return separated_s.split()
+        s = " ".join(lst)
+        separated_s = re.sub(" @([^ ]+)@ ", " @ \1 @ ", s)
+        separated_s = re.sub(" 't", " ' t", separated_s)
+        separated_s = re.sub(' "', ' " ', separated_s)
+        separated_s = re.sub('" ', ' " ', separated_s)
+        return separated_s.split()
     else:
-      return lst
+        return lst
 
 
 """
@@ -164,14 +177,16 @@ extraction_indices (which are 1-indexed into parsed_words)
 
 fix me to catch more cases?
 """
+
+
 def extract_subphrase(orig_words, parsed_words, extraction_indices, lang="en"):
-    extraction_indices = [i-1 for i in extraction_indices]
+    extraction_indices = [i - 1 for i in extraction_indices]
 
     if lang == "sp":
-      return " ".join([parsed_words[i] for i in extraction_indices])
+        return " ".join([parsed_words[i] for i in extraction_indices])
 
     orig_words = redo_tokenization(orig_words, lang=lang)
-    
+
     if len(orig_words) == len(parsed_words):
         return " ".join([orig_words[i] for i in extraction_indices])
     else:
@@ -182,36 +197,36 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices, lang="en"):
 
         last_word_indices = get_indices(orig_words, parsed_words[last_parse_index])
 
-        if len(first_word_indices)>0 and len(last_word_indices)>0:
+        if len(first_word_indices) > 0 and len(last_word_indices) > 0:
             first_orig_index = get_nearest(first_word_indices, first_parse_index)
             last_orig_index = get_nearest(last_word_indices, last_parse_index)
-            if last_orig_index-first_orig_index == last_parse_index-first_parse_index:
+            if last_orig_index - first_orig_index == last_parse_index - first_parse_index:
                 # maybe it's just shifted
                 shift = first_orig_index - first_parse_index
-                extraction_indices = [i+shift for i in extraction_indices]
+                extraction_indices = [i + shift for i in extraction_indices]
                 return " ".join([orig_words[i] for i in extraction_indices])
             else:
                 # or maybe there's funny stuff happening inside the subphrase
                 # in which case T-T
-                print "wonky subphrase:"
-                print orig_words
-                print parsed_words
+                print("wonky subphrase:")
+                print(orig_words)
+                print(parsed_words)
                 return None
         else:
-            if len(first_word_indices)>0 and abs(last_parse_index-len(parsed_words))<3:
+            if len(first_word_indices) > 0 and abs(last_parse_index - len(parsed_words)) < 3:
                 # the end of the sentence is always weird. assume it's aligned
 
                 # grab the start of the subphrase
                 first_orig_index = get_nearest(first_word_indices, first_parse_index)
                 # shift if necessary
                 shift = first_orig_index - first_parse_index
-                extraction_indices = [i+shift for i in extraction_indices]
+                extraction_indices = [i + shift for i in extraction_indices]
 
                 if len(orig_words) > extraction_indices[-1]:
                     # extend to the end of the sentence if we're not already there
-                    extraction_indices += range(extraction_indices[-1]+1, len(orig_words))
+                    extraction_indices += range(extraction_indices[-1] + 1, len(orig_words))
                 else:
-                    extraction_indices = [i for i in extraction_indices if i<len(orig_words)]
+                    extraction_indices = [i for i in extraction_indices if i < len(orig_words)]
 
                 return " ".join([orig_words[i] for i in extraction_indices])
 
@@ -219,20 +234,21 @@ def extract_subphrase(orig_words, parsed_words, extraction_indices, lang="en"):
                 # or maybe the first and/or last words have been transformed,
                 # in which case T-T
                 return None
-        
 
 
 """
 use corenlp server (see https://github.com/erindb/corenlp-ec2-startup)
 to parse sentences: tokens, dependency parse
 """
+
+
 def get_parse(sentence, lang="en", depparse=True):
     if lang == 'en':
         sentence = sentence.replace("'t ", " 't ")
         port = EN_PORT
     elif lang == "ch":
         port = CH_PORT
-    elif lang == "sp" or lang=="es":
+    elif lang == "sp" or lang == "es":
         port = SP_PORT
 
     if depparse:
@@ -243,30 +259,31 @@ def get_parse(sentence, lang="en", depparse=True):
     data = sentence
 
     parse_string = requests.post(url, data=data).text
-  
+
     parse_string = parse_string.replace('\r\n', '')
     parse_string = parse_string.replace('\x19', '')
 
     try:
-      parsed_output = json.loads(parse_string)
-      sentences = parsed_output["sentences"]
-      if len(sentences)>0:
-        return sentences[0]
-      else:
-        print "error in parse:"
-        print sentences
-        return None
+        parsed_output = json.loads(parse_string)
+        sentences = parsed_output["sentences"]
+        if len(sentences) > 0:
+            return sentences[0]
+        else:
+            print("error in parse:")
+            print(sentences)
+            return None
 
     except ValueError:
         try:
-          if lang=="en":
-            return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
-          elif lang=="sp":
-            return json.loads(re.sub("[^áéíóúñÑü¿?¡!ÁÉÍÓÚÜªºA-z0-9.,:\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
+            if lang == "en":
+                return json.loads(re.sub("[^A-z0-9.,!:?\"'*&/\{\}\[\]()=+-]", "", parse_string))["sentences"][0]
+            elif lang == "sp":
+                return json.loads(re.sub("[^áéíóúñÑü¿?¡!ÁÉÍÓÚÜªºA-z0-9.,:\"'*&/\{\}\[\]()=+-]", "", parse_string))[
+                    "sentences"][0]
         except:
-          print "error loading json:"
-          print sentence
-          return None
+            print("error loading json:")
+            print(sentence)
+            return None
 
 
 class Sentence():
@@ -276,6 +293,7 @@ class Sentence():
         self.tokens = json_sentence["tokens"]
         self.original_sentence = original_sentence
         self.lang = lang
+
     def indices(self, word):
         if len(word.split(" ")) > 1:
             words = word.split(" ")
@@ -284,9 +302,11 @@ class Sentence():
         else:
             # print " ".join([t["word"].lower() for t in self.tokens])
             # print word.lower()
-            return [i+1 for i in get_indices([t["word"].lower() for t in self.tokens], word)]
+            return [i + 1 for i in get_indices([t["word"].lower() for t in self.tokens], word)]
+
     def token(self, index):
-        return self.tokens[int(index)-1]
+        return self.tokens[int(index) - 1]
+
     def word(self, index):
         return self.token(index)["word"]
 
@@ -298,7 +318,8 @@ class Sentence():
 
         return [d["governor"] for d in deps]
 
-    def find_children(self, index, filter_types=False, exclude_types=False, needs_verb=False, exclude_type_and_POS=False):
+    def find_children(self, index, filter_types=False, exclude_types=False, needs_verb=False,
+                      exclude_type_and_POS=False):
         deps = self.find_deps(
             index,
             dir="children",
@@ -324,7 +345,7 @@ class Sentence():
             return True
         else:
             cop_relations = self.find_deps(index, dir="children", filter_types="cop")
-            has_cop_relation = len(cop_relations)>0
+            has_cop_relation = len(cop_relations) > 0
             if has_cop_relation:
                 return True
             else:
@@ -340,10 +361,10 @@ class Sentence():
 
     def find_deps(self, index, dir=None, filter_types=False, exclude_types=False, exclude_type_and_POS=False):
         deps = []
-        if dir=="parents" or dir==None:
-            deps += [{"dep": d, "index": d['governor']} for d in self.dependencies if d['dependent']==index]
-        if dir=="children" or dir==None:
-            deps += [{"dep": d, "index": d['dependent']} for d in self.dependencies if d['governor']==index]
+        if dir == "parents" or dir == None:
+            deps += [{"dep": d, "index": d['governor']} for d in self.dependencies if d['dependent'] == index]
+        if dir == "children" or dir == None:
+            deps += [{"dep": d, "index": d['dependent']} for d in self.dependencies if d['governor'] == index]
 
         if filter_types:
             deps = [d for d in deps if d["dep"]["dep"] in filter_types]
@@ -370,16 +391,17 @@ class Sentence():
         exclude_indices.sort()
         acc.sort()
         explore.sort()
-        
-	if depth > 15:
-		return None
-	# print("exclude: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in exclude_indices]))
+
+        if depth > 15:
+            return None
+        # print("exclude: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in exclude_indices]))
         # print("acc: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in acc]))
         # print("explore: " + " ".join([self.tokens[t_ind-1]["word"] for t_ind in explore]))
         # print("*****")
 
-        if depth==0:
-            all_children = [c for i in explore for c in self.find_children(i, exclude_types=exclude_types, exclude_type_and_POS=top_level_deps_to_ignore_if_extra)]
+        if depth == 0:
+            all_children = [c for i in explore for c in self.find_children(i, exclude_types=exclude_types,
+                                                                           exclude_type_and_POS=top_level_deps_to_ignore_if_extra)]
         else:
             all_children = [c for i in explore for c in self.find_children(i, exclude_types=exclude_types)]
 
@@ -387,18 +409,18 @@ class Sentence():
         children = [c for c in all_children if not c in exclude_indices]
 
         # delete commas before excluded indices
-        children = [c for c in children if not (c+1 in exclude_indices and self.word(c)==",")]
+        children = [c for c in children if not (c + 1 in exclude_indices and self.word(c) == ",")]
 
         # delete commas after excluded indices
-        children = [c for c in children if not (c-1 in exclude_indices and self.word(c)==",")]
+        children = [c for c in children if not (c - 1 in exclude_indices and self.word(c) == ",")]
 
-        if len(children)==0:
+        if len(children) == 0:
             return acc
         else:
             return self.get_subordinate_indices(
                 acc=acc + children,
                 explore=children,
-                depth=depth+1,
+                depth=depth + 1,
                 exclude_indices=exclude_indices,
                 exclude_types=exclude_types
             )
@@ -413,24 +435,24 @@ class Sentence():
             exclude_indices=exclude_indices,
             exclude_types=exclude_types
         )
-        #print subordinate_indices
-        #print " ".join([self.word(i) for i in subordinate_indices])
- 
+        # print subordinate_indices
+        # print " ".join([self.word(i) for i in subordinate_indices])
+
         if not subordinate_indices:
             return None
         subordinate_indices.sort()
 
-	#print subordinate_indices
-        #print self
+        # print subordinate_indices
+        # print self
         # exclude any punctuation not followed by a non-punctuation token
-        while len(subordinate_indices)>0 and self.is_punct(subordinate_indices[-1]):
+        while len(subordinate_indices) > 0 and self.is_punct(subordinate_indices[-1]):
             subordinate_indices = subordinate_indices[:-1]
-	if len(subordinate_indices)==0:
-		return None
+        if len(subordinate_indices) == 0:
+            return None
 
-#        while self.is_punct(subordinate_indices[0]):
-#            subordinate_indices = subordinate_indices[1:]
-        
+        #        while self.is_punct(subordinate_indices[0]):
+        #            subordinate_indices = subordinate_indices[1:]
+
         if self.lang == "ch":
             subordinate_phrase = "".join([self.word(i) for i in subordinate_indices])
         else:
@@ -446,7 +468,7 @@ class Sentence():
             # (tokenization systems are different)
             orig_words = self.original_sentence.split()
             parsed_words = [t["word"] for t in self.tokens]
-            #print subordinate_indices
+            # print subordinate_indices
 
             # if "estudios" in parse_subordinate_string:
             #     # print orig_words
@@ -478,11 +500,12 @@ class Sentence():
         else:
             marker_head = marker
 
-        valid_marker_indices = [i for i in self.indices(marker_head) if self.token(i)["pos"] in pos ]
+        valid_marker_indices = [i for i in self.indices(marker_head) if self.token(i)["pos"] in pos]
         # if marker=="so":
         #     for i in valid_marker_indices:
         #         print self.find_children(i)
-        valid_marker_indices = [i for i in valid_marker_indices if len(self.find_children(i))==(len(marker.split(" "))-1)]
+        valid_marker_indices = [i for i in valid_marker_indices if
+                                len(self.find_children(i)) == (len(marker.split(" ")) - 1)]
         return valid_marker_indices
 
     def get_candidate_S2_indices(self, marker, marker_index, dep_pattern, needs_verb=False):
@@ -503,7 +526,7 @@ class Sentence():
         )
 
     def find_pair(self, marker, order, previous_sentence, lang="en"):
-        assert(order in ["s2 discourse_marker s1", "any"])
+        assert (order in ["s2 discourse_marker s1", "any"])
         # fix me
         # (this won't quite work if there are multiple matching connections)
         # (which maybe never happens)
@@ -524,9 +547,9 @@ class Sentence():
         #     print self.get_valid_marker_indices(marker)
 
         for dep_pattern in dependency_patterns[lang][marker]:
-            #print dep_pattern
+            # print dep_pattern
             for marker_index in self.get_valid_marker_indices(marker, dep_pattern):
-                #print marker_index
+                # print marker_index
                 # if " ".join([t["word"] for t in self.tokens])=="The government buried many in mass graves , some above-ground tombs were forced open so bodies could be stacked inside , and others were burned .":
                 #     print marker_index
 
@@ -534,30 +557,30 @@ class Sentence():
                 #     print marker_index
 
                 s2_candidates = self.get_candidate_S2_indices(marker, marker_index, dep_pattern, needs_verb=needs_verb)
-                #print s2_candidates
-                
+                # print s2_candidates
+
                 for s2_head_index in s2_candidates:
                     s2_ind = s2_head_index
-                    #print s2_ind
+                    # print s2_ind
                     possible_S1s = []
 
-                    s1_candidates = self.get_candidate_S1_indices(marker, s2_head_index, dep_pattern, needs_verb=needs_verb)
-                    
+                    s1_candidates = self.get_candidate_S1_indices(marker, s2_head_index, dep_pattern,
+                                                                  needs_verb=needs_verb)
+
                     if "acceptable_order" in dep_pattern:
-                        if dep_pattern["acceptable_order"]=="S1 S2":
+                        if dep_pattern["acceptable_order"] == "S1 S2":
                             s1_candidates = [s1_ind for s1_ind in s1_candidates if s1_ind < s2_ind]
-                            
-                    
+
                     for s1_head_index in s1_candidates:
                         # print(marker_index, s2_ind, s1_head_index)
-                        #print s1_head_index
+                        # print s1_head_index
                         # store S1 if we have one
                         S1 = self.get_phrase_from_head(
                             s1_head_index,
                             exclude_indices=[s2_head_index]
                         )
 
-                        #print S1
+                        # print S1
                         # we'll lose some stuff here because of alignment between
                         # wikitext tokenization and corenlp tokenization.
                         # if we can't get a phrase, reject this pair
@@ -565,14 +588,14 @@ class Sentence():
                             break
 
                         # if we are only checking for the "reverse" order, reject anything else
-                        if order=="s2 discourse_marker s1":
+                        if order == "s2 discourse_marker s1":
                             if s1_ind < s2_ind:
                                 break
 
                         possible_S1s.append((s1_head_index, S1))
 
-                    # to do: fix this. it is wrong. we're just grabbing the first if there are multiple matches for the S1 pattern rather than choosing in a principled way
-                    # if len(possible_S1s) > 1:
+                        # to do: fix this. it is wrong. we're just grabbing the first if there are multiple matches for the S1 pattern rather than choosing in a principled way
+                        # if len(possible_S1s) > 1:
                         # could sort by something here...
                         # possible_S1s = sorted(possible_S1s, key=lambda t: -abs(marker_index - t[0]))
                         # print self
@@ -586,7 +609,7 @@ class Sentence():
                         exclude_indices=[marker_index, s1_ind],
                         # exclude_types=dependency_patterns[marker]["S1"]
                     )
-                    #print S2
+                    # print S2
 
                     # we'll lose some stuff here because of alignment between
                     # wikitext tokenization and corenlp tokenization.
@@ -617,18 +640,23 @@ class Sentence():
 
         return None
 
+
 def setup_corenlp(lang="en"):
     try:
-        test_sentences = {"en": "The quick brown fox jumped over the lazy dog.", "ch": "当周二开始申购时,有数万人涌入索取MTRC的申请表,可以说是盛况空前。", "sp": "Que voy a hacer?"}
+        test_sentences = {"en": "The quick brown fox jumped over the lazy dog.",
+                          "ch": "当周二开始申购时,有数万人涌入索取MTRC的申请表,可以说是盛况空前。", "sp": "Que voy a hacer?"}
         get_parse(test_sentences[lang], lang=lang)
     except:
         # TODO
         # run the server if we can
         # otherwise ask to install the server and install it if we can
-        #raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
-        raise Exception("corenlp parser needs to be running for language '{}'. see https://github.com/erindb/corenlp-ec2-startup".format(lang))
+        # raise Exception('corenlp parser needs to be running. see https://github.com/erindb/corenlp-ec2-startup')
+        raise Exception(
+            "corenlp parser needs to be running for language '{}'. see https://github.com/erindb/corenlp-ec2-startup".format(
+                lang))
 
-#def depparse_ssplit(sentence, previous_sentence, marker):
+
+# def depparse_ssplit(sentence, previous_sentence, marker):
 #    sentence = cleanup(sentence)
 #    parse = get_parse(sentence)
 #    if parse:
@@ -650,7 +678,7 @@ def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
         #     # pp.pprint(parse["basicDependencies"])
         #     # print(json.dumps(parse["tokens"], indent=4))
         sentence = Sentence(parse, sentence, lang)
-        #print sentence
+        # print sentence
         # print orig_sentence
         # print len(orig_sentence)
         # print str(sentence)
@@ -658,14 +686,14 @@ def depparse_ssplit(sentence, previous_sentence, marker, lang="en"):
 
         # print sentence
         pair = sentence.find_pair(marker, "any", previous_sentence, lang=lang)
-        #print pair
-        #stop
+        # print pair
+        # stop
         return pair
     else:
         return None
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.parse_args()
     setup_corenlp()
-
