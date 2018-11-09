@@ -174,7 +174,6 @@ def redo_tokenization(lst, lang="en"):
 parsed tokenization is different from original tokenization.
 try to re-align and extract the correct words given the
 extraction_indices (which are 1-indexed into parsed_words)
-
 fix me to catch more cases?
 """
 
@@ -293,6 +292,7 @@ class Sentence():
         self.tokens = json_sentence["tokens"]
         self.original_sentence = original_sentence
         self.lang = lang
+        self.new_tokens = self.tokens
 
     def indices(self, word):
         if len(word.split(" ")) > 1:
@@ -450,7 +450,7 @@ class Sentence():
         if len(subordinate_indices) == 0:
             return None
 
-        #        while self.is_punct(subordinate_indices[0]):
+        # while self.is_punct(subordinate_indices[0]):
         #            subordinate_indices = subordinate_indices[1:]
 
         if self.lang == "ch":
@@ -467,7 +467,7 @@ class Sentence():
             # correct subordinate phrase from parsed version to wikitext version
             # (tokenization systems are different)
             orig_words = self.original_sentence.split()
-            parsed_words = [t["word"] for t in self.tokens]
+            parsed_words = [t["word"] for t in self.new_tokens]
             # print subordinate_indices
 
             # if "estudios" in parse_subordinate_string:
@@ -524,6 +524,48 @@ class Sentence():
             filter_types=valid_connection_types,
             needs_verb=needs_verb
         )
+
+    def add(self, token):
+        new_new_tokens = [token]
+        index = token["index"]
+        for token in self.new_tokens:
+            if token["index"] >= index:
+                token["index"] = token["index"] + 1
+            new_new_tokens.append(token)
+        new_new_tokens.sort(key=lambda x: x["index"])
+        self.new_tokens = new_new_tokens
+
+    def cut(self, index):
+        new_tokens = []
+        for token in self.new_tokens:
+            if token["index"] != index:
+                if token["index"] > index:
+                    token["index"] = token["index"] - 1
+                new_tokens.append(token)
+        self.new_tokens = new_tokens
+
+    def move(self, original_index, new_index):
+        if (original_index != new_index):
+            new_new_tokens = []
+            for token in self.new_tokens:
+                current_index = token["index"]
+                if current_index == original_index:
+                    token["index"] = new_index
+                elif original_index < new_index:
+                    # moving word to later in the sentence
+                    # if current_index < original_index:
+                    #    #do nothing
+                    if original_index < current_index and current_index <= new_index:
+                        # so words in between the new and old indices go back one index,
+                        # including the word that is currently located at that new index
+                        token["index"] = token["index"] - 1
+                else:
+                    # moving word to earlier in the sentence
+                    if new_index <= current_index and current_index < original_index:
+                        token["index"] = token["index"] + 1
+                new_new_tokens.append(token)
+            new_new_tokens.sort(key=(lambda x: x["index"]))
+            self.new_tokens = new_new_tokens
 
     def find_pair(self, marker, order, previous_sentence, lang="en"):
         assert (order in ["s2 discourse_marker s1", "any"])
