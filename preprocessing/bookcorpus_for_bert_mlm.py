@@ -48,10 +48,10 @@ def read_sentence_pairs(input_files):
         for k, s_pairs in d.items():
             S1.extend(s_pairs["previous"])
             S2.extend(s_pairs["sentence"])
-    
-    return list(zip(S1, S2))
 
-sentence_pairs = read_sentence_pairs(input_files)
+    return zip(S1, S2)
+
+sentence_pairs = list(set(read_sentence_pairs(input_files)))
 
 
 # ## Output of this script
@@ -62,9 +62,8 @@ sentence_pairs = read_sentence_pairs(input_files)
 
 
 import numpy as np
-sentence_pairs = list(set(sentence_pairs))
 
-np.random.seed(1)
+np.random.seed(12345)
 np.random.shuffle(sentence_pairs)
 
 
@@ -107,13 +106,21 @@ def write_bert_files(sentence_pairs, output_dir, train_proportion=0.9):
     splits["valid"] = sentence_pairs[n_test:(n_test + n_valid)]
     splits["train"] = sentence_pairs[(n_test + n_valid):]
 
+    words = set()
+    
     for split, sentence_pairs in splits.items():
         write_path = pjoin(output_dir, "%s.txt" % split)
         with open(write_path, "w") as write_file:
             for S1, S2 in sentence_pairs:
+                words.update(S1.split(" "))
+                words.update(S2.split(" "))
                 write_file.write(S1)
                 write_file.write(S2)
                 write_file.write("\n")
+                
+    with open(pjoin(output_dir, "vocab.txt"), "w") as write_file:
+        write_file.write("\n".join(words))
+    
 
 output_dir = "/data/erindb/bookcorpus/sentence_pairs_with_discourse_markers/"
 write_bert_files(sentence_pairs, output_dir)
