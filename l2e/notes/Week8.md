@@ -264,25 +264,72 @@ We only evaluate model that does best on validation set (in terms of accuracy).
 **todo:** try to load ensemble models using OpenNMT to evaluate on Winograd
 
 ```bash
-# Evaluate L2EC on validation set
-CUDA_VISIBLE_DEVICES=0 python3.6 translate.py -model save/because_transformer_copy_attn_sep24/dissent_step_200000.pt -src data/src-test.txt -share_vocab -output save/because_transformer_copy_attn_sep24/dissent_step_200000_pred.txt -replace_unk \
+# Evaluate L2EC on validation set (NOT DONE YET)
+
+
+# Evaluate L2E on News Commentary (iter 80000) (greedy) (running)
+CUDA_VISIBLE_DEVICES=7 python3.6 translate.py -model save/because_transformer_sep5/dissent_step_80000.pt -src /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-src-test.txt -tgt /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-tgt-test.txt -share_vocab -output /home/anie/DisExtract/data/news_commentary/l2e_sep5_step_80000_pred_greedy.txt -replace_unk \
      -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 1
 
-# Evaluate L2E on News Commentary
+# Evaluate L2E on News Commentary (iter 200000) (greedy)
+CUDA_VISIBLE_DEVICES=6 python3.6 translate.py -model save/because_transformer_sep5/dissent_step_200000.pt -src /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-src-test.txt -tgt /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-tgt-test.txt -share_vocab -output /home/anie/DisExtract/data/news_commentary/l2e_sep5_step_200000_pred_greedy.txt -replace_unk \
+     -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 1
+     
+# Evaluate L2E on News Commentary (iter 80000) (Beam=5)
+CUDA_VISIBLE_DEVICES=7 python3.6 translate.py -model save/because_transformer_sep5/dissent_step_80000.pt -src /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-src-test.txt -tgt /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-tgt-test.txt -share_vocab -output /home/anie/DisExtract/data/news_commentary/l2e_sep5_step_80000_pred_beam5.txt -replace_unk \
+     -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 5
 
-# Evaluate L2EC on News Commentary
+# Evaluate L2E on News Commentary (iter 200000) (Beam=5)
+CUDA_VISIBLE_DEVICES=6 python3.6 translate.py -model save/because_transformer_sep5/dissent_step_200000.pt -src /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-src-test.txt -tgt /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-tgt-test.txt -share_vocab -output /home/anie/DisExtract/data/news_commentary/l2e_sep5_step_200000_pred_beam5.txt -replace_unk \
+     -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 5
 
-# Evaluate FairSeq (ConvLM) on News Commentary
+# Evaluate L2EC on News Commentary (iter 200000) (greedy)
+CUDA_VISIBLE_DEVICES=6 python3.6 translate.py -model /mnt/fs5/anie/OpenNMT-py/save/because_ctx_full_lstm_650_300ksteps/dissent_step_300000.pt -src /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-ctx-src-test.txt -tgt /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-tgt-test.txt -share_vocab -output /home/anie/DisExtract/data/news_commentary/l2ec_sep5_step_300000_pred_greedy.txt -replace_unk \
+     -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 1
+
+# Evaluate L2EC on News Commentary (iter 200000) (Beam=5) (running, train)
+CUDA_VISIBLE_DEVICES=7 python3.6 translate.py -model /mnt/fs5/anie/OpenNMT-py/save/because_ctx_full_lstm_650_300ksteps/dissent_step_300000.pt -src /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-ctx-src-test.txt -tgt /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-tgt-test.txt -share_vocab -output /home/anie/DisExtract/data/news_commentary/l2ec_sep5_step_300000_pred_beam5.txt -replace_unk \
+     -report_bleu -report_rouge -batch_size 512 -gpu 0 -beam_size 5
+
+# Evaluate FairSeq (ConvLM) on News Commentary (greedy)
+
+cat /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-src-test.txt | CUDA_VISIBLE_DEVICES=6 python3.6 eval_lm.py /mnt/fs5/anie/fairseq/model/gbw_fconv_lm/ \
+  --path /mnt/fs5/anie/fairseq/model/gbw_fconv_lm/model.pt \
+  --beam 1 --task language_modeling --nbest 1 \
+  --batch-size 1 --buffer-size 1 --remove-bpe --raw-text --replace-unk --sample-break-mode eos  | tee /home/anie/DisExtract/data/news_commentary/conv_lm_lm1b_greedy.txt
+
+# Evaluate FairSeq (ConvLM) on News Commentary with Context
 
 # Evaluate FairSeq (ConvLM) on Winograd
 
 # Evaluate FairSeq (ConvLM) on CoPA
 
-# Evaluate OpenSubtitles (OpenNMT) on L2E test set?
+# Evaluate OpenSubtitles (OpenNMT) on L2E test set
 
 ```
 
+Notes:
 
+`-fast` does not evaluate gold PPL
+
+**FairSeq Usage**
+
+Usee `interactive.py` 
+
+**News Commentary Evaluation**
+
+We evaluate on Gold PPL and BLEU score
+
+| Model                                 | Gold PPL | Test BLEU                                                    |
+| ------------------------------------- | -------- | ------------------------------------------------------------ |
+| **l2e**_sep5_step_200000_pred_greedy  | -57.0265 | 0.55, 22.3/1.4/0.2/0.1 (BP=0.629, ratio=0.683, hyp_len=63182, ref_len=92493) |
+| **l2e**_sep5_step_80000_pred_greedy   | -51.3911 | 0.53, 22.0/1.3/0.2/0.1 (BP=0.662, ratio=0.708, hyp_len=65449, ref_len=92493) |
+| **l2e**_sep5_step_200000_pred_beam5   | -57.0265 | 0.37, 24.1/1.3/0.3/0.1 (BP=0.423, ratio=0.538, hyp_len=49719, ref_len=92493) |
+| **l2e**_sep5_step_80000_pred_beam5    | -51.3911 | 0.35, 24.2/1.3/0.2/0.1 (BP=0.431, ratio=0.543, hyp_len=50240, ref_len=92493) |
+| **l2ec**_sep5_step_300000_pred_greedy | -62.075  | 0.40, 25.1/1.7/0.2/0.0 (BP=0.522, ratio=0.606, hyp_len=56021, ref_len=92493) |
+| **l2ec**_sep5_step_300000_pred_beam5  | -62.0750 | 0.47, 26.7/1.7/0.4/0.1 (BP=0.396, ratio=0.519, hyp_len=48007, ref_len=92493) |
+
+So PPL and BLEU are not entirely linked up.
 
 ## Baseline Models
 
