@@ -4,6 +4,12 @@ This is the official repo that we used to train for DisSent paper. It is not yet
 
 Please contact anie@stanford.edu if you want access to the trained model and loading script! Thank you!
 
+## DIS
+
+In the paper, we mentioned a specific evaluation dataset DIS that we created to evaluate model's performance on discourse marker. 
+
+You can download this dataset following this link: https://s3-us-west-2.amazonaws.com/nlp-corpus-collection/dis_v2.zip
+
 ## Dependency Pattern Instructions
 
 ```python
