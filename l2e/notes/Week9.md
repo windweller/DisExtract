@@ -18,3 +18,30 @@ Example:
 
 Orig: "The movie was rated R."	L2E: "It was too upsetting ."
 
+**Todo**: Evaluate PPL and BLEU for LM
+
+**Todo**: Generate why-questions for News Commentary, and then evaluate 
+
+**Todo**: Design the human MTurker experiment
+
+
+
+**Todo**: Evaluate OpenSubtitle on Winograd, COPA using Why questions
+
+## Winograd Ranking Script
+
+This is part of `DisExtract`
+
+
+
+## COPA Ranking Script
+
+This is part of `COPA` code
+
+
+
+## Analysis
+
+1. Ngram overlap that we did before, should end up in the paper!!
+2. Subject/Object as explanation strategy
+3. 

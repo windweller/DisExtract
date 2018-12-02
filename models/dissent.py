@@ -12,6 +12,7 @@ import logging
 
 import torch
 from torch.autograd import Variable
+from torch.nn import Parameter
 import torch.nn as nn
 
 logger = logging.getLogger(__name__)
@@ -82,7 +83,7 @@ class BLSTMEncoder(nn.Module):
 
         idx_sort = torch.from_numpy(idx_sort).cuda() if self.is_cuda() \
             else torch.from_numpy(idx_sort)
-        sent = sent.index_select(1, Variable(idx_sort))
+        sent = sent.index_select(1, Variable(idx_sort).cuda())
 
         # apply input dropout
         # sent = self.emb_drop(sent)
@@ -124,7 +125,7 @@ class BLSTMEncoder(nn.Module):
 
         idx_sort = torch.from_numpy(idx_sort).cuda() if self.is_cuda() \
             else torch.from_numpy(idx_sort)
-        sent = sent.index_select(1, Variable(idx_sort))
+        sent = sent.index_select(1, Variable(idx_sort).cuda())
 
         # apply input dropout
         # sent = self.emb_drop(sent)
@@ -145,7 +146,7 @@ class BLSTMEncoder(nn.Module):
         # Un-sort by length
         idx_unsort = torch.from_numpy(idx_unsort).cuda() if self.is_cuda() \
             else torch.from_numpy(idx_unsort)
-        sent_output = sent_output.index_select(1, Variable(idx_unsort))
+        sent_output = sent_output.index_select(1, Variable(idx_unsort).cuda())
 
         # for the output
         sent_output.retain_grad()
@@ -359,6 +360,117 @@ class DisSent(nn.Module):
 
         output = self.classifier(features)
         return output
+
+    def encode(self, s1):
+        emb = self.encoder(s1)
+        return emb
+
+class DisMLM(nn.Module):
+    def __init__(self, config, vocab_emb_np):
+        super(DisMLM, self).__init__()
+
+        # classifier
+        self.fc_dim = config['fc_dim']
+        self.n_classes = config['n_classes']
+        self.enc_lstm_dim = config['enc_lstm_dim']
+        self.encoder_type = config['encoder_type']
+        self.dpout_fc = config['dpout_fc']
+        self.s1_only = config['s1_only']
+        self.s2_only = config['s2_only']
+
+        assert not(self.s1_only is True and self.s2_only is True)
+
+        self.encoder = eval(self.encoder_type)(config)
+        self.inputdim = 5 * 2 * self.enc_lstm_dim
+
+        # === MLM classification ===
+
+        # self.mlm_classifier = nn.Linear(self.enc_lstm_dim * 2, config['n_words'])
+
+        # self.mlm_classifier = SampledSoftmax(config['n_words'],
+        #                                      8192, 2 * self.enc_lstm_dim, None)
+
+        # self.mlm_classifier = nn.Linear(self.enc_lstm_dim * 2, config['n_words'])
+
+        # self.mlm_vocab = nn.Linear(config['word_emb_dim'], vocab_emb_np.shape[0])
+
+        # transpose
+        # self.mlm_vocab.weight = Parameter(torch.from_numpy(vocab_emb_np.T), requires_grad=False)
+
+        # self.mlm_classifier = nn.Sequential(
+        #     self.mlm_fc,
+        #     self.mlm_vocab
+        # )
+
+        # === NSP classification ===
+
+        # If fully connected layer dimension is set to 0, we are not using it
+        if self.fc_dim != 0:
+            if self.dpout_fc == 0.:
+                self.classifier = nn.Sequential(
+                    nn.Linear(self.inputdim, self.fc_dim),
+                    nn.Linear(self.fc_dim, self.fc_dim),
+                    nn.Linear(self.fc_dim, self.n_classes)
+                )
+            else:
+                # this is middle-layer-dropout
+                self.classifier = nn.Sequential(
+                    nn.Linear(self.inputdim, self.fc_dim),
+                    nn.Dropout(p=self.dpout_fc),
+                    nn.Linear(self.fc_dim, self.fc_dim),
+                    nn.Dropout(p=self.dpout_fc),
+                    nn.Linear(self.fc_dim, self.n_classes)
+                )
+        else:
+            self.classifier = nn.Linear(self.inputdim, self.n_classes)
+
+    def max_pool(self, sent_output):
+        return torch.max(sent_output, 0)[0]
+
+    def forward(self, s1, s2, s1_masked_pos, s2_masked_pos):
+        # s1 : (s1, s1_len)
+        # this is clearly for NSP!
+        # masked_pos: [[int]]
+        # return mlm_feats: (batch_size, hid)
+
+        # u = self.encoder(s1)
+        # v = self.encoder(s2)
+
+        # ===== MLM prediction
+
+        s1_hids = self.encoder.get_hidden_states(s1)  # (T, b, d)
+        s2_hids = self.encoder.get_hidden_states(s2)
+
+        s1_mlm_feats = []
+        s2_mlm_feats = []
+
+        for j, ex_positions in enumerate(s1_masked_pos):
+            for ex_pos in ex_positions:
+                s1_mlm_feats.append(s1_hids[ex_pos, j, :])
+
+        for j, ex_positions in enumerate(s2_masked_pos):
+            for ex_pos in ex_positions:
+                s2_mlm_feats.append(s2_hids[ex_pos, j, :])
+
+        s1_mlm_feats = torch.stack(s1_mlm_feats) # (b, d)
+        s2_mlm_feats = torch.stack(s2_mlm_feats)
+
+        # TODO: fix this part and use AdapativeLogSoftmax instead
+
+        # s1_logits, new_s1_targets = self.mlm_classifier(s1_mlm_feats, s1_lm_targets) # (b * num_preds, |Vocab|)
+        # s2_logits, new_s2_targets = self.mlm_classifier(s2_mlm_feats, s2_lm_targets) # (b * num_preds, |Vocab|)
+
+        # ==== NSP prediction
+
+        u = self.max_pool(s1_hids)
+        v = self.max_pool(s2_hids)
+
+        features = torch.cat((u, v, u - v, u * v, (u + v) / 2.), 1)
+
+        output = self.classifier(features)  # (batch_size, n_classes=2)
+
+        return output, s1_mlm_feats, s2_mlm_feats
+        # return output, s1_logits, s2_logits, new_s1_targets, new_s2_targets
 
     def encode(self, s1):
         emb = self.encoder(s1)

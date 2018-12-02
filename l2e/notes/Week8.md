@@ -298,23 +298,29 @@ cat /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-src-test
   --beam 1 --task language_modeling --nbest 1 \
   --batch-size 1 --buffer-size 1 --remove-bpe --raw-text --replace-unk --sample-break-mode eos  | tee /home/anie/DisExtract/data/news_commentary/conv_lm_lm1b_greedy.txt
 
-# Evaluate FairSeq (ConvLM) on News Commentary with Context
+# Evaluate LM1B on News Commentary 
+CUDA_VISIBLE_DEVICES=8 python gen_lm1b.py --dataset news_commentary --output_file /home/anie/DisExtract/data/news_commentary/src_lm1b_greedy.txt --print_sent --max_seq 50
 
-# Evaluate FairSeq (ConvLM) on Winograd
+# Evaluate LM1B on News Commentary with Context (this is sampled after our fix)
+CUDA_VISIBLE_DEVICES=9 python gen_lm1b.py --dataset news_commentary_ctx --output_file /home/anie/DisExtract/data/news_commentary/ctx_src_lm1b_greedy.txt --print_sent --max_seq 50
 
-# Evaluate FairSeq (ConvLM) on CoPA
+# Evaluate LM1B on Winograd
+CUDA_VISIBLE_DEVICES=9 python gen_lm1b.py --dataset winograd --output_file /home/anie/DisExtract/data/winograd/lm1b_greedy.txt
+
+# Evaluate LM1B on CoPA
+CUDA_VISIBLE_DEVICES=9 python gen_lm1b.py --dataset copa --output_file /home/anie/DisExtract/data/copa/lm1b_greedy.txt
 
 # Evaluate OpenSubtitles (OpenNMT) on L2E test set
 
 ```
 
+```
+2 * (precision * recall) / (precision + recall)
+```
+
 Notes:
 
 `-fast` does not evaluate gold PPL
-
-**FairSeq Usage**
-
-Usee `interactive.py` 
 
 **News Commentary Evaluation**
 
@@ -322,14 +328,42 @@ We evaluate on Gold PPL and BLEU score
 
 | Model                                 | Gold PPL | Test BLEU                                                    |
 | ------------------------------------- | -------- | ------------------------------------------------------------ |
-| **l2e**_sep5_step_200000_pred_greedy  | -57.0265 | 0.55, 22.3/1.4/0.2/0.1 (BP=0.629, ratio=0.683, hyp_len=63182, ref_len=92493) |
-| **l2e**_sep5_step_80000_pred_greedy   | -51.3911 | 0.53, 22.0/1.3/0.2/0.1 (BP=0.662, ratio=0.708, hyp_len=65449, ref_len=92493) |
-| **l2e**_sep5_step_200000_pred_beam5   | -57.0265 | 0.37, 24.1/1.3/0.3/0.1 (BP=0.423, ratio=0.538, hyp_len=49719, ref_len=92493) |
-| **l2e**_sep5_step_80000_pred_beam5    | -51.3911 | 0.35, 24.2/1.3/0.2/0.1 (BP=0.431, ratio=0.543, hyp_len=50240, ref_len=92493) |
-| **l2ec**_sep5_step_300000_pred_greedy | -62.075  | 0.40, 25.1/1.7/0.2/0.0 (BP=0.522, ratio=0.606, hyp_len=56021, ref_len=92493) |
-| **l2ec**_sep5_step_300000_pred_beam5  | -62.0750 | 0.47, 26.7/1.7/0.4/0.1 (BP=0.396, ratio=0.519, hyp_len=48007, ref_len=92493) |
+| **l2e**_sep5_step_200000_pred_greedy  | 57.0265  | 0.55, 22.3/1.4/0.2/0.1 (BP=0.629, ratio=0.683, hyp_len=63182, ref_len=92493) |
+| **l2e**_sep5_step_80000_pred_greedy   | 51.3911  | 0.53, 22.0/1.3/0.2/0.1 (BP=0.662, ratio=0.708, hyp_len=65449, ref_len=92493) |
+| **l2e**_sep5_step_200000_pred_beam5   | 57.0265  | 0.37, 24.1/1.3/0.3/0.1 (BP=0.423, ratio=0.538, hyp_len=49719, ref_len=92493) |
+| **l2e**_sep5_step_80000_pred_beam5    | 51.3911  | 0.35, 24.2/1.3/0.2/0.1 (BP=0.431, ratio=0.543, hyp_len=50240, ref_len=92493) |
+| **l2ec**_sep5_step_300000_pred_greedy | 62.075   | 0.40, 25.1/1.7/0.2/0.0 (BP=0.522, ratio=0.606, hyp_len=56021, ref_len=92493) |
+| **l2ec**_sep5_step_300000_pred_beam5  | 62.075   | 0.47, 26.7/1.7/0.4/0.1 (BP=0.396, ratio=0.519, hyp_len=48007, ref_len=92493) |
 
-So PPL and BLEU are not entirely linked up.
+So PPL and BLEU are not entirely linked up
+
+## LM1B
+
+LM1B code is available. Can train using it on `node15-ccncluster`
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python eval_lm1b.py --mode sample \
+                             --prefix "I love that I" \
+                             --pbtxt /mnt/fs5/anie/lm1b/tf-lm1b/graph-2016-09-10.pbtxt \
+                             --vocab_file /mnt/fs5/anie/lm1b/tf-lm1b/vocab-2016-09-10.txt  \
+                             --ckpt '/mnt/fs5/anie/lm1b/tf-lm1b/ckpt-*'
+```
+
+We evaluate LM1B on Winograd / COPA
+
+```bash
+# winograd
+CUDA_VISIBLE_DEVICES=9 python gen_lm1b.py --dataset winograd --output_file /home/anie/DisExtract/data/winograd/lm1b_greedy.txt
+
+# copa
+CUDA_VISIBLE_DEVICES=9 python gen_lm1b.py --dataset copa --output_file /home/anie/DisExtract/data/copa/lm1b_greedy.txt
+```
+
+**todo**: Run LM1B on News Commentary with PPL (write additional code, directly get softmax result and compute PPL on target by yourself) and BLEU (with `perl` script or check OpenNMT).
+
+**todo**: Run OpenSubtitle on Why-bot generated results.
+
+**todo**: Generated questions kinda suck...what to do???
 
 ## Baseline Models
 
@@ -338,6 +372,14 @@ Use model trained on LM1B (State-of-the-art GCCV model)
 ### Side ideas: Why-QA
 
 Use Causal net to select most important phrases of explanation (result) from the cause. Then delete `because`, put S1 and S2 back to paragraph. Then you actually do get a QA style selection dataset. Question would be naturalistic (but might overlap too much with S1...so cautious!!). Answers would be a short span inside the paragraph. 
+
+Generate explain-bot dataset
+
+```bash
+python3 gen_why_test.py --data_file /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov6-src-test.txt --output_file /home/anie/DisExtract/data/news_commentary/news_commentary_v13_nov25-src-test-Q.txt
+```
+
+Generated Qs kinda suck??? Maybe Erin can improve it maybe she can't -- she might not have enough time.
 
 ## Processing News Commentary
 
@@ -359,7 +401,7 @@ Also filtering out s1/s2 that are too long or too short
 
 Final test number of examples: 6301 (which is a good amount as external evaluation)
 
-**Todo**: run L2EC and L2E both on this dataset and see who wins. Need to wait until L2E LSTM finishes training...
+Run L2EC and L2E both on this dataset and see who wins. Need to wait until L2E LSTM finishes training...
 
 ## Processing Holdout Newscrawl Test set
 

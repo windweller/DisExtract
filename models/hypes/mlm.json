@@ -1,0 +1,4 @@
+{
+  "glove_path": "/home/anie/glove/glove.840B.300d.txt",
+  "data_dir": "/home/anie/DisExtract/data/mlm_nsp"
+}
