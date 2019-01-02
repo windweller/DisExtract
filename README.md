@@ -1,8 +1,15 @@
 ## Note
 
-This is the official repo that we used to train for DisSent paper. It is not yet cleaned up and not ready for official release. But it has come to our notice that the community still lacks efficient sentence representation models (public ones), so we are willing to give access to people on an individual bases before the publishing of our paper. 
+This is the official repo that we used to train for DisSent paper. It is not yet cleaned up and not ready for official release. But it has come to our notice that the community still lacks efficient sentence representation models (public ones), so we are providing access to people our trained model. 
 
-Please contact anie@stanford.edu if you want access to the trained model and loading script! Thank you!
+You can download the trained models from the following AWS S3 link:
+https://s3-us-west-2.amazonaws.com/dissent/ (Books 5, Books 8, and Books ALL)
+
+You can also load the models by using the following script:
+https://github.com/windweller/SentEval/blob/master/examples/dissent.py
+https://github.com/windweller/SentEval/blob/master/examples/dissent_eval.py
+
+Please contact anie@stanford.edu if you have problem using these scripts! Thank you!
 
 ## DIS
 
