@@ -18,15 +18,11 @@ Example:
 
 Orig: "The movie was rated R."	L2E: "It was too upsetting ."
 
-**Todo**: Evaluate PPL and BLEU for LM
-
-**Todo**: Generate why-questions for News Commentary, and then evaluate 
-
-**Todo**: Design the human MTurker experiment
 
 
+TODO:
 
-**Todo**: Evaluate OpenSubtitle on Winograd, COPA using Why questions
+1. Evaluate gender agreement (instead of just verb agreement) (similar to Linzen et al.)
 
 ## Winograd Ranking Script
 

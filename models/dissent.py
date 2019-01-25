@@ -70,7 +70,8 @@ class BLSTMEncoder(nn.Module):
 
     def is_cuda(self):
         # either all weights are on cpu or they are on gpu
-        return 'cuda' in str(type(self.enc_lstm.bias_hh_l0.data)) # or 'cuda' in str(self.enc_lstm.bias_hh_l0.data.device)
+        # return 'cuda' in str(type(self.enc_lstm.bias_hh_l0.data)) # or 'cuda' in str(self.enc_lstm.bias_hh_l0.data.device)
+        return next(self.parameters()).is_cuda
 
     def forward(self, sent_tuple):
         # sent_len: [max_len, ..., min_len] (bsize)
