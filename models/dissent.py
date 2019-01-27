@@ -482,17 +482,8 @@ from collections import defaultdict
 import sklearn
 
 class SIFEncoder(object):
-    def __init__(self, config):
+    def __init__(self):
         super(SIFEncoder, self).__init__()
-        self.bsize = config['bsize']
-        self.word_emb_dim = config['word_emb_dim']
-        self.enc_lstm_dim = config['enc_lstm_dim']
-        self.pool_type = config['pool_type']
-        self.dpout_model = config['dpout_model']
-        self.dpout_emb = config['dpout_emb']
-        self.tied_weights = config['tied_weights']
-
-        bidrectional = True if not self.tied_weights else False
 
         self.word_freq = None
         self.total = 0
