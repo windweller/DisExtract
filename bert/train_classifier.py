@@ -41,6 +41,95 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_dir",
+                    default=None,
+                    type=str,
+                    required=True,
+                    help="The input data dir. Should contain the .tsv files (or other data files) for the task.")
+parser.add_argument("--bert_model", default=None, type=str, required=True,
+                    help="Bert pre-trained model selected in the list: bert-base-uncased, "
+                         "bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, "
+                         "bert-base-multilingual-cased, bert-base-chinese.")
+parser.add_argument("--task_name",
+                    default=None,
+                    type=str,
+                    required=True,
+                    help="The name of the task to train.")
+parser.add_argument("--output_dir",
+                    default=None,
+                    type=str,
+                    required=True,
+                    help="The output directory where the model predictions and checkpoints will be written.")
+
+## Other parameters
+parser.add_argument("--cache_dir",
+                    default="",
+                    type=str,
+                    help="Where do you want to store the pre-trained models downloaded from s3")
+parser.add_argument("--max_seq_length",
+                    default=128,
+                    type=int,
+                    help="The maximum total input sequence length after WordPiece tokenization. \n"
+                         "Sequences longer than this will be truncated, and sequences shorter \n"
+                         "than this will be padded.")
+parser.add_argument("--do_train",
+                    action='store_true',
+                    help="Whether to run training.")
+parser.add_argument("--do_eval",
+                    action='store_true',
+                    help="Whether to run eval on the dev set.")
+parser.add_argument("--do_lower_case",
+                    action='store_true',
+                    help="Set this flag if you are using an uncased model.")
+parser.add_argument("--train_batch_size",
+                    default=32,
+                    type=int,
+                    help="Total batch size for training.")
+parser.add_argument("--eval_batch_size",
+                    default=8,
+                    type=int,
+                    help="Total batch size for eval.")
+parser.add_argument("--learning_rate",
+                    default=5e-5,
+                    type=float,
+                    help="The initial learning rate for Adam.")
+parser.add_argument("--num_train_epochs",
+                    default=3.0,
+                    type=float,
+                    help="Total number of training epochs to perform.")
+parser.add_argument("--warmup_proportion",
+                    default=0.1,
+                    type=float,
+                    help="Proportion of training to perform linear learning rate warmup for. "
+                         "E.g., 0.1 = 10%% of training.")
+parser.add_argument("--no_cuda",
+                    action='store_true',
+                    help="Whether not to use CUDA when available")
+parser.add_argument("--local_rank",
+                    type=int,
+                    default=-1,
+                    help="local_rank for distributed training on gpus")
+parser.add_argument('--seed',
+                    type=int,
+                    default=42,
+                    help="random seed for initialization")
+parser.add_argument('--gradient_accumulation_steps',
+                    type=int,
+                    default=1,
+                    help="Number of updates steps to accumulate before performing a backward/update pass.")
+parser.add_argument('--fp16',
+                    action='store_true',
+                    help="Whether to use 16-bit float precision instead of 32-bit")
+parser.add_argument('--loss_scale',
+                    type=float, default=0,
+                    help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
+                         "0 (default value): dynamic loss scaling.\n"
+                         "Positive power of 2: static loss scaling value.\n")
+parser.add_argument('--server_ip', type=str, default='', help="Can be used for distant debugging.")
+parser.add_argument('--server_port', type=str, default='', help="Can be used for distant debugging.")
+args = parser.parse_args()
+
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -195,6 +284,97 @@ class ColaProcessor(DataProcessor):
                 InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples
 
+EN_FIVE_DISCOURSE_MARKERS = [
+    "and",
+    "because",
+    "but",
+    "if",
+    "when"
+]
+
+EN_EIGHT_DISCOURSE_MARKERS = [
+    "and",
+    "because",
+    "but",
+    "if",
+    "when",
+    "so",
+    "though",
+    "before"
+]
+
+EN_DISCOURSE_MARKERS = [
+    "after",
+    "also",
+    "although",
+    "and",
+    "as",
+    "because",
+    "before",
+    "but",
+    "if",
+    "so",
+    "still",
+    "then",
+    "though",
+    "when",
+    "while"
+]
+
+class DisProcessor(DataProcessor):
+    """A data loader for DIS corpus"""
+
+    def __init__(self):
+        super().__init__()
+        self.dis_corpus = args.task_name.lower()
+        if self.dis_corpus == 'dis' or self.dis_corpus == 'dis5':
+            self.prefix = "discourse_EN_FIVE_and_but_because_if_when_2017dec12_"
+        elif self.dis_corpus == 'dis8':
+            self.prefix = "discourse_EN_EIGHT_and_but_because_if_when_before_so_though_2017dec18_"
+        elif self.dis_corpus == 'dis_all':
+            self.prefix = "discourse_EN_ALL_and_then_because_though_still_after_when_while_but_also_as_so_although_before_if_2017dec21_"
+
+    def get_labels(self):
+        """See base class."""
+        if self.dis_corpus == 'dis' or self.dis_corpus == 'dis5':
+            return EN_FIVE_DISCOURSE_MARKERS
+        elif self.dis_corpus == 'dis8':
+            return EN_EIGHT_DISCOURSE_MARKERS
+        elif self.dis_corpus == 'dis_all':
+            return EN_DISCOURSE_MARKERS
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, self.prefix + "train.tsv")), "train")
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, self.prefix + "valid.tsv")), "valid")
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, self.prefix + "test.tsv")), "test")
+
+    def _create_examples(self, lines, set_type):
+        """Creates examples for the training and dev sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            guid = "%s-%s" % (set_type, i)
+            text_a = line[0]
+            text_b = line[1]
+
+            label = line[2]
+
+            examples.append(
+                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
+
+        return examples
+
 
 def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer):
     """Loads a data file into a list of `InputBatch`s."""
@@ -299,98 +479,55 @@ def accuracy(out, labels):
     outputs = np.argmax(out, axis=1)
     return np.sum(outputs == labels)
 
+def evaluate(model, processor, label_list, tokenizer, device, global_step):
+    eval_examples = processor.get_dev_examples(args.data_dir)
+    eval_features = convert_examples_to_features(
+        eval_examples, label_list, args.max_seq_length, tokenizer)
+    logger.info("***** Running evaluation *****")
+    logger.info("  Num examples = %d", len(eval_examples))
+    logger.info("  Batch size = %d", args.eval_batch_size)
+    all_input_ids = torch.tensor([f.input_ids for f in eval_features], dtype=torch.long)
+    all_input_mask = torch.tensor([f.input_mask for f in eval_features], dtype=torch.long)
+    all_segment_ids = torch.tensor([f.segment_ids for f in eval_features], dtype=torch.long)
+    all_label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
+    eval_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
+    # Run prediction for full data
+    eval_sampler = SequentialSampler(eval_data)
+    eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+
+    model.eval()
+    eval_loss, eval_accuracy = 0, 0
+    nb_eval_steps, nb_eval_examples = 0, 0
+
+    for input_ids, input_mask, segment_ids, label_ids in tqdm(eval_dataloader, desc="Evaluating"):
+        input_ids = input_ids.to(device)
+        input_mask = input_mask.to(device)
+        segment_ids = segment_ids.to(device)
+        label_ids = label_ids.to(device)
+
+        with torch.no_grad():
+            tmp_eval_loss = model(input_ids, segment_ids, input_mask, label_ids)
+            logits = model(input_ids, segment_ids, input_mask)
+
+        logits = logits.detach().cpu().numpy()
+        label_ids = label_ids.to('cpu').numpy()
+        tmp_eval_accuracy = accuracy(logits, label_ids)
+
+        eval_loss += tmp_eval_loss.mean().item()
+        eval_accuracy += tmp_eval_accuracy
+
+        nb_eval_examples += input_ids.size(0)
+        nb_eval_steps += 1
+
+    eval_loss = eval_loss / nb_eval_steps
+    eval_accuracy = eval_accuracy / nb_eval_examples
+    result = {'eval_loss': eval_loss,
+              'eval_accuracy': eval_accuracy,
+              'global_step': global_step}
+
+    return result
 
 def main():
-    parser = argparse.ArgumentParser()
-
-    ## Required parameters
-    parser.add_argument("--data_dir",
-                        default=None,
-                        type=str,
-                        required=True,
-                        help="The input data dir. Should contain the .tsv files (or other data files) for the task.")
-    parser.add_argument("--bert_model", default=None, type=str, required=True,
-                        help="Bert pre-trained model selected in the list: bert-base-uncased, "
-                             "bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, "
-                             "bert-base-multilingual-cased, bert-base-chinese.")
-    parser.add_argument("--task_name",
-                        default=None,
-                        type=str,
-                        required=True,
-                        help="The name of the task to train.")
-    parser.add_argument("--output_dir",
-                        default=None,
-                        type=str,
-                        required=True,
-                        help="The output directory where the model predictions and checkpoints will be written.")
-
-    ## Other parameters
-    parser.add_argument("--cache_dir",
-                        default="",
-                        type=str,
-                        help="Where do you want to store the pre-trained models downloaded from s3")
-    parser.add_argument("--max_seq_length",
-                        default=128,
-                        type=int,
-                        help="The maximum total input sequence length after WordPiece tokenization. \n"
-                             "Sequences longer than this will be truncated, and sequences shorter \n"
-                             "than this will be padded.")
-    parser.add_argument("--do_train",
-                        action='store_true',
-                        help="Whether to run training.")
-    parser.add_argument("--do_eval",
-                        action='store_true',
-                        help="Whether to run eval on the dev set.")
-    parser.add_argument("--do_lower_case",
-                        action='store_true',
-                        help="Set this flag if you are using an uncased model.")
-    parser.add_argument("--train_batch_size",
-                        default=32,
-                        type=int,
-                        help="Total batch size for training.")
-    parser.add_argument("--eval_batch_size",
-                        default=8,
-                        type=int,
-                        help="Total batch size for eval.")
-    parser.add_argument("--learning_rate",
-                        default=5e-5,
-                        type=float,
-                        help="The initial learning rate for Adam.")
-    parser.add_argument("--num_train_epochs",
-                        default=3.0,
-                        type=float,
-                        help="Total number of training epochs to perform.")
-    parser.add_argument("--warmup_proportion",
-                        default=0.1,
-                        type=float,
-                        help="Proportion of training to perform linear learning rate warmup for. "
-                             "E.g., 0.1 = 10%% of training.")
-    parser.add_argument("--no_cuda",
-                        action='store_true',
-                        help="Whether not to use CUDA when available")
-    parser.add_argument("--local_rank",
-                        type=int,
-                        default=-1,
-                        help="local_rank for distributed training on gpus")
-    parser.add_argument('--seed',
-                        type=int,
-                        default=42,
-                        help="random seed for initialization")
-    parser.add_argument('--gradient_accumulation_steps',
-                        type=int,
-                        default=1,
-                        help="Number of updates steps to accumulate before performing a backward/update pass.")
-    parser.add_argument('--fp16',
-                        action='store_true',
-                        help="Whether to use 16-bit float precision instead of 32-bit")
-    parser.add_argument('--loss_scale',
-                        type=float, default=0,
-                        help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
-                             "0 (default value): dynamic loss scaling.\n"
-                             "Positive power of 2: static loss scaling value.\n")
-    parser.add_argument('--server_ip', type=str, default='', help="Can be used for distant debugging.")
-    parser.add_argument('--server_port', type=str, default='', help="Can be used for distant debugging.")
-    args = parser.parse_args()
 
     if args.server_ip and args.server_port:
         # Distant debugging - see https://code.visualstudio.com/docs/python/debugging#_attach-to-a-local-script
@@ -403,6 +540,10 @@ def main():
         "cola": ColaProcessor,
         "mnli": MnliProcessor,
         "mrpc": MrpcProcessor,
+        'dis': DisProcessor,
+        'dis5': DisProcessor,
+        'dis8': DisProcessor,
+        'dis_all': DisProcessor
     }
 
     num_labels_task = {
@@ -535,9 +676,10 @@ def main():
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=args.train_batch_size)
 
         model.train()
-        for _ in trange(int(args.num_train_epochs), desc="Epoch"):
+        for epoch_num in trange(int(args.num_train_epochs), desc="Epoch"):
             tr_loss = 0
             nb_tr_examples, nb_tr_steps = 0, 0
+
             for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
                 batch = tuple(t.to(device) for t in batch)
                 input_ids, input_mask, segment_ids, label_ids = batch
@@ -566,6 +708,14 @@ def main():
                     optimizer.step()
                     optimizer.zero_grad()
                     global_step += 1
+
+                if step % args.every_iter == 0:
+                    logger.info("training loss: {}".format(tr_loss / nb_tr_steps))
+
+            # evaluate at end of epoch
+            logger.info("at epoch {} we evaluate performance".format(epoch_num))
+            logger.info(evaluate(model, processor, label_list, tokenizer, device, global_step))
+
 
     if args.do_train:
         # Save a trained model and the associated configuration
