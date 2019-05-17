@@ -11,11 +11,15 @@ https://github.com/windweller/SentEval/blob/master/examples/dissent_eval.py
 
 Please contact anie@stanford.edu if you have problem using these scripts! Thank you!
 
-## DIS
+We wrote the majority of the code in 2017 when PyTorch was still at version 0.1 and Python 2 was still popular. You might need to adjust your library versions in order to load in the model.
 
-In the paper, we mentioned a specific evaluation dataset DIS that we created to evaluate model's performance on discourse marker. 
+## DisSent Corpus
 
-You can download this dataset following this link: https://s3-us-west-2.amazonaws.com/nlp-corpus-collection/dis_v2.zip
+The links to data is available under the same link: 
+
+https://s3-us-west-2.amazonaws.com/dissent/ (Books 5, Books 8, Books ALL, Books ALL -- perfectly balanced)
+
+If you scroll down, beneath the trained model pickle files, you can find download links for all our data.
 
 ## Dependency Pattern Instructions
 
