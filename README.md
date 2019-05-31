@@ -21,6 +21,12 @@ https://s3-us-west-2.amazonaws.com/dissent/ (Books 5, Books 8, Books ALL, Books 
 
 If you scroll down, beneath the trained model pickle files, you can find download links for all our data.
 
+We include all the training files (with the original train/valid/test split). We do not provide access to the original raw BookCorpus data at all.
+
+```
+aws s3 cp https://s3-us-west-2.amazonaws.com/dissent/discourse_EN_ALL_and_then_because_though_still_after_when_while_but_also_as_so_although_before_if_2017dec21_train.tsv .
+```
+
 ## Dependency Pattern Instructions
 
 ```python
