@@ -23,6 +23,8 @@ If you scroll down, beneath the trained model pickle files, you can find downloa
 
 We include all the training files (with the original train/valid/test split). We do not provide access to the original raw BookCorpus data at all.
 
+Once you install [AWS-CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) (commandline tool from AWS), you can download using commands like below:
+
 ```
 aws s3 cp https://s3-us-west-2.amazonaws.com/dissent/discourse_EN_ALL_and_then_because_though_still_after_when_while_but_also_as_so_although_before_if_2017dec21_train.tsv .
 ```
