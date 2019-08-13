@@ -29,6 +29,30 @@ Once you install [AWS-CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-
 aws s3 cp https://s3-us-west-2.amazonaws.com/dissent/data/discourse_EN_ALL_and_then_because_though_still_after_when_while_but_also_as_so_although_before_if_2017dec21_train.tsv .
 ```
 
+## PDTB 2 Caveat
+
+In the main portion of our paper, we stated that we "use the same dataset split scheme for this task as for the implicit vs explicit task discussed above. Following Ji and Eisenstein (2015) and Qin et al. (2017)". This line caused confusion. In terms of dataset split scheme, we followed "Patterson and Kehler (2013)’s preprocessing. The dataset contains 25 sections in total. We use sections 0 and 1 as the development set, **sections 23 and 24** for the **test set**, and we train on the remaining sections 2-22.". This is made clear in the Appendix Section A.3.
+
+As far as we know, Ji and Eisenstein (2015) and Qin et al. (2017) both used **sections 21-22** as the test set. It appears that they weren't aware the existence of **sections 23 and 24** at the time. In order to move the field forward, we highly encourage you to follow Patterson and Kehler (2013) processing scheme and use https://github.com/cgpotts/pdtb2 to process.
+
+The code to extract sections 23 and 24 is the following:
+
+```python
+from pdtb2 import CorpusReader
+
+corpus = CorpusReader('pdtb2.csv')
+
+test_sents = []
+
+for sent in corpus.iter_data():
+    if sent.Relation == 'Implicit' and sent.Section in ['23','24']:
+        if len(sent.ConnHeadSemClass1.split('.')) != 1:
+            test_sents.append(sent)
+```
+
+Patterson, Gary, and Andrew Kehler. "Predicting the presence of discourse connectives." Proceedings of the 2013 Conference on Empirical Methods in Natural Language Processing. 2013. [link](https://www.aclweb.org/anthology/D13-1094)
+
+
 ## Dependency Pattern Instructions
 
 ```python
@@ -54,17 +78,6 @@ but in itself a S2 S1 situation. In general it's hard to generate a valid (S1, S
 then S1 connects to S2.
 
 `head: "example""`: for two words, which one is the one we use to match dependency patterns. 
-
-## TODO
-
-[x] switch to better (more automatic) dependency parsing with corenlp
-[x] finish making test cases and editing parser for all discourse markers in english
-[x] rewrite producer
-[ ] run model on new dataset for English
-[ ] get Chinese and Spanish corpora
-[ ] check parser on a few examples of English BookCorpus data
-[ ] record dependency patterns for Chinese and Spanish
-[ ] what if this doesn't work?
 
 ## Parsing performance
 
