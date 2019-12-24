@@ -1,6 +1,6 @@
 ## Note
 
-This is the official repo that we used to train for DisSent paper. It is not yet cleaned up and not ready for official release. But it has come to our notice that the community still lacks efficient sentence representation models (public ones), so we are providing access to people our trained model. 
+This is the official repo that we used to train for DisSent paper. It is not yet cleaned up and not ready for official release.
 
 You can download the trained models from the following AWS S3 link:
 https://s3-us-west-2.amazonaws.com/dissent/ (Books 5, Books 8, and Books ALL)
@@ -12,6 +12,39 @@ https://github.com/windweller/SentEval/blob/master/examples/dissent_eval.py
 Please contact anie@stanford.edu if you have problem using these scripts! Thank you!
 
 We wrote the majority of the code in 2017 when PyTorch was still at version 0.1 and Python 2 was still popular. You might need to adjust your library versions in order to load in the model.
+
+## Predicting Discourse Connectors
+
+Thanks to Stepan Zakharov <stepanz@post.bgu.ac.il> who wrote some easy to use code for loading the complete model for the task of discourse connector prediction.
+
+```python
+import torch
+from torch.autograd import Variable
+model_path = 'C:/Users/vaule/PycharmProjects/Reddit/src/remote/dissent/dis-model.pickle'
+GLOVE_PATH = 'C:/Users/vaule/PycharmProjects/Reddit/src/glove/glove.840B.300d.txt'
+map_locations = torch.device('cpu')
+dissent = torch.load(model_path, map_location=map_locations)
+dissent.encoder.set_glove_path(GLOVE_PATH)
+
+s1_raw = ['Hello there.']
+s2_raw = ['How are you?']
+
+dissent.encoder.build_vocab(s1_raw+s2_raw)
+s1_prepared,s1_len = dissent.encoder.prepare_samples(s1_raw, tokenize=True, verbose=False, no_sort=True)
+s2_prepared,s2_len = dissent.encoder.prepare_samples(s2_raw, tokenize=True, verbose=False, no_sort=True)
+
+b1 = Variable(dissent.encoder.get_batch(s1_prepared, no_sort=True))
+b2 = Variable(dissent.encoder.get_batch(s2_prepared, no_sort=True))
+discourse_preds = dissent((b1, s1_len), (b2, s2_len))
+
+print(discourse_preds)
+
+out_proba = torch.nn.Softmax()(discourse_preds)
+
+print('Output probabilities: ', [ '%.4f' % elem for elem in out_proba[0] ])
+```
+
+In this code, he loads the "DIS-ALL" model where we trained to predict 15 discourse markers. The list of markers can be found in: https://github.com/windweller/DisExtract/blob/master/preprocessing/cfg.py
 
 ## DisSent Corpus
 
