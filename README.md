@@ -62,6 +62,89 @@ Once you install [AWS-CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-
 aws s3 cp https://s3-us-west-2.amazonaws.com/dissent/data/discourse_EN_ALL_and_then_because_though_still_after_when_while_but_also_as_so_although_before_if_2017dec21_train.tsv .
 ```
 
+## Dataset Metadata
+
+The following table is necessary for this dataset to be indexed by search
+engines such as <a href="https://g.co/datasetsearch">Google Dataset Search</a>.
+<div itemscope itemtype="http://schema.org/Dataset">
+<table>
+  <tr>
+    <th>property</th>
+    <th>value</th>
+  </tr>
+  <tr>
+    <td>name</td>
+    <td><code itemprop="name">Large Scale Discourse Marker Prediction Task</code></td>
+  </tr>
+  <tr>
+    <td>alternateName</td>
+    <td><code itemprop="alternateName">dissent</code></td>
+  </tr>
+  <tr>
+    <td>url</td>
+    <td><code itemprop="url">https://github.com/windweller/DisExtract</code></td>
+  </tr>
+  <tr>
+    <td>description</td>
+    <td><code itemprop="description">Learning effective representations of sentences is one of the core missions of natural language understanding. Existing models
+either train on a vast amount of text, or require costly, manually curated sentence relation datasets. We show that with dependency
+parsing and rule-based rubrics, we can curate
+a high quality sentence relation task by leveraging explicit discourse relations. We show
+that our curated dataset provides an excellent
+signal for learning vector representations of
+sentence meaning, representing relations that
+can only be determined when the meanings
+of two sentences are combined.</code></td>
+  </tr>
+  <tr>
+    <td>provider</td>
+    <td>
+      <div itemscope itemtype="http://schema.org/Organization" itemprop="provider">
+        <table>
+          <tr>
+            <th>property</th>
+            <th>value</th>
+          </tr>
+          <tr>
+            <td>name</td>
+            <td><code itemprop="name">Stanford University</code></td>
+          </tr>
+          <tr>
+            <td>sameAs</td>
+            <td><code itemprop="sameAs">https://www.stanford.edu/</code></td>
+          </tr>
+        </table>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>license</td>
+    <td>
+      <div itemscope itemtype="http://schema.org/CreativeWork" itemprop="license">
+        <table>
+          <tr>
+            <th>property</th>
+            <th>value</th>
+          </tr>
+          <tr>
+            <td>name</td>
+            <td><code itemprop="name">CC BY-SA 3.0</code></td>
+          </tr>
+          <tr>
+            <td>url</td>
+            <td><code itemprop="url">https://creativecommons.org/licenses/by-sa/3.0/</code></td>
+          </tr>
+        </table>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>citation</td>
+    <td><code itemprop="citation">Nie, A., Bennett, E. and Goodman, N., 2019, July. DisSent: Learning sentence representations from explicit discourse relations. In Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics (pp. 4497-4510).</code></td>
+  </tr>
+</table>
+</div>
+
 ## PDTB 2 Caveat
 
 In the main portion of our paper, we stated that we "use the same dataset split scheme for this task as for the implicit vs explicit task discussed above. Following Ji and Eisenstein (2015) and Qin et al. (2017)". This line caused confusion. In terms of dataset split scheme, we followed "Patterson and Kehler (2013)’s preprocessing. The dataset contains 25 sections in total. We use sections 0 and 1 as the development set, **sections 23 and 24** for the **test set**, and we train on the remaining sections 2-22.". This is made clear in the Appendix Section A.3.
