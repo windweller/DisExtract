@@ -59,7 +59,17 @@ We include all the training files (with the original train/valid/test split). We
 Once you install [AWS-CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) (commandline tool from AWS), you can download using commands like below:
 
 ```
-aws s3 cp https://s3-us-west-2.amazonaws.com/dissent/data/discourse_EN_ALL_and_then_because_though_still_after_when_while_but_also_as_so_although_before_if_2017dec21_train.tsv .
+aws s3 cp s3://dissent/data/discourse_EN_ALL_and_then_because_though_still_after_when_while_but_also_as_so_although_before_if_2017dec21_test.tsv .
+```
+
+You can also browse files and folders using:
+
+```
+aws s3 ls s3://dissent/
+    PRE books_5/
+    PRE books_8/
+    PRE books_all/
+    PRE data/
 ```
 
 ## Dataset Metadata
