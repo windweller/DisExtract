@@ -72,6 +72,14 @@ aws s3 ls s3://dissent/
     PRE data/
 ```
 
+An alternative way to download the data (since all of them are public), is to use `aws s3 ls s3://dissent/data/` to find the correct file name and use the following format:
+
+```
+wget https://dissent.s3-us-west-2.amazonaws.com/data/discourse_EN_FIVE_and_but_because_if_when_2017dec12_test.tsv
+```
+
+You can copy and paste your the file name in `https://dissent.s3-us-west-2.amazonaws.com/data/{FILE_NAME}`.
+
 ## Dataset Metadata
 
 The following table is necessary for this dataset to be indexed by search
